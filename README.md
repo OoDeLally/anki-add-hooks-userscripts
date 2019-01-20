@@ -2,6 +2,12 @@ Add a button on translation websites to create an Anki card from a translation.
 
 ![Screenshot](/doc/images/screenshot.png)
 
+## Currently supported websites
+
+### wordreference.com
+
+  `/hook/wordreference_com_hook.user.js`
+
 
 ## Setup
 
