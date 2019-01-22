@@ -15,7 +15,11 @@ function getLanguageCodes() {
 
 
 function appendStyleSheep() {
+  // TODO: Button style should be provided by the chrome extension
   const css = '.--anki-quick-adder-hook-- {'
+            + '  width: 25px;'
+            + '  height: 15px;'
+            + '  box-sizing: content-box;'
             + '  display: block;'
             + '  opacity: 0.4;'
             + '  overflow: hidden;'
@@ -63,9 +67,7 @@ function appendStyleSheep() {
 }
 
 
-function createHook(frontText, backText, trGroup) {
-  console.log('frontText:', frontText)
-  console.log('backText:', backText)
+function createHook(trGroup) {
   const starNodeBig = document.createElement('div');
   starNodeBig.innerText = '★';
   starNodeBig.className = '--anki-quick-adder-hook--star --anki-quick-adder-hook--big';
@@ -73,9 +75,8 @@ function createHook(frontText, backText, trGroup) {
   starNodeSmall.innerText = '★';
   starNodeSmall.className = '--anki-quick-adder-hook--star --anki-quick-adder-hook--small';
   const hookNode = document.createElement('div');
+  hookNode.setAttributes('name', 'wordreference.com');
   hookNode.className = '--anki-quick-adder-hook--';
-  hookNode.setAttribute('front', frontText);
-  hookNode.setAttribute('back', backText);
   hookNode.innerText = 'Add';
   hookNode.title = 'Create an Anki card from this translation';
   hookNode.onmouseover = () => {
@@ -87,7 +88,7 @@ function createHook(frontText, backText, trGroup) {
   hookNode.onclick = (event) => {
     const hookNode = event.target;
     if (hookNode.dataset.clickHandler) {
-      hookNode.dataset.clickHandler(hookNode.attributes.front, hookNode.attributes.back);
+      hookNode.dataset.clickHandler(extractFrontText(trGroup), extractBackText(trGroup));
     } else {
       alert(
           'This button was not detected by AnkiQuickAdder.\n'
@@ -183,10 +184,9 @@ function extractBackText(trGroup) {
 
 
 function addHooksInTrGroup(trGroup) {
-  const hook = createHook(extractFrontText(trGroup), extractBackText(trGroup), trGroup);
   const parent = trGroup[0].querySelector('td');
   parent.style.position = 'relative';
-  parent.prepend(hook);
+  parent.prepend(createHook(trGroup));
 }
 
 

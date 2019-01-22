@@ -1,15 +1,16 @@
 // ==UserScript==
-// @name         FIXME AnkiQuickAdder Hook
-// @namespace    FIXME
+// @name         Lingea.cz AnkiQuickAdder Hook
+// @namespace    https://github.com/OoDeLally
 // @version      0.1
-// @description  Generate a hook for AnkiQuickAdder on FIXME
-// @author       FIXME
-// @include      FIXME
+// @description  Generate a hook for AnkiQuickAdder on Lingea.cz
+// @author       Pascal Heitz
+// @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
 // @grant        none
 // ==/UserScript==
 
 
 function appendStyleSheep() {
+  // TODO: Button style should be provided by the chrome extension
   const css = '.--anki-quick-adder-hook-- {'
             + '  width: 25px;'
             + '  height: 15px;'
@@ -37,7 +38,7 @@ function appendStyleSheep() {
             + '  opacity: 1;'
             + '}'
             + '.--anki-quick-adder-hook-- .--anki-quick-adder-hook--star {'
-            + '  display: inline-block;'
+            + '  display: block;'
             + '  transform: rotate(-15deg);'
             + '  position: absolute;'
             + '}'
@@ -65,6 +66,25 @@ function appendStyleSheep() {
 }
 
 
+
+function extractFrontText() {
+  const sourceSentence = document.querySelector('h1').innerText;
+  return sourceSentence;
+}
+
+
+
+function extractBackText() {
+  const translationRows = Array.from(document.querySelectorAll('.entry tr'))
+    .filter(tr => !tr.className || !tr.className.includes('head'));
+  const definitionText = translationRows.map(tr => tr.innerText).join('\n');
+  return definitionText;
+}
+
+
+
+
+
 function createHook(frontText, backText) {
   const starNodeBig = document.createElement('div');
   starNodeBig.innerText = '★';
@@ -73,15 +93,16 @@ function createHook(frontText, backText) {
   starNodeSmall.innerText = '★';
   starNodeSmall.className = '--anki-quick-adder-hook--star --anki-quick-adder-hook--small';
   const hookNode = document.createElement('div');
+  hookNode.setAttributes('name', 'slovniky.lingea.cz');
   hookNode.className = '--anki-quick-adder-hook--';
-  hookNode.setAttribute('front', frontText);
-  hookNode.setAttribute('back', backText);
   hookNode.innerText = 'Add';
   hookNode.title = 'Create an Anki card from this translation';
   hookNode.onclick = (event) => {
     const hookNode = event.target;
+      // console.log('extractFrontText():', extractFrontText())
+      // console.log('extractBackText():', extractBackText())
     if (hookNode.dataset.clickHandler) {
-      hookNode.dataset.clickHandler(hookNode.attributes.front, hookNode.attributes.back);
+      hookNode.dataset.clickHandler(extractFrontText(), extractBackText());
     } else {
       alert(
           'This button was not detected by AnkiQuickAdder.\n'
@@ -100,13 +121,21 @@ function createHook(frontText, backText) {
 
 
 
+
 function run(){
   appendStyleSheep();
 
-  // FIXME
-  const hook = createHook('front face text', 'back face text');
-  document.querySelector('hook-parent-selector').append(hook);
-  // !FIXME
+  setInterval(() => {
+    const parentNode = document.querySelector('.entry tr.head td');
+    if (!parentNode) {
+      return // Container not found
+    }
+    const existingHook = parentNode.querySelector('.--anki-quick-adder-hook--');
+    if (existingHook) {
+      return // Hook already exists
+    }
+    parentNode.append(createHook());
+  }, 500);
 }
 
 
