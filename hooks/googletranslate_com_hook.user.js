@@ -5,7 +5,6 @@
 // @description  Generate a hook for AnkiQuickAdder on Google Translate
 // @author       Pascal Heitz
 // @include      /translate\.google\.com\//
-// @grant        none
 // ==/UserScript==
 
 
@@ -91,7 +90,7 @@ function createHook(frontText, backText) {
   starNodeSmall.innerText = '★';
   starNodeSmall.className = '--anki-quick-adder-hook--star --anki-quick-adder-hook--small';
   const hookNode = document.createElement('div');
-  hookNode.setAttributes('name', 'translate.google.com');
+  hookNode.setAttribute('name', 'translate.google.com');
   hookNode.className = '--anki-quick-adder-hook--';
   hookNode.innerText = 'Add';
   hookNode.title = 'Create an Anki card from this translation';

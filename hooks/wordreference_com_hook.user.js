@@ -5,7 +5,6 @@
 // @description  Generate a hook for AnkiQuickAdder on WordReference
 // @author       Pascal Heitz
 // @include      /http://www\.wordreference\.com\/[a-z]{4}\/.+/
-// @grant        none
 // ==/UserScript==
 
 function getLanguageCodes() {
@@ -75,7 +74,7 @@ function createHook(trGroup) {
   starNodeSmall.innerText = '★';
   starNodeSmall.className = '--anki-quick-adder-hook--star --anki-quick-adder-hook--small';
   const hookNode = document.createElement('div');
-  hookNode.setAttributes('name', 'wordreference.com');
+  hookNode.setAttribute('name', 'wordreference.com');
   hookNode.className = '--anki-quick-adder-hook--';
   hookNode.innerText = 'Add';
   hookNode.title = 'Create an Anki card from this translation';

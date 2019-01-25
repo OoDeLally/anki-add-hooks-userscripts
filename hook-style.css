@@ -1,0 +1,51 @@
+.-anki-quick-adder-hook {
+  width: 35px;
+  height: 15px;
+  box-sizing: content-box;
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+  opacity: 0.6;
+  overflow: hidden;
+  z-index: 1000;
+  border-radius: 5px;
+  padding-left: 30px;
+  padding-right: 5px;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  background-color: #aaaaaa;
+  border: 2px solid #222222;
+  line-height: 17px;
+  top: 0px;
+  right: 0px;
+  cursor: pointer;
+}
+.-anki-quick-adder-hook-added {
+  border: 2px solid green;
+  opacity: 1;
+  cursor: auto;
+  color: #ccff99;
+}
+.-anki-quick-adder-hook:hover {
+  opacity: 1;
+}
+.-anki-quick-adder-hook-star {
+  display: block;
+  transform: rotate(-15deg);
+  position: absolute;
+}
+.-anki-quick-adder-hook-star-big {
+  font-size: 40px;
+  color: white;
+  z-index: 1005;
+  left: -7px;
+  top: -1px;
+}
+.-anki-quick-adder-hook-star-small {
+  font-size: 25px;
+  color: #0099ff;
+  z-index: 1010;
+  left: 0px;
+  top: -1px;
+}
