@@ -18,3 +18,9 @@ Add a button on translation websites to create an Anki card from a translation.
 3- Install the AnkiQuickAdder Hook User Scripts from `/hooks/` on Tampermonkey.
 
 4- Anki's "Add" Button should appear on the translation pages of the websites you installed.
+
+
+## TODO
+
+* Extract the common logic in another script
+* Add a `Settings` button

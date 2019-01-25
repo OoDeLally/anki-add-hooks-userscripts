@@ -6,81 +6,26 @@
 // @author       Pascal Heitz
 // @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
 // @connect      localhost
+// @grant        GM_getResourceText
 // @grant        GM_xmlhttpRequest
-// @require        https://code.jquery.com/jquery-2.0.3.min.js
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @require      https://openuserjs.org/src/libs/sizzle/GM_config.js
+// @resource     styleSheet https://raw.githubusercontent.com/OoDeLally/ankiquickadder-hooks/master/hook-style.css
 // ==/UserScript==
 
 
 function appendStyleSheep() {
-  // TODO: Button style should be provided by the chrome extension
-  const css = '.--anki-quick-adder-hook-- {'
-            + '  width: 35px;'
-            + '  height: 15px;'
-            + '  box-sizing: content-box;'
-            + '  position: relative;'
-            + '  display: inline-block;'
-            + '  vertical-align: middle;'
-            + '  opacity: 0.6;'
-            + '  overflow: hidden;'
-            + '  z-index: 1000;'
-            + '  border-radius: 5px;'
-            + '  padding-left: 30px;'
-            + '  padding-right: 5px;'
-            + '  color: white;'
-            + '  font-size: 12px;'
-            + '  font-weight: bold;'
-            + '  background-color: #aaaaaa;'
-            + '  border: 2px solid #222222;'
-            + '  line-height: 17px;'
-            + '  top: 0px;'
-            + '  right: 0px;'
-            + '  cursor: pointer;'
-            + '}'
-            + '.--anki-quick-adder-hook--.added {'
-            + '  border: 2px solid green;'
-            + '  opacity: 1;'
-            + '  cursor: auto;'
-            + '  color: #ccff99;'
-            + '}'
-            + '.--anki-quick-adder-hook--:hover {'
-            + '  opacity: 1;'
-            + '}'
-            + '.--anki-quick-adder-hook-- .--anki-quick-adder-hook--star {'
-            + '  display: block;'
-            + '  transform: rotate(-15deg);'
-            + '  position: absolute;'
-            + '}'
-            + '.--anki-quick-adder-hook-- .--anki-quick-adder-hook--star.--anki-quick-adder-hook--big {'
-            + '  font-size: 40px;'
-            + '  color: white;'
-            + '  z-index: 1005;'
-            + '  left: -7px;'
-            + '  top: -1px;'
-            + '}'
-            + '.--anki-quick-adder-hook-- .--anki-quick-adder-hook--star.--anki-quick-adder-hook--small {'
-            + '  font-size: 25px;'
-            + '  color: #0099ff;'
-            + '  z-index: 1010;'
-            + '  left: 0px;'
-            + '  top: -1px;'
-            + '}';
   var style = document.createElement('style');
-  if (style.styleSheet) {
-      style.styleSheet.cssText = css;
-  } else {
-      style.appendChild(document.createTextNode(css));
-  }
+  const css = GM_getResourceText('styleSheet');
+  style.appendChild(document.createTextNode(css));
   document.getElementsByTagName('head')[0].appendChild(style);
 }
-
-
 
 function extractFrontText() {
   const sourceSentence = document.querySelector('h1').innerText;
   return sourceSentence;
 }
-
-
 
 function extractBackText() {
   const translationRows = Array.from(document.querySelectorAll('.entry tr'))
@@ -89,29 +34,50 @@ function extractBackText() {
   return definitionText;
 }
 
-
 function ankiRequestOnFail(response, message) {
   console.error('Anki request response:', response)
   console.error(message)
+  if (message.includes('deck was not found')) {
+    GM_setValue('deckName', null);
+  }
+  if (message.includes('model was not found')) {
+    GM_setValue('modelName', null);
+  }
   alert(`AnkiConnect returned an error:\n${message}`);
 }
 
 function ankiRequestOnSuccess(hookNode) {
-  hookNode.classList.add('added');
+  hookNode.classList.add('-anki-quick-adder-hook-added');
   hookNode.querySelector('.text').innerText = 'Added';
   hookNode.onclick = () => {};
 }
 
 
 function hookOnClick(hookNode, frontText, backText) {
+  let deckName = GM_getValue('deckName');
+  if (!deckName) {
+    deckName = prompt('Enter the name of the deck you want to add cards from this website', 'Default');
+    if (!deckName) {
+      return // Cancel
+    }
+  }
+  let modelName = GM_getValue('modelName');
+  if (!modelName) {
+    modelName = prompt('Enter the name of the card model you want to create', 'Basic (and reversed card)');
+    if (!modelName) {
+      return // Cancel
+    }
+  }
+  GM_setValue('deckName', deckName);
+  GM_setValue('modelName', modelName);
   // console.log('hookOnClick')
   const dataStr = JSON.stringify({
     action: 'addNote',
     version: 6,
     params: {
       note: {
-        deckName: 'cestina',
-        modelName: 'Basic (and reversed card)',
+        deckName: deckName,
+        modelName: modelName,
         fields: {
           Front: frontText,
           Back: backText,
@@ -141,45 +107,30 @@ function hookOnClick(hookNode, frontText, backText) {
   })
 }
 
-
-
 function createHook() {
   const starNodeBig = document.createElement('div');
   starNodeBig.innerText = '★';
-  starNodeBig.className = '--anki-quick-adder-hook--star --anki-quick-adder-hook--big';
+  starNodeBig.className = '-anki-quick-adder-hook-star -anki-quick-adder-hook-star-big';
   const starNodeSmall = document.createElement('div');
   starNodeSmall.innerText = '★';
-  starNodeSmall.className = '--anki-quick-adder-hook--star --anki-quick-adder-hook--small';
+  starNodeSmall.className = '-anki-quick-adder-hook-star -anki-quick-adder-hook-star-small';
   const textNode = document.createElement('span');
   textNode.className = 'text';
   textNode.innerText = 'Add';
   const hookNode = document.createElement('div');
   hookNode.setAttribute('name', 'slovniky.lingea.cz');
-  hookNode.className = '--anki-quick-adder-hook--';
+  hookNode.className = '-anki-quick-adder-hook';
   hookNode.title = 'Create an Anki card from this translation';
-  // hookNode.onclick = () => {
-  //   alert(
-  //       'This button was not detected by AnkiQuickAdder.\n'
-  //     + 'Make sure you have AnkiQuickAdder active at the last available version.\n'
-  //     + 'If you did all those things, please post an issue at\n'
-  //     + 'https://github.com/OoDeLally/ankiquickadder-hooks/issues'
-  //   );
-  //   event.preventDefault();
-  //   event.stopPropagation();
-  // };
   hookNode.onclick = (event) => {
     hookOnClick(hookNode, extractFrontText(), extractBackText());
     event.preventDefault();
     event.stopPropagation();
   };
-  hookNode.append(starNodeBig);
-  hookNode.append(starNodeSmall);
-  hookNode.append(textNode);
+  hookNode.appendChild(starNodeBig);
+  hookNode.appendChild(starNodeSmall);
+  hookNode.appendChild(textNode);
   return hookNode;
 }
-
-
-
 
 function run(){
   appendStyleSheep();
@@ -189,14 +140,13 @@ function run(){
     if (!parentNode) {
       return // Container not found
     }
-    const existingHook = parentNode.querySelector('.--anki-quick-adder-hook--');
+    const existingHook = parentNode.querySelector('.-anki-quick-adder-hook');
     if (existingHook) {
       return // Hook already exists
     }
-    parentNode.append(createHook());
+    parentNode.appendChild(createHook());
   }, 500);
 }
-
 
 (function() {
   'use strict';
