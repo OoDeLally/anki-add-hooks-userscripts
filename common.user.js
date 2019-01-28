@@ -1,28 +1,34 @@
-// ==UserScript==
-// @name         AnkiConnect Hook Common
-// @namespace    https://github.com/OoDeLally
-// @version      0.1
-// @description  Generate a hook for AnkiConnect
-// @author       Pascal Heitz
-// @connect      localhost
-// @grant        GM_getResourceText
-// @grant        GM_xmlhttpRequest
-// @grant        GM_setValue
-// @grant        GM_getValue
-// @resource     styleSheet https://raw.githubusercontent.com/OoDeLally/tampermonkey-anki-add-hooks/develop/hook-style.css
-// ==/UserScript==
+var GM = {};
+var initialized = false;
 
 
 const appendStyleSheet = () => {
   var style = document.createElement('style');
-  const css = GM_getResourceText('styleSheet');
+  const css = GM.getResourceText('styleSheet');
   style.appendChild(document.createTextNode(css));
   document.getElementsByTagName('head')[0].appendChild(style);
 }
 
 
-const init = () => {
+const init = (injectedGM) => {
+  if (!injectedGM) {
+    throw Error('GM must be provided as first argument')
+  }
+  if (!injectedGM.getResourceText) {
+    throw Error('GM.getResourceText must be available. Please add // @grant GM.getResourceText to your metadata')
+  }
+  if (!injectedGM.xmlhttpRequest) {
+    throw Error('GM.xmlhttpRequest must be available. Please add // @grant GM.xmlhttpRequest to your metadata')
+  }
+  if (!injectedGM.setValue) {
+    throw Error('GM.setValue must be available. Please add // @grant GM.setValue to your metadata')
+  }
+  if (!injectedGM.getValue) {
+    throw Error('GM.getValue must be available. Please add // @grant GM.getValue to your metadata')
+  }
+  GM = injectedGM;
   appendStyleSheet();
+  initialized = true;
 }
 
 
@@ -30,10 +36,10 @@ const ankiRequestOnFail = (response, message) => {
   console.error('Anki request response:', response)
   console.error(message)
   if (message.includes('deck was not found')) {
-    GM_setValue('deckName', null);
+    GM.setValue('deckName', null);
   }
   if (message.includes('model was not found')) {
-    GM_setValue('modelName', null);
+    GM.setValue('modelName', null);
   }
   alert(`AnkiConnect returned an error:\n${message}`);
 }
@@ -46,22 +52,22 @@ const ankiRequestOnSuccess = (hookNode) => {
 }
 
 const hookOnClick = (hookNode, frontText, backText) => {
-  let deckName = GM_getValue('deckName');
+  let deckName = GM.getValue('deckName');
   if (!deckName) {
     deckName = prompt('Enter the name of the deck you want to add cards from this website', 'Default');
     if (!deckName) {
       return // Cancel
     }
   }
-  let modelName = GM_getValue('modelName');
+  let modelName = GM.getValue('modelName');
   if (!modelName) {
     modelName = prompt('Enter the name of the card model you want to create', 'Basic (and reversed card)');
     if (!modelName) {
       return // Cancel
     }
   }
-  GM_setValue('deckName', deckName);
-  GM_setValue('modelName', modelName);
+  GM.setValue('deckName', deckName);
+  GM.setValue('modelName', modelName);
   // console.log('hookOnClick')
   const dataStr = JSON.stringify({
     action: 'addNote',
@@ -78,7 +84,7 @@ const hookOnClick = (hookNode, frontText, backText) => {
       }
     }
   });
-  return GM_xmlhttpRequest({
+  return GM.xmlhttpRequest({
     method: 'POST',
     url: 'http://localhost:8765',
     data: dataStr,
@@ -101,14 +107,17 @@ const hookOnClick = (hookNode, frontText, backText) => {
 
 
 const createHook = (hookName, extractFrontText, extractBackText) => {
+  if (!initialized) {
+    throw Error('AnkiAddHooks must be initialized first. Call AnkiAddHooks.init(GM)');
+  }
   if (!hookName || typeof hookName != 'string') {
     throw Error('First argument must be the name of the hook');
   }
   if (!extractFrontText || typeof extractFrontText != 'function') {
-    throw Error('Second argument must be a function which extract text for the front side of the card')
+    throw Error('Second argument must be a function which extract text for the front side of the card');
   }
   if (!extractBackText || typeof extractBackText != 'function') {
-    throw Error('Third argument must be a function which extract text for the back side of the card')
+    throw Error('Third argument must be a function which extract text for the back side of the card');
   }
   const starNodeBig = document.createElement('div');
   starNodeBig.innerText = '★';
@@ -146,6 +155,6 @@ const createHook = (hookName, extractFrontText, extractBackText) => {
 
 
 
-// var AnkiAddHooks = {createHook, init}
+var AnkiAddHooks = {createHook, init}
 
-// console.log('AnkiAddHooks created:', AnkiAddHooks)
+console.log('AnkiAddHooks created:', AnkiAddHooks)

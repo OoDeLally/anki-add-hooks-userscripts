@@ -1,12 +1,25 @@
 // ==UserScript==
+// Customize this metadata
 // @name         AnkiConnect Hook for lingea.cz
 // @namespace    https://github.com/OoDeLally
 // @version      0.1
 // @description  Generate a hook for AnkiConnect on Lingea.cz
 // @author       Pascal Heitz
 // @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
+
+
+// Dont touch this metadata
 // @require      https://raw.githubusercontent.com/OoDeLally/tampermonkey-anki-add-hooks/develop/common.user.js
+// @grant        GM.getResourceText
+// @grant        GM.xmlhttpRequest
+// @grant        GM.setValue
+// @grant        GM.getValue
+// @connect      localhost
+// @resource     styleSheet https://raw.githubusercontent.com/OoDeLally/tampermonkey-anki-add-hooks/develop/hook-style.css
 // ==/UserScript==
+
+
+
 
 
 function extractFrontText() {
@@ -25,7 +38,7 @@ function extractBackText() {
 
 function run(){
   console.log('AnkiAddHooks:', AnkiAddHooks)
-  AnkiAddHooks.init();
+  AnkiAddHooks.init(GM);
 
   setInterval(() => {
     const parentNode = document.querySelector('.entry tr.head td');
