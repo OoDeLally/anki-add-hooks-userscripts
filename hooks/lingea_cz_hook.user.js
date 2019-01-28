@@ -10,8 +10,8 @@
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
 // @grant        GM_getValue
-// @resource     styleSheet https://raw.githubusercontent.com/OoDeLally/ankiquickadder-hooks/develop/common.js
-// @resource     styleSheet https://raw.githubusercontent.com/OoDeLally/ankiquickadder-hooks/develop/hook-style.css
+// @resource     styleSheet https://raw.githubusercontent.com/OoDeLally/tampermonkey-anki-add-hooks/develop/common.js
+// @resource     styleSheet https://raw.githubusercontent.com/OoDeLally/tampermonkey-anki-add-hooks/develop/hook-style.css
 // ==/UserScript==
 
 
