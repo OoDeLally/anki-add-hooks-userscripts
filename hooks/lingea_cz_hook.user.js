@@ -10,7 +10,7 @@
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
 // @grant        GM_getValue
-// @resource     styleSheet https://raw.githubusercontent.com/OoDeLally/tampermonkey-anki-add-hooks/develop/common.js
+// @require      https://raw.githubusercontent.com/OoDeLally/tampermonkey-anki-add-hooks/develop/common.js
 // @resource     styleSheet https://raw.githubusercontent.com/OoDeLally/tampermonkey-anki-add-hooks/develop/hook-style.css
 // ==/UserScript==
 
@@ -41,7 +41,8 @@ function run(){
     if (existingHook) {
       return // Hook already exists
     }
-    parentNode.appendChild(AnkiAddHooks.createHook('slovniky.lingea.cz'));
+    const hook = AnkiAddHooks.createHook('slovniky.lingea.cz', extractFrontText, extractBackText);
+    parentNode.appendChild(hook);
   }, 500);
 }
 
