@@ -5,7 +5,7 @@
 // @description  Generate a hook for AnkiConnect on Lingea.cz
 // @author       Pascal Heitz
 // @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
-// @require      https://raw.githubusercontent.com/OoDeLally/tampermonkey-anki-add-hooks/develop/common.js
+// @require      https://raw.githubusercontent.com/OoDeLally/tampermonkey-anki-add-hooks/develop/common.user.js
 // ==/UserScript==
 
 
