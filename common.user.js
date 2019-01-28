@@ -11,6 +11,7 @@ const appendStyleSheet = () => {
 
 
 const init = (injectedGM) => {
+  console.log('injectedGM:', injectedGM)
   if (!injectedGM) {
     throw Error('GM must be provided as first argument')
   }
@@ -156,5 +157,3 @@ const createHook = (hookName, extractFrontText, extractBackText) => {
 
 
 var AnkiAddHooks = {createHook, init}
-
-console.log('AnkiAddHooks created:', AnkiAddHooks)
