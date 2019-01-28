@@ -1,17 +1,11 @@
 // ==UserScript==
-// @name         Lingea.cz AnkiQuickAdder Hook
+// @name         AnkiConnect Hook for lingea.cz
 // @namespace    https://github.com/OoDeLally
 // @version      0.1
-// @description  Generate a hook for AnkiQuickAdder on Lingea.cz
+// @description  Generate a hook for AnkiConnect on Lingea.cz
 // @author       Pascal Heitz
 // @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
-// @connect      localhost
-// @grant        GM_getResourceText
-// @grant        GM_xmlhttpRequest
-// @grant        GM_setValue
-// @grant        GM_getValue
 // @require      https://raw.githubusercontent.com/OoDeLally/tampermonkey-anki-add-hooks/develop/common.js
-// @resource     styleSheet https://raw.githubusercontent.com/OoDeLally/tampermonkey-anki-add-hooks/develop/hook-style.css
 // ==/UserScript==
 
 

@@ -1,4 +1,16 @@
-
+// ==UserScript==
+// @name         AnkiConnect Hook Common
+// @namespace    https://github.com/OoDeLally
+// @version      0.1
+// @description  Generate a hook for AnkiConnect
+// @author       Pascal Heitz
+// @connect      localhost
+// @grant        GM_getResourceText
+// @grant        GM_xmlhttpRequest
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @resource     styleSheet https://raw.githubusercontent.com/OoDeLally/tampermonkey-anki-add-hooks/develop/hook-style.css
+// ==/UserScript==
 
 
 const appendStyleSheet = () => {

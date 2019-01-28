@@ -22,6 +22,8 @@ Add a button on translation websites to create an Anki card from a translation.
 
 1- Install Tampermonkey: https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo.
 
-2- Install the Hook User Scripts from `/hooks/` on Tampermonkey.
+2- Install the Hook User Scripts from `/hooks/` on Tampermonkey. Click on the link above.
+
+3- Install and run Anki Desktop *with the AnkiConnect add-on*. The Anki app must be running when the hook is clicked on a website.
 
 3- Anki's "Add" Button should appear on the translation pages of the websites you installed.
