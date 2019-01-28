@@ -24,6 +24,7 @@ function extractBackText() {
 
 
 function run(){
+  console.log('AnkiAddHooks:', AnkiAddHooks)
   AnkiAddHooks.init();
 
   setInterval(() => {
