@@ -1,46 +1,43 @@
-var GM = {};
 var initialized = false;
 
 
-const appendStyleSheet = () => {
+const appendStyleSheet = async () => {
   var style = document.createElement('style');
-  const css = GM.getResourceText('styleSheet');
+  const css = await GM.getResourceText('styleSheet');
   style.appendChild(document.createTextNode(css));
   document.getElementsByTagName('head')[0].appendChild(style);
 }
 
 
-const init = (injectedGM) => {
-  console.log('injectedGM:', injectedGM)
-  if (!injectedGM) {
-    throw Error('GM must be provided as first argument')
+const init = () => {
+  if (!GM) {
+    throw Error('GM must be provided')
   }
-  if (!injectedGM.getResourceText) {
+  if (!GM.getResourceText) {
     throw Error('GM.getResourceText must be available. Please add // @grant GM.getResourceText to your metadata')
   }
-  if (!injectedGM.xmlhttpRequest) {
-    throw Error('GM.xmlhttpRequest must be available. Please add // @grant GM.xmlhttpRequest to your metadata')
+  if (!GM.xmlHttpRequest) {
+    throw Error('GM.xmlHttpRequest must be available. Please add // @grant GM.xmlHttpRequest to your metadata')
   }
-  if (!injectedGM.setValue) {
+  if (!GM.setValue) {
     throw Error('GM.setValue must be available. Please add // @grant GM.setValue to your metadata')
   }
-  if (!injectedGM.getValue) {
+  if (!GM.getValue) {
     throw Error('GM.getValue must be available. Please add // @grant GM.getValue to your metadata')
   }
-  GM = injectedGM;
   appendStyleSheet();
   initialized = true;
 }
 
 
-const ankiRequestOnFail = (response, message) => {
+const ankiRequestOnFail = async (response, message) => {
   console.error('Anki request response:', response)
   console.error(message)
   if (message.includes('deck was not found')) {
-    GM.setValue('deckName', null);
+    await GM.setValue('deckName', null);
   }
   if (message.includes('model was not found')) {
-    GM.setValue('modelName', null);
+    await GM.setValue('modelName', null);
   }
   alert(`AnkiConnect returned an error:\n${message}`);
 }
@@ -52,23 +49,23 @@ const ankiRequestOnSuccess = (hookNode) => {
   hookNode.onclick = () => {};
 }
 
-const hookOnClick = (hookNode, frontText, backText) => {
-  let deckName = GM.getValue('deckName');
+const hookOnClick = async (hookNode, frontText, backText) => {
+  let deckName = await GM.getValue('deckName');
   if (!deckName) {
     deckName = prompt('Enter the name of the deck you want to add cards from this website', 'Default');
     if (!deckName) {
       return // Cancel
     }
+    GM.setValue('deckName', deckName);
   }
-  let modelName = GM.getValue('modelName');
+  let modelName = await GM.getValue('modelName');
   if (!modelName) {
     modelName = prompt('Enter the name of the card model you want to create', 'Basic (and reversed card)');
     if (!modelName) {
       return // Cancel
     }
+    await GM.setValue('modelName', modelName);
   }
-  GM.setValue('deckName', deckName);
-  GM.setValue('modelName', modelName);
   // console.log('hookOnClick')
   const dataStr = JSON.stringify({
     action: 'addNote',
@@ -85,7 +82,7 @@ const hookOnClick = (hookNode, frontText, backText) => {
       }
     }
   });
-  return GM.xmlhttpRequest({
+  return GM.xmlHttpRequest({
     method: 'POST',
     url: 'http://localhost:8765',
     data: dataStr,
