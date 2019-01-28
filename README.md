@@ -24,3 +24,4 @@ Add a button on translation websites to create an Anki card from a translation.
 
 * Extract the common logic in another script
 * Add a `Settings` button
+* Work on lingea layout
