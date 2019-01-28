@@ -146,6 +146,6 @@ const createHook = (hookName, extractFrontText, extractBackText) => {
 
 
 
-var AnkiAddHooks = {createHook, init}
+// var AnkiAddHooks = {createHook, init}
 
-console.log('AnkiAddHooks created:', AnkiAddHooks)
+// console.log('AnkiAddHooks created:', AnkiAddHooks)
