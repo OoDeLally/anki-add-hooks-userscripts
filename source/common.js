@@ -1,124 +1,32 @@
-// ==UserScript==
-// @name         Anki Add Hooks for lingea.cz
-// @namespace    https://github.com/OoDeLally
-// @version      0.3
-// @description  Generate a hook for AnkiConnect on Lingea.cz
-// @author       Pascal Heitz
-// @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
-// @grant        GM.xmlHttpRequest
-// @grant        GM.setValue
-// @grant        GM.getValue
-// @connect      localhost
-// ==/UserScript==
-
-
-
-function extractFrontText() {
-  const sourceSentence = document.querySelector('h1').innerText;
-  return sourceSentence;
-}
-
-function extractBackText() {
-  const translationRows = Array.from(document.querySelectorAll('.entry tr'))
-    .filter(tr => !tr.className || !tr.className.includes('head'));
-  const definitionText = translationRows.map(tr => tr.innerText).join('\n');
-  return definitionText;
-}
-
-
-
-function run(){
-  init(GM);
-
-  setInterval(() => {
-    const parentNode = document.querySelector('.entry tr.head td');
-    if (!parentNode) {
-      return // Container not found
-    }
-    const existingHook = parentNode.querySelector('.-anki-quick-adder-hook');
-    if (existingHook) {
-      return // Hook already exists
-    }
-    parentNode.appendChild(createHook());
-  }, 500);
-}
-
-const hookName = 'Anki Add Hooks for lingea.cz';
-
-
-
-
-const styleText = '.-anki-quick-adder-hook {'
-+ '  width: 35px;'
-+ '  height: 15px;'
-+ '  box-sizing: content-box;'
-+ '  position: relative;'
-+ '  display: inline-block;'
-+ '  vertical-align: middle;'
-+ '  opacity: 0.6;'
-+ '  overflow: hidden;'
-+ '  z-index: 1000;'
-+ '  border-radius: 5px;'
-+ '  padding-left: 30px;'
-+ '  padding-right: 5px;'
-+ '  color: white;'
-+ '  font-size: 12px;'
-+ '  font-weight: bold;'
-+ '  background-color: #aaaaaa;'
-+ '  border: 2px solid #222222;'
-+ '  line-height: 17px;'
-+ '  top: 0px;'
-+ '  right: 0px;'
-+ '  cursor: pointer;'
-+ '  user-select: none;'
-+ '  -webkit-user-select: none;'
-+ '  -ms-user-select: none;'
-+ '  -webkit-touch-callout: none;'
-+ '  -o-user-select: none;'
-+ '  -moz-user-select: none;'
-+ '}'
-+ '.-anki-quick-adder-hook-added {'
-+ '  border: 2px solid green;'
-+ '  opacity: 1;'
-+ '  cursor: auto;'
-+ '  color: #ccff99;'
-+ '}'
-+ '.-anki-quick-adder-hook:hover {'
-+ '  opacity: 1;'
-+ '}'
-+ '.-anki-quick-adder-hook-star {'
-+ '  display: block;'
-+ '  transform: rotate(-15deg);'
-+ '  position: absolute;'
-+ '}'
-+ '.-anki-quick-adder-hook-star-big {'
-+ '  font-size: 40px;'
-+ '  color: white;'
-+ '  z-index: 1005;'
-+ '  left: -7px;'
-+ '  top: -1px;'
-+ '}'
-+ '.-anki-quick-adder-hook-star-small {'
-+ '  font-size: 25px;'
-+ '  color: #0099ff;'
-+ '  z-index: 1010;'
-+ '  left: 0px;'
-+ '  top: -1px;'
-+ '}';
-
-
 var initialized = false;
 
 
 const appendStyleSheet = async () => {
   var style = document.createElement('style');
-  style.appendChild(document.createTextNode(styleText));
+  const css = await GM.getResourceText('styleSheet');
+  style.appendChild(document.createTextNode(css));
   document.getElementsByTagName('head')[0].appendChild(style);
 }
 
 
 const init = () => {
+  if (!GM) {
+    throw Error('GM must be provided')
+  }
+  if (!GM.getResourceText) {
+    throw Error('GM.getResourceText must be available. Please add // @grant GM.getResourceText to your metadata')
+  }
+  if (!GM.xmlHttpRequest) {
+    throw Error('GM.xmlHttpRequest must be available. Please add // @grant GM.xmlHttpRequest to your metadata')
+  }
+  if (!GM.setValue) {
+    throw Error('GM.setValue must be available. Please add // @grant GM.setValue to your metadata')
+  }
+  if (!GM.getValue) {
+    throw Error('GM.getValue must be available. Please add // @grant GM.getValue to your metadata')
+  }
   appendStyleSheet();
+  initialized = true;
 }
 
 
@@ -196,7 +104,19 @@ const hookOnClick = async (hookNode, frontText, backText) => {
 }
 
 
-const createHook = () => {
+const createHook = (hookName, extractFrontText, extractBackText) => {
+  if (!initialized) {
+    throw Error('AnkiAddHooks must be initialized first. Call AnkiAddHooks.init(GM)');
+  }
+  if (!hookName || typeof hookName != 'string') {
+    throw Error('First argument must be the name of the hook');
+  }
+  if (!extractFrontText || typeof extractFrontText != 'function') {
+    throw Error('Second argument must be a function which extract text for the front side of the card');
+  }
+  if (!extractBackText || typeof extractBackText != 'function') {
+    throw Error('Third argument must be a function which extract text for the back side of the card');
+  }
   const starNodeBig = document.createElement('div');
   starNodeBig.innerText = '★';
   starNodeBig.className = '-anki-quick-adder-hook-star -anki-quick-adder-hook-star-big';
@@ -232,7 +152,5 @@ const createHook = () => {
 }
 
 
-(function() {
-  'use strict';
-  run();
-})();
+
+var AnkiAddHooks = {createHook, init}
