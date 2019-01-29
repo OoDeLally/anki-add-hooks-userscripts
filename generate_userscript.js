@@ -56,6 +56,16 @@ module.exports = function(babel, {templateFile, styleFile}) {
         extractMetadata(programPath, 'version');
         extractMetadata(programPath, 'include');
 
+        const userscriptDeclarations = programPath.node.body;
+
+        verifyFunctionExists('run', userscriptDeclarations);
+        verifyFunctionExists('extractFrontText', userscriptDeclarations);
+        verifyFunctionExists('extractBackText', userscriptDeclarations);
+        verifyIdentifierDoesntExists('createHook', userscriptDeclarations);
+        verifyIdentifierDoesntExists('hookOnClick', userscriptDeclarations);
+        verifyIdentifierDoesntExists('ankiRequestOnSuccess', userscriptDeclarations);
+        verifyIdentifierDoesntExists('ankiRequestOnFail', userscriptDeclarations);
+
         const templateFileContent = fs.readFileSync(templateFile, 'utf-8');
         const buildUserScript = babelTemplate(templateFileContent);
         const styleFileContent = fs.readFileSync(styleFile, 'utf-8');
@@ -66,16 +76,6 @@ module.exports = function(babel, {templateFile, styleFile}) {
         });
 
         const resultProgram = babelTypes.program(ast);
-
-        const userscriptDeclarations = programPath.node.body;
-
-        verifyFunctionExists('run', userscriptDeclarations);
-        verifyFunctionExists('extractFrontText', userscriptDeclarations);
-        verifyFunctionExists('extractBackText', userscriptDeclarations);
-        verifyIdentifierDoesntExists('createHook', userscriptDeclarations);
-        verifyIdentifierDoesntExists('hookOnClick', userscriptDeclarations);
-        verifyIdentifierDoesntExists('ankiRequestOnSuccess', userscriptDeclarations);
-        verifyIdentifierDoesntExists('ankiRequestOnFail', userscriptDeclarations);
 
         for (let expression of userscriptDeclarations.reverse()) {
           resultProgram.body.unshift(expression);

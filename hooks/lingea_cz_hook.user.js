@@ -94,15 +94,15 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./src/lingea_cz.js");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./src/hooks/lingea_cz.js");
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ "./src/lingea_cz.js":
-/*!**************************!*\
-  !*** ./src/lingea_cz.js ***!
-  \**************************/
+/***/ "./src/hooks/lingea_cz.js":
+/*!********************************!*\
+  !*** ./src/hooks/lingea_cz.js ***!
+  \********************************/
 /*! no static exports found */
 /***/ (function(module, exports) {
 

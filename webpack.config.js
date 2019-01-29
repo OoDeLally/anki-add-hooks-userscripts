@@ -1,12 +1,15 @@
 const generateUserscriptBanner = require('./generate_userscript_banner');
 const webpack = require('webpack');
+const glob = require("glob");
+
+const entries = glob.sync('./src/hooks/*.js').reduce(
+  (obj, val) => {obj[val.match(/\/([^/]+)\.js$/)[1]] = val; return obj}, {}
+);
 
 module.exports = {
   mode: 'development',
   devtool: false,
-  entry: {
-    lingea_cz: './src/lingea_cz.js',
-  },
+  entry: entries,
   output: {
     filename: '[name]_hook.user.js',
     path: __dirname + '/hooks'

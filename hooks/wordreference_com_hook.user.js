@@ -1,118 +1,128 @@
 // ==UserScript==
-// @name         WordReference AnkiQuickAdder Hook
 // @namespace    https://github.com/OoDeLally
+// @description  Generate a hook for AnkiConnect on Lingea.cz
+// @grant        GM.xmlHttpRequest
+// @grant        GM.setValue
+// @grant        GM.getValue
+// @connect      localhost
+// @name         Anki Add Hooks for WordReference.com
 // @version      0.1
-// @description  Generate a hook for AnkiQuickAdder on WordReference
+// @description  Generate a hook for AnkiConnect on WordReference.com
 // @author       Pascal Heitz
 // @include      /http://www\.wordreference\.com\/[a-z]{4}\/.+/
 // ==/UserScript==
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = "./src/hooks/wordreference_com.js");
+/******/ })
+/************************************************************************/
+/******/ ({
 
+/***/ "./src/hooks/wordreference_com.js":
+/*!****************************************!*\
+  !*** ./src/hooks/wordreference_com.js ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+// @name         Anki Add Hooks for WordReference.com
+// @version      0.1
+// @description  Generate a hook for AnkiConnect on WordReference.com
+// @author       Pascal Heitz
+// @include      /http://www\.wordreference\.com\/[a-z]{4}\/.+/
 function getLanguageCodes() {
-  const match = window.location.href.match(/wordreference\.com\/([a-z]{2})([a-z]{2})\//);
+  var match = window.location.href.match(/wordreference\.com\/([a-z]{2})([a-z]{2})\//);
   return [match[1], match[2]];
 }
 
-
-function appendStyleSheep() {
-  // TODO: Button style should be provided by the chrome extension
-  const css = '.--anki-quick-adder-hook-- {'
-            + '  width: 25px;'
-            + '  height: 15px;'
-            + '  box-sizing: content-box;'
-            + '  display: block;'
-            + '  opacity: 0.4;'
-            + '  overflow: hidden;'
-            + '  position: absolute;'
-            + '  z-index: 1000;'
-            + '  border-radius: 5px;'
-            + '  padding-left: 30px;'
-            + '  padding-right: 5px;'
-            + '  color: white;'
-            + '  font-size: 12px;'
-            + '  font-weight: bold;'
-            + '  background-color: #aaaaaa;'
-            + '  border: 2px solid #222222;'
-            + '  left: -70px;'
-            + '}'
-            + '.--anki-quick-adder-hook--:hover {'
-            + '  opacity: 1;'
-            + '}'
-            + '.--anki-quick-adder-hook-- .--anki-quick-adder-hook--star {'
-            + '  display: inline-block;'
-            + '  transform: rotate(-15deg);'
-            + '  position: absolute;'
-            + '}'
-            + '.--anki-quick-adder-hook-- .--anki-quick-adder-hook--star.--anki-quick-adder-hook--big {'
-            + '  font-size: 40px;'
-            + '  color: white;'
-            + '  z-index: 1005;'
-            + '  left: -7px;'
-            + '  top: -17px;'
-            + '}'
-            + '.--anki-quick-adder-hook-- .--anki-quick-adder-hook--star.--anki-quick-adder-hook--small {'
-            + '  font-size: 25px;'
-            + '  color: #0099ff;'
-            + '  z-index: 1010;'
-            + '  left: 0px;'
-            + '  top: -8px;'
-            + '}';
-  var style = document.createElement('style');
-  if (style.styleSheet) {
-      style.styleSheet.cssText = css;
-  } else {
-      style.appendChild(document.createTextNode(css));
-  }
-  document.getElementsByTagName('head')[0].appendChild(style);
-}
-
-
-function createHook(trGroup) {
-  const starNodeBig = document.createElement('div');
-  starNodeBig.innerText = '★';
-  starNodeBig.className = '--anki-quick-adder-hook--star --anki-quick-adder-hook--big';
-  const starNodeSmall = document.createElement('div');
-  starNodeSmall.innerText = '★';
-  starNodeSmall.className = '--anki-quick-adder-hook--star --anki-quick-adder-hook--small';
-  const hookNode = document.createElement('div');
-  hookNode.setAttribute('name', 'wordreference.com');
-  hookNode.className = '--anki-quick-adder-hook--';
-  hookNode.innerText = 'Add';
-  hookNode.title = 'Create an Anki card from this translation';
-  hookNode.onmouseover = () => {
-    trGroup.forEach(tr => { tr.style.backgroundColor = 'gold' });
-  };
-  hookNode.onmouseout = () => {
-    trGroup.forEach(tr => { tr.style.backgroundColor = null });
-  };
-  hookNode.onclick = (event) => {
-    const hookNode = event.target;
-    if (hookNode.dataset.clickHandler) {
-      hookNode.dataset.clickHandler(extractFrontText(trGroup), extractBackText(trGroup));
-    } else {
-      alert(
-          'This button was not detected by AnkiQuickAdder.\n'
-        + 'Make sure you have AnkiQuickAdder active at the last available version.\n'
-        + 'If you did all those things, please post an issue at\n'
-        + 'https://github.com/OoDeLally/ankiquickadder-hooks/issues'
-      );
-    }
-    event.preventDefault();
-    event.stopPropagation();
-  };
-  hookNode.prepend(starNodeBig);
-  hookNode.prepend(starNodeSmall);
-  return hookNode;
-}
-
-
 function getTrGroups(tableNode) {
-  const trGroups = [];
-  let currentTrGroup = [];
-  let currentTrClass = 'even';
-  // console.log('tableNode.querySelectorAll():', tableNode.querySelectorAll('.even, .odd'))
-  Array.from(tableNode.querySelectorAll('.even, .odd'))
-  // .sort((a, b) => a.rowIndex - b.rowIndex)
-  .forEach(trNode => {
+  var trGroups = [];
+  var currentTrGroup = [];
+  var currentTrClass = 'even'; // console.log('tableNode.querySelectorAll():', tableNode.querySelectorAll('.even, .odd'))
+
+  Array.from(tableNode.querySelectorAll('.even, .odd')) // .sort((a, b) => a.rowIndex - b.rowIndex)
+  .forEach(function (trNode) {
     if (trNode.className == currentTrClass) {
       currentTrGroup.push(trNode);
     } else {
@@ -125,87 +135,243 @@ function getTrGroups(tableNode) {
   return trGroups;
 }
 
-
 function extractFrontText(trGroup) {
-  const firstRowTds = trGroup[0].querySelectorAll('td');
-  const firstCell = firstRowTds[0];
-  const firstCellStrong = firstCell.querySelector('strong');
+  var firstRowTds = trGroup[0].querySelectorAll('td');
+  var firstCell = firstRowTds[0];
+  var firstCellStrong = firstCell.querySelector('strong');
+
   if (!firstCellStrong) {
-    return // Not a real definition row
+    return; // Not a real definition row
   }
-  const firstCellStrongChildren = Array.from(firstCellStrong.childNodes).filter(node => node.nodeName != 'A');
-  const firstChildText = firstCellStrongChildren.map(node => node.textContent).join('');
-  const remainingChildrenTexts = Array.from(firstCell.childNodes)
-  .slice(1)
-  .map(node => node.innerText)
-  .filter(text => text)
-  .map(text => text.trim())
-  .filter(text => text);
-  let frontText = `${getLanguageCodes()[0].toUpperCase()}\n${firstChildText}`;
+
+  var firstCellStrongChildren = Array.from(firstCellStrong.childNodes).filter(function (node) {
+    return node.nodeName != 'A';
+  });
+  var firstChildText = firstCellStrongChildren.map(function (node) {
+    return node.textContent;
+  }).join('');
+  var remainingChildrenTexts = Array.from(firstCell.childNodes).slice(1).map(function (node) {
+    return node.innerText;
+  }).filter(function (text) {
+    return text;
+  }).map(function (text) {
+    return text.trim();
+  }).filter(function (text) {
+    return text;
+  });
+  var frontText = "".concat(getLanguageCodes()[0].toUpperCase(), "\n").concat(firstChildText);
+
   if (remainingChildrenTexts.length > 0) {
-    frontText += ` [${remainingChildrenTexts.join(' ')}]`;
+    frontText += " [".concat(remainingChildrenTexts.join(' '), "]");
   }
-  const secondCellText = Array.from(firstRowTds[1].childNodes)
-  .filter(node => !node.className || !node.className.includes('dsense'))
-  .map(node => node.textContent)
-  .join('');
+
+  var secondCellText = Array.from(firstRowTds[1].childNodes).filter(function (node) {
+    return !node.className || !node.className.includes('dsense');
+  }).map(function (node) {
+    return node.textContent;
+  }).join('');
+
   if (secondCellText) {
-    frontText += ` (${secondCellText.trim()})`;
+    frontText += " (".concat(secondCellText.trim(), ")");
   }
+
   return frontText;
 }
 
-
 function extractBackText(trGroup) {
-  return `${getLanguageCodes()[1].toUpperCase()}\n` + trGroup
-  .filter(tr => !(parseInt(tr.querySelector('td:last-child').getAttribute('colspan')) > 1))
-  .map(tr => {
-    const tds = tr.querySelectorAll('td');
-    const lastTd = tds[2];
-    const lastTdChildren = Array.from(lastTd.childNodes);
-    let backText = lastTdChildren[0].textContent;
-    const firstTdOtherChildren = lastTdChildren.slice(1);
+  return "".concat(getLanguageCodes()[1].toUpperCase(), "\n") + trGroup.filter(function (tr) {
+    return !(parseInt(tr.querySelector('td:last-child').getAttribute('colspan')) > 1);
+  }).map(function (tr) {
+    var tds = tr.querySelectorAll('td');
+    var lastTd = tds[2];
+    var lastTdChildren = Array.from(lastTd.childNodes);
+    var backText = lastTdChildren[0].textContent;
+    var firstTdOtherChildren = lastTdChildren.slice(1);
+
     if (firstTdOtherChildren.length > 0) {
-      backText += `[${firstTdOtherChildren.map(node => node.innerText)}]`;
+      backText += "[".concat(firstTdOtherChildren.map(function (node) {
+        return node.innerText;
+      }), "]");
     }
-    const middleTdText = Array.from(tds[1].childNodes)
-    .filter(node => node.className && node.className.includes('dsense'))
-    .map(node => node.textContent)
-    .join('');
+
+    var middleTdText = Array.from(tds[1].childNodes).filter(function (node) {
+      return node.className && node.className.includes('dsense');
+    }).map(function (node) {
+      return node.textContent;
+    }).join('');
+
     if (middleTdText) {
-      backText += ` ${middleTdText}`;
+      backText += " ".concat(middleTdText);
     }
+
     return backText;
-  })
-  .join('\n');
+  }).join('\n');
 }
-
-
 
 function addHooksInTrGroup(trGroup) {
-  const parent = trGroup[0].querySelector('td');
+  var parent = trGroup[0].querySelector('td');
   parent.style.position = 'relative';
-  parent.prepend(createHook(trGroup));
+  var hook = createHook(trGroup);
+  hook.style.position = 'absolute';
+  hook.style.left = '-80px';
+  parent.prepend(hook);
 }
 
-
-function addHooksInTable(tableNode){
+function addHooksInTable(tableNode) {
   getTrGroups(tableNode).forEach(addHooksInTrGroup);
 }
-
 
 function getTables() {
   return document.querySelectorAll('.WRD');
 }
 
-
-function run(){
-  appendStyleSheep();
+function run() {
   getTables().forEach(addHooksInTable);
 }
 
+const ankiRequestOnFail = async (response, message) => {
+  console.error('Anki request response:', response);
+  console.error(message);
 
-(function() {
+  if (message.includes('deck was not found')) {
+    await GM.setValue('deckName', null);
+  }
+
+  if (message.includes('model was not found')) {
+    await GM.setValue('modelName', null);
+  }
+
+  alert(`AnkiConnect returned an error:\n${message}`);
+};
+
+const ankiRequestOnSuccess = hookNode => {
+  hookNode.classList.add('-anki-quick-adder-hook-added');
+  hookNode.querySelector('.text').innerText = 'Added';
+
+  hookNode.onclick = () => {};
+};
+
+const hookOnClick = async (hookNode, frontText, backText) => {
+  let deckName = await GM.getValue('deckName');
+
+  if (!deckName) {
+    deckName = prompt('Enter the name of the deck you want to add cards from this website', 'Default');
+
+    if (!deckName) {
+      return;
+    }
+
+    GM.setValue('deckName', deckName);
+  }
+
+  let modelName = await GM.getValue('modelName');
+
+  if (!modelName) {
+    modelName = prompt('Enter the name of the card model you want to create', 'Basic (and reversed card)');
+
+    if (!modelName) {
+      return;
+    }
+
+    await GM.setValue('modelName', modelName);
+  }
+
+  const dataStr = JSON.stringify({
+    action: 'addNote',
+    version: 6,
+    params: {
+      note: {
+        deckName: deckName,
+        modelName: modelName,
+        fields: {
+          Front: frontText,
+          Back: backText
+        },
+        tags: []
+      }
+    }
+  });
+  return GM.xmlHttpRequest({
+    method: 'POST',
+    url: 'http://localhost:8765',
+    data: dataStr,
+    onabort: response => {
+      ankiRequestOnFail(response, 'Request was aborted');
+    },
+    onerror: response => {
+      ankiRequestOnFail(response, 'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.');
+    },
+    onload: response => {
+      const result = JSON.parse(response.responseText);
+
+      if (result.error) {
+        ankiRequestOnFail(response, result.error);
+        return;
+      }
+
+      ankiRequestOnSuccess(hookNode);
+    }
+  });
+};
+
+const createHook = userdata => {
+  if (!extractFrontText || typeof extractFrontText != 'function') {
+    throw Error('Second argument must be a function which extract text for the front side of the card');
+  }
+
+  if (!extractBackText || typeof extractBackText != 'function') {
+    throw Error('Third argument must be a function which extract text for the back side of the card');
+  }
+
+  const starNodeBig = document.createElement('div');
+  starNodeBig.innerText = '★';
+  starNodeBig.className = '-anki-quick-adder-hook-star -anki-quick-adder-hook-star-big';
+  const starNodeSmall = document.createElement('div');
+  starNodeSmall.innerText = '★';
+  starNodeSmall.className = '-anki-quick-adder-hook-star -anki-quick-adder-hook-star-small';
+  const textNode = document.createElement('span');
+  textNode.className = 'text';
+  textNode.innerText = 'Add';
+  const hookNode = document.createElement('div');
+  hookNode.setAttribute('name', "Anki Add Hooks for WordReference.com");
+  hookNode.className = '-anki-quick-adder-hook';
+  hookNode.title = 'Create an Anki card from this translation';
+
+  hookNode.onclick = event => {
+    const frontText = extractFrontText(userdata);
+
+    if (typeof frontText != 'string') {
+      console.error('Found', frontText);
+      throw Error('Provided extractFrontText() fonction did not return a string');
+    }
+
+    const backText = extractBackText(userdata);
+
+    if (typeof frontText != 'string') {
+      console.error('Found', backText);
+      throw Error('Provided extractBackText() fonction did not return a string');
+    }
+
+    hookOnClick(hookNode, frontText, backText);
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  hookNode.appendChild(starNodeBig);
+  hookNode.appendChild(starNodeSmall);
+  hookNode.appendChild(textNode);
+  return hookNode;
+};
+
+(function () {
   'use strict';
+
+  var style = document.createElement('style');
+  style.appendChild(document.createTextNode(".-anki-quick-adder-hook {\n  width: 35px;\n  height: 15px;\n  box-sizing: content-box;\n  position: relative;\n  display: inline-block;\n  vertical-align: middle;\n  opacity: 0.6;\n  overflow: hidden;\n  z-index: 1000;\n  border-radius: 5px;\n  padding-left: 30px;\n  padding-right: 5px;\n  color: white;\n  font-size: 12px;\n  font-weight: bold;\n  background-color: #aaaaaa;\n  border: 2px solid #222222;\n  line-height: 17px;\n  top: 0px;\n  right: 0px;\n  cursor: pointer;\n  user-select: none;\n  -webkit-user-select: none;\n  -ms-user-select: none;\n  -webkit-touch-callout: none;\n  -o-user-select: none;\n  -moz-user-select: none;\n}\n.-anki-quick-adder-hook-added {\n  border: 2px solid green;\n  opacity: 1;\n  cursor: auto;\n  color: #ccff99;\n}\n.-anki-quick-adder-hook:hover {\n  opacity: 1;\n}\n.-anki-quick-adder-hook-star {\n  display: block;\n  transform: rotate(-15deg);\n  position: absolute;\n}\n.-anki-quick-adder-hook-star-big {\n  font-size: 40px;\n  color: white;\n  z-index: 1005;\n  left: -7px;\n  top: -1px;\n}\n.-anki-quick-adder-hook-star-small {\n  font-size: 25px;\n  color: #0099ff;\n  z-index: 1010;\n  left: 0px;\n  top: -1px;\n}\n"));
+  document.getElementsByTagName('head')[0].appendChild(style);
   run();
 })();
+
+/***/ })
+
+/******/ });
