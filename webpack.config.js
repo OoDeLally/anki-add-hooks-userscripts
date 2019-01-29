@@ -33,7 +33,8 @@ module.exports = {
   },
   plugins: [
     new webpack.BannerPlugin({
-      banner: (context) => generateUserscriptBanner('./src/template.js', context)
+      banner: (context) => generateUserscriptBanner('./src/template.js', context),
+      raw: true
     })
   ]
 };

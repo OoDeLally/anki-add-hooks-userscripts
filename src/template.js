@@ -8,18 +8,6 @@
 // ==/UserScript==
 
 
-PLACEHOLDER_FUNCTION_RUN
-PLACEHOLDER_FUNCTION_EXTRACT_FRONT_TEXT
-PLACEHOLDER_FUNCTION_EXTRACT_BACK_TEXT
-
-
-
-const appendStyleSheet = () => {
-  var style = document.createElement('style');
-  style.appendChild(document.createTextNode(PLACEHOLDER_STYLE_TEXT));
-  document.getElementsByTagName('head')[0].appendChild(style);
-}
-
 
 const ankiRequestOnFail = async (response, message) => {
   console.error('Anki request response:', response)
@@ -139,6 +127,10 @@ const createHook = (userdata) => {
 
 (function() {
   'use strict';
-  appendStyleSheet();
+
+  var style = document.createElement('style');
+  style.appendChild(document.createTextNode(PLACEHOLDER_STYLE_TEXT));
+  document.getElementsByTagName('head')[0].appendChild(style);
+
   run();
 })();

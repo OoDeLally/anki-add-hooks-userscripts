@@ -1,18 +1,16 @@
-/*!
- * ==UserScript==
- * // @namespace    https://github.com/OoDeLally
- * // @description  Generate a hook for AnkiConnect on Lingea.cz
- * // @grant        GM.xmlHttpRequest
- * // @grant        GM.setValue
- * // @grant        GM.getValue
- * // @connect      localhost
- * // @name         Anki Add Hooks for lingea.cz
- * // @version      0.3
- * // @description  Generate a hook for AnkiConnect on Lingea.cz
- * // @author       Pascal Heitz
- * // @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
- * ==/UserScript==
- */
+// ==UserScript==
+// @namespace    https://github.com/OoDeLally
+// @description  Generate a hook for AnkiConnect on Lingea.cz
+// @grant        GM.xmlHttpRequest
+// @grant        GM.setValue
+// @grant        GM.getValue
+// @connect      localhost
+// @name         Anki Add Hooks for lingea.cz
+// @version      0.3
+// @description  Generate a hook for AnkiConnect on Lingea.cz
+// @author       Pascal Heitz
+// @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
+// ==/UserScript==
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -108,25 +106,6 @@
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-function run() {
-  setInterval(function () {
-    var parentNode = document.querySelector('.entry tr.head td');
-
-    if (!parentNode) {
-      return; // Container not found
-    }
-
-    var existingHook = parentNode.querySelector('.-anki-quick-adder-hook');
-
-    if (existingHook) {
-      return; // Hook already exists
-    }
-
-    var hook = createHook();
-    parentNode.appendChild(hook);
-  }, 500);
-}
-
 // @name         Anki Add Hooks for lingea.cz
 // @version      0.3
 // @description  Generate a hook for AnkiConnect on Lingea.cz
@@ -147,11 +126,24 @@ function extractBackText(data) {
   return definitionText;
 }
 
-const appendStyleSheet = () => {
-  var style = document.createElement('style');
-  style.appendChild(document.createTextNode(".-anki-quick-adder-hook {\n  width: 35px;\n  height: 15px;\n  box-sizing: content-box;\n  position: relative;\n  display: inline-block;\n  vertical-align: middle;\n  opacity: 0.6;\n  overflow: hidden;\n  z-index: 1000;\n  border-radius: 5px;\n  padding-left: 30px;\n  padding-right: 5px;\n  color: white;\n  font-size: 12px;\n  font-weight: bold;\n  background-color: #aaaaaa;\n  border: 2px solid #222222;\n  line-height: 17px;\n  top: 0px;\n  right: 0px;\n  cursor: pointer;\n  user-select: none;\n  -webkit-user-select: none;\n  -ms-user-select: none;\n  -webkit-touch-callout: none;\n  -o-user-select: none;\n  -moz-user-select: none;\n}\n.-anki-quick-adder-hook-added {\n  border: 2px solid green;\n  opacity: 1;\n  cursor: auto;\n  color: #ccff99;\n}\n.-anki-quick-adder-hook:hover {\n  opacity: 1;\n}\n.-anki-quick-adder-hook-star {\n  display: block;\n  transform: rotate(-15deg);\n  position: absolute;\n}\n.-anki-quick-adder-hook-star-big {\n  font-size: 40px;\n  color: white;\n  z-index: 1005;\n  left: -7px;\n  top: -1px;\n}\n.-anki-quick-adder-hook-star-small {\n  font-size: 25px;\n  color: #0099ff;\n  z-index: 1010;\n  left: 0px;\n  top: -1px;\n}\n"));
-  document.getElementsByTagName('head')[0].appendChild(style);
-};
+function run() {
+  setInterval(function () {
+    var parentNode = document.querySelector('.entry tr.head td');
+
+    if (!parentNode) {
+      return; // Container not found
+    }
+
+    var existingHook = parentNode.querySelector('.-anki-quick-adder-hook');
+
+    if (existingHook) {
+      return; // Hook already exists
+    }
+
+    var hook = createHook();
+    parentNode.appendChild(hook);
+  }, 500);
+}
 
 const ankiRequestOnFail = async (response, message) => {
   console.error('Anki request response:', response);
@@ -290,7 +282,9 @@ const createHook = userdata => {
 (function () {
   'use strict';
 
-  appendStyleSheet();
+  var style = document.createElement('style');
+  style.appendChild(document.createTextNode(".-anki-quick-adder-hook {\n  width: 35px;\n  height: 15px;\n  box-sizing: content-box;\n  position: relative;\n  display: inline-block;\n  vertical-align: middle;\n  opacity: 0.6;\n  overflow: hidden;\n  z-index: 1000;\n  border-radius: 5px;\n  padding-left: 30px;\n  padding-right: 5px;\n  color: white;\n  font-size: 12px;\n  font-weight: bold;\n  background-color: #aaaaaa;\n  border: 2px solid #222222;\n  line-height: 17px;\n  top: 0px;\n  right: 0px;\n  cursor: pointer;\n  user-select: none;\n  -webkit-user-select: none;\n  -ms-user-select: none;\n  -webkit-touch-callout: none;\n  -o-user-select: none;\n  -moz-user-select: none;\n}\n.-anki-quick-adder-hook-added {\n  border: 2px solid green;\n  opacity: 1;\n  cursor: auto;\n  color: #ccff99;\n}\n.-anki-quick-adder-hook:hover {\n  opacity: 1;\n}\n.-anki-quick-adder-hook-star {\n  display: block;\n  transform: rotate(-15deg);\n  position: absolute;\n}\n.-anki-quick-adder-hook-star-big {\n  font-size: 40px;\n  color: white;\n  z-index: 1005;\n  left: -7px;\n  top: -1px;\n}\n.-anki-quick-adder-hook-star-small {\n  font-size: 25px;\n  color: #0099ff;\n  z-index: 1010;\n  left: 0px;\n  top: -1px;\n}\n"));
+  document.getElementsByTagName('head')[0].appendChild(style);
   run();
 })();
 

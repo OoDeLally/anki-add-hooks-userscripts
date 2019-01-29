@@ -13,7 +13,7 @@ const openFileAndExtractMetaDataLines = (filePath) => {
 
 
 module.exports = (templateFile, context) => {
-  let lines = ['==UserScript=='];
+  let lines = ['// ==UserScript=='];
 
   // From the template
   for (let metadataLine of openFileAndExtractMetaDataLines(templateFile)) {
@@ -25,6 +25,6 @@ module.exports = (templateFile, context) => {
     lines.push(metadataLine);
   }
 
-  lines.push('==/UserScript==');
+  lines.push('// ==/UserScript==');
   return lines.join('\n');
 }

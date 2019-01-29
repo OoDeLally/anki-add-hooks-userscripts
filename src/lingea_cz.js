@@ -5,6 +5,7 @@
 // @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
 
 
+
 function extractFrontText(data) {
   const sourceSentence = document.querySelector('h1').innerText;
   return sourceSentence;
