@@ -43,4 +43,4 @@ Add a button on translation websites to create an Anki card from a translation.
 
 2- Compile it to `hooks/myscript_hook.user.js` using **FIXME**
 
-3- Make a pull-request if you think it can be usefull for other people.
+3- Make a pull-request if you think it can be useful for other people.

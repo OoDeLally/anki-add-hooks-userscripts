@@ -1,32 +1,23 @@
-var initialized = false;
+// ==UserScript==
+// @namespace    https://github.com/OoDeLally
+// @description  Generate a hook for AnkiConnect on Lingea.cz
+// @grant        GM.xmlHttpRequest
+// @grant        GM.setValue
+// @grant        GM.getValue
+// @connect      localhost
+// ==/UserScript==
 
 
-const appendStyleSheet = async () => {
+PLACEHOLDER_FUNCTION_RUN
+PLACEHOLDER_FUNCTION_EXTRACT_FRONT_TEXT
+PLACEHOLDER_FUNCTION_EXTRACT_BACK_TEXT
+
+
+
+const appendStyleSheet = () => {
   var style = document.createElement('style');
-  const css = await GM.getResourceText('styleSheet');
-  style.appendChild(document.createTextNode(css));
+  style.appendChild(document.createTextNode(PLACEHOLDER_STYLE_TEXT));
   document.getElementsByTagName('head')[0].appendChild(style);
-}
-
-
-const init = () => {
-  if (!GM) {
-    throw Error('GM must be provided')
-  }
-  if (!GM.getResourceText) {
-    throw Error('GM.getResourceText must be available. Please add // @grant GM.getResourceText to your metadata')
-  }
-  if (!GM.xmlHttpRequest) {
-    throw Error('GM.xmlHttpRequest must be available. Please add // @grant GM.xmlHttpRequest to your metadata')
-  }
-  if (!GM.setValue) {
-    throw Error('GM.setValue must be available. Please add // @grant GM.setValue to your metadata')
-  }
-  if (!GM.getValue) {
-    throw Error('GM.getValue must be available. Please add // @grant GM.getValue to your metadata')
-  }
-  appendStyleSheet();
-  initialized = true;
 }
 
 
@@ -104,13 +95,7 @@ const hookOnClick = async (hookNode, frontText, backText) => {
 }
 
 
-const createHook = (hookName, extractFrontText, extractBackText) => {
-  if (!initialized) {
-    throw Error('AnkiAddHooks must be initialized first. Call AnkiAddHooks.init(GM)');
-  }
-  if (!hookName || typeof hookName != 'string') {
-    throw Error('First argument must be the name of the hook');
-  }
+const createHook = (userdata) => {
   if (!extractFrontText || typeof extractFrontText != 'function') {
     throw Error('Second argument must be a function which extract text for the front side of the card');
   }
@@ -127,16 +112,16 @@ const createHook = (hookName, extractFrontText, extractBackText) => {
   textNode.className = 'text';
   textNode.innerText = 'Add';
   const hookNode = document.createElement('div');
-  hookNode.setAttribute('name', hookName);
+  hookNode.setAttribute('name', PLACEHOLDER_HOOK_NAME);
   hookNode.className = '-anki-quick-adder-hook';
   hookNode.title = 'Create an Anki card from this translation';
   hookNode.onclick = (event) => {
-    const frontText = extractFrontText();
+    const frontText = extractFrontText(userdata);
     if (typeof frontText != 'string') {
       console.error('Found', frontText);
       throw Error('Provided extractFrontText() fonction did not return a string');
     }
-    const backText = extractBackText();
+    const backText = extractBackText(userdata);
     if (typeof frontText != 'string') {
       console.error('Found', backText);
       throw Error('Provided extractBackText() fonction did not return a string');
@@ -152,5 +137,8 @@ const createHook = (hookName, extractFrontText, extractBackText) => {
 }
 
 
-
-var AnkiAddHooks = {createHook, init}
+(function() {
+  'use strict';
+  appendStyleSheet();
+  run();
+})();

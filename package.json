@@ -1,0 +1,32 @@
+{
+  "name": "anki-add-hooks-userscripts",
+  "version": "1.0.0",
+  "description": "Anki Add Hooks Userscripts",
+  "main": "build.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/core": "^7.2.2",
+    "@babel/preset-env": "^7.3.1",
+    "babel-generator": "^6.26.1",
+    "babel-loader": "^8.0.5",
+    "babel-template": "^6.26.0",
+    "webpack": "^4.29.0",
+    "webpack-cli": "^3.2.1"
+  },
+  "scripts": {
+    "build": "npx webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OoDeLally/anki-add-hooks-userscripts.git"
+  },
+  "author": "Pascal Heitz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/OoDeLally/anki-add-hooks-userscripts/issues"
+  },
+  "homepage": "https://github.com/OoDeLally/anki-add-hooks-userscripts#readme"
+}
