@@ -4,11 +4,11 @@
 // @grant        GM.setValue
 // @grant        GM.getValue
 // @connect      localhost
-// @name         Anki Add Hooks for Google Translate
+// @name         Anki Add Hooks for Reverso
 // @version      0.1
-// @description  Generate a hook for AnkiConnect on Google Translate
+// @description  Generate a hook for AnkiConnect on Reverso
 // @author       Pascal Heitz
-// @include      /translate\.google\.com\//
+// @include      /reverso\.net\/\w+-\w+/\w+/
 // ==/UserScript==
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -93,72 +93,153 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./src/hooks/translate_google_com.js");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./src/hooks/reverso_net.js");
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ "./src/hooks/translate_google_com.js":
-/*!*******************************************!*\
-  !*** ./src/hooks/translate_google_com.js ***!
-  \*******************************************/
+/***/ "./src/hooks/reverso_net.js":
+/*!**********************************!*\
+  !*** ./src/hooks/reverso_net.js ***!
+  \**********************************/
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-// @name         Anki Add Hooks for Google Translate
+// @name         Anki Add Hooks for Reverso
 // @version      0.1
-// @description  Generate a hook for AnkiConnect on Google Translate
+// @description  Generate a hook for AnkiConnect on Reverso
 // @author       Pascal Heitz
-// @include      /translate\.google\.com\//
-function getSourceLangage() {
-  return document.querySelector('.sl-sugg .jfk-button-checked').innerText.split(/ *- */)[0];
+// @include      /reverso\.net\/\w+-\w+/\w+/
+function getLanguageCodes() {
+  var match = window.location.href.match(/reverso\.net\/([a-z]+)-([a-z]+)\//);
+
+  if (!match) {
+    throw Error('Failed to get language codes');
+  }
+
+  return [match[1], match[2]];
 }
 
-function getTargetLangage() {
-  return document.querySelector('.tl-sugg .jfk-button-checked').innerText;
+function extractMainTranslationFrontText() {
+  var word = document.querySelector('h2').innerText;
+
+  if (!word) {
+    throw Error('Could not find source word');
+  }
+
+  var text = "".concat(getLanguageCodes()[0], "\n").concat(word);
+  return text;
 }
 
-function extractFrontText() {
-  // source language could be written as "ENGLISH - DETECTED" and we only want "ENGLISH"
-  var sourceLanguage = getSourceLangage();
-  var sourceSentence = document.querySelector('textarea#source').value;
-  return "".concat(sourceLanguage, "\n").concat(sourceSentence);
+function extractMainTranslationBackText() {
+  var blocks = Array.from(document.querySelectorAll('#TableHTMLResult div')).filter(function (div) {
+    return div.getAttribute('border') == '1';
+  });
+  blocks.shift(); // The first block is the source word.
+
+  var text = "".concat(getLanguageCodes()[1], "\n").concat(blocks.map(function (block) {
+    return block.innerText;
+  }).join('\n'));
+  return text;
 }
 
-function extractBackText() {
-  var targetLanguage = getTargetLangage();
-  var translatedSentence = document.querySelector('.translation').innerText;
-  return "".concat(targetLanguage, "\n").concat(translatedSentence);
+function extractCollaborativeTranslationFrontText(parentNode) {
+  var word = parentNode.querySelector('.CDResSource').innerText;
+  var text = "".concat(getLanguageCodes()[0], "\n").concat(word);
+  return text;
+}
+
+function extractCollaborativeTranslationBackText(parentNode) {
+  var word = parentNode.querySelector('.CDResTarget').innerText;
+  var text = "".concat(getLanguageCodes()[1], "\n").concat(word);
+  return text;
+}
+
+function extractFrontText(_ref2) {
+  var type = _ref2.type,
+      parentNode = _ref2.parentNode;
+
+  if (type == 'mainDictionary') {
+    return extractMainTranslationFrontText();
+  } else if (type == 'collaborativeDictionary') {
+    return extractCollaborativeTranslationFrontText(parentNode);
+  } else {
+    throw Error("Unknown type ".concat(type));
+  }
+}
+
+function extractBackText(_ref) {
+  var type = _ref.type,
+      parentNode = _ref.parentNode;
+
+  if (type == 'mainDictionary') {
+    return extractMainTranslationBackText();
+  } else if (type == 'collaborativeDictionary') {
+    return extractCollaborativeTranslationBackText(parentNode);
+  } else {
+    throw Error("Unknown type ".concat(type));
+  }
 }
 
 function extractDirection() {
-  return "".concat(getSourceLangage(), " -> ").concat(getTargetLangage());
+  var languageCodes = getLanguageCodes();
+  return "".concat(languageCodes[0], " -> ").concat(languageCodes[1]);
 }
 
 function run() {
-  setInterval(function () {
-    var parentNode = document.querySelector('.result-footer');
+  // There are two translation providers in reverso.
+  // 1- the main reverso dictionary
+  // 2- the collaborative dictionary
+  // 1- real reverso dictionary
+  var mainDictionarySourceNode = document.querySelector('h2');
 
-    if (!parentNode) {
-      return; // Container not found
-    }
-
-    var existingHook = parentNode.querySelector('.-anki-quick-adder-hook');
-
-    if (existingHook) {
-      return; // Hook already exists
-    }
-
-    var children = Array.from(parentNode.childNodes);
-    var firstFloatLeftNode = children.find(function (node) {
-      return node.style.float == 'left';
+  if (mainDictionarySourceNode) {
+    var hook = createHook({
+      type: 'mainDictionary'
     });
-    var hook = createHook();
-    hook.style.float = 'right';
-    hook.style.top = '15px';
-    hook.style.right = '10px';
-    parentNode.insertBefore(hook, firstFloatLeftNode);
-  }, 500);
+    hook.style.position = 'absolute';
+    hook.style.right = '150px';
+    hook.style.top = '10px';
+    mainDictionarySourceNode.parentNode.append(hook);
+  } // 2- collaborative dictionary
+
+
+  var collaborativeDefinitionsRows = Array.from(document.querySelectorAll('.CDResTable tr')).filter(function (tr) {
+    return tr.getAttribute('valign') == 'top';
+  });
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = collaborativeDefinitionsRows[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var rowNode = _step.value;
+
+      var _hook = createHook({
+        type: 'collaborativeDictionary',
+        parentNode: rowNode
+      });
+
+      _hook.style.position = 'absolute';
+      _hook.style.left = '105px';
+      var parentNode = rowNode.querySelector('.CDResAct');
+      parentNode.style.position = 'relative';
+      parentNode.append(_hook);
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return != null) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
 }
 
 const ankiRequestOnFail = async (response, message, directionCode) => {
@@ -271,7 +352,7 @@ const createHook = userdata => {
   textNode.className = '-anki-quick-adder-hook-text';
   textNode.innerText = 'Add';
   const hookNode = document.createElement('div');
-  hookNode.setAttribute('name', "Anki Add Hooks for Google Translate");
+  hookNode.setAttribute('name', "Anki Add Hooks for Reverso");
   hookNode.className = '-anki-quick-adder-hook';
   hookNode.title = 'Create an Anki card from this translation';
 

@@ -38,6 +38,8 @@ function run(){
       return // Hook already exists
     }
     const hook = createHook();
+    hook.style.position = 'absolute';
+    hook.style.right = '10px';
     parentNode.appendChild(hook);
   }, 500);
 }

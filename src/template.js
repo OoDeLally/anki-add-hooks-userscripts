@@ -20,12 +20,12 @@ const ankiRequestOnFail = async (response, message, directionCode) => {
   alert(`AnkiConnect returned an error:\n${message}`);
 }
 
-const getDeckNameMapKey = directionCode => `deckName_${directionCode}`;
-const getModelNameMapKey = directionCode => `modelName_${directionCode}`;
+const getDeckNameMapKey = directionCode => `deckName_${directionCode.toLowerCase()}`;
+const getModelNameMapKey = directionCode => `modelName_${directionCode.toLowerCase()}`;
 
 const ankiRequestOnSuccess = (hookNode) => {
   hookNode.classList.add('-anki-quick-adder-hook-added');
-  hookNode.querySelector('.text').innerText = 'Added';
+  hookNode.querySelector('.-anki-quick-adder-hook-text').innerText = 'Added';
   hookNode.onclick = () => {};
 }
 
@@ -100,7 +100,7 @@ const createHook = (userdata) => {
   starNodeSmall.innerText = '★';
   starNodeSmall.className = '-anki-quick-adder-hook-star -anki-quick-adder-hook-star-small';
   const textNode = document.createElement('span');
-  textNode.className = 'text';
+  textNode.className = '-anki-quick-adder-hook-text';
   textNode.innerText = 'Add';
   const hookNode = document.createElement('div');
   hookNode.setAttribute('name', PLACEHOLDER_HOOK_NAME);
