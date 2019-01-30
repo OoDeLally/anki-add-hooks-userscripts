@@ -31,7 +31,7 @@
   border: 2px solid green;
   opacity: 1;
   cursor: auto;
-  color: #ccff99;
+  color: lightgreen;
 }
 .-anki-quick-adder-hook:hover {
   opacity: 1;
@@ -40,6 +40,9 @@
   display: block;
   transform: rotate(-15deg);
   position: absolute;
+}
+.-anki-quick-adder-hook-added .-anki-quick-adder-hook-star-small {
+  color: green;
 }
 .-anki-quick-adder-hook-star-big {
   font-size: 40px;

@@ -5,11 +5,11 @@
 // @grant        GM.setValue
 // @grant        GM.getValue
 // @connect      localhost
-// @name         Anki Add Hooks for WordReference.com
+// @name         GoogleTranslate AnkiQuickAdder Hook
 // @version      0.1
-// @description  Generate a hook for AnkiConnect on WordReference.com
+// @description  Generate a hook for AnkiQuickAdder on Google Translate
 // @author       Pascal Heitz
-// @include      /http://www\.wordreference\.com\/[a-z]{4}\/.+/
+// @include      /translate\.google\.com\//
 // ==/UserScript==
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -94,139 +94,60 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./src/hooks/wordreference_com.js");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./src/hooks/translate_google_com.js");
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ "./src/hooks/wordreference_com.js":
-/*!****************************************!*\
-  !*** ./src/hooks/wordreference_com.js ***!
-  \****************************************/
+/***/ "./src/hooks/translate_google_com.js":
+/*!*******************************************!*\
+  !*** ./src/hooks/translate_google_com.js ***!
+  \*******************************************/
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-// @name         Anki Add Hooks for WordReference.com
+// @name         GoogleTranslate AnkiQuickAdder Hook
 // @version      0.1
-// @description  Generate a hook for AnkiConnect on WordReference.com
+// @description  Generate a hook for AnkiQuickAdder on Google Translate
 // @author       Pascal Heitz
-// @include      /http://www\.wordreference\.com\/[a-z]{4}\/.+/
-function getLanguageCodes() {
-  var match = window.location.href.match(/wordreference\.com\/([a-z]{2})([a-z]{2})\//);
-  return [match[1], match[2]];
+// @include      /translate\.google\.com\//
+function extractFrontText() {
+  // source language could be written as "ENGLISH - DETECTED" and we only want "ENGLISH"
+  var sourceLanguage = document.querySelector('.sl-sugg .jfk-button-checked').innerText.split(/ *- */)[0];
+  var sourceSentence = document.querySelector('textarea#source').value;
+  return "".concat(sourceLanguage, "\n").concat(sourceSentence);
 }
 
-function getTrGroups(tableNode) {
-  var trGroups = [];
-  var currentTrGroup = [];
-  var currentTrClass = 'even'; // console.log('tableNode.querySelectorAll():', tableNode.querySelectorAll('.even, .odd'))
-
-  Array.from(tableNode.querySelectorAll('.even, .odd')) // .sort((a, b) => a.rowIndex - b.rowIndex)
-  .forEach(function (trNode) {
-    if (trNode.className == currentTrClass) {
-      currentTrGroup.push(trNode);
-    } else {
-      trGroups.push(currentTrGroup);
-      currentTrGroup = [trNode];
-      currentTrClass = currentTrClass == 'even' ? 'odd' : 'even';
-    }
-  });
-  trGroups.push(currentTrGroup);
-  return trGroups;
-}
-
-function extractFrontText(trGroup) {
-  var firstRowTds = trGroup[0].querySelectorAll('td');
-  var firstCell = firstRowTds[0];
-  var firstCellStrong = firstCell.querySelector('strong');
-
-  if (!firstCellStrong) {
-    return; // Not a real definition row
-  }
-
-  var firstCellStrongChildren = Array.from(firstCellStrong.childNodes).filter(function (node) {
-    return node.nodeName != 'A';
-  });
-  var firstChildText = firstCellStrongChildren.map(function (node) {
-    return node.textContent;
-  }).join('');
-  var remainingChildrenTexts = Array.from(firstCell.childNodes).slice(1).map(function (node) {
-    return node.innerText;
-  }).filter(function (text) {
-    return text;
-  }).map(function (text) {
-    return text.trim();
-  }).filter(function (text) {
-    return text;
-  });
-  var frontText = "".concat(getLanguageCodes()[0].toUpperCase(), "\n").concat(firstChildText);
-
-  if (remainingChildrenTexts.length > 0) {
-    frontText += " [".concat(remainingChildrenTexts.join(' '), "]");
-  }
-
-  var secondCellText = Array.from(firstRowTds[1].childNodes).filter(function (node) {
-    return !node.className || !node.className.includes('dsense');
-  }).map(function (node) {
-    return node.textContent;
-  }).join('');
-
-  if (secondCellText) {
-    frontText += " (".concat(secondCellText.trim(), ")");
-  }
-
-  return frontText;
-}
-
-function extractBackText(trGroup) {
-  return "".concat(getLanguageCodes()[1].toUpperCase(), "\n") + trGroup.filter(function (tr) {
-    return !(parseInt(tr.querySelector('td:last-child').getAttribute('colspan')) > 1);
-  }).map(function (tr) {
-    var tds = tr.querySelectorAll('td');
-    var lastTd = tds[2];
-    var lastTdChildren = Array.from(lastTd.childNodes);
-    var backText = lastTdChildren[0].textContent;
-    var firstTdOtherChildren = lastTdChildren.slice(1);
-
-    if (firstTdOtherChildren.length > 0) {
-      backText += "[".concat(firstTdOtherChildren.map(function (node) {
-        return node.innerText;
-      }), "]");
-    }
-
-    var middleTdText = Array.from(tds[1].childNodes).filter(function (node) {
-      return node.className && node.className.includes('dsense');
-    }).map(function (node) {
-      return node.textContent;
-    }).join('');
-
-    if (middleTdText) {
-      backText += " ".concat(middleTdText);
-    }
-
-    return backText;
-  }).join('\n');
-}
-
-function addHooksInTrGroup(trGroup) {
-  var parent = trGroup[0].querySelector('td');
-  parent.style.position = 'relative';
-  var hook = createHook(trGroup);
-  hook.style.position = 'absolute';
-  hook.style.left = '-80px';
-  parent.prepend(hook);
-}
-
-function addHooksInTable(tableNode) {
-  getTrGroups(tableNode).forEach(addHooksInTrGroup);
-}
-
-function getTables() {
-  return document.querySelectorAll('.WRD');
+function extractBackText() {
+  var targetLanguage = document.querySelector('.tl-sugg .jfk-button-checked').innerText;
+  var translatedSentence = document.querySelector('.translation').innerText;
+  return "".concat(targetLanguage, "\n").concat(translatedSentence);
 }
 
 function run() {
-  getTables().forEach(addHooksInTable);
+  setInterval(function () {
+    var parentNode = document.querySelector('.result-footer');
+
+    if (!parentNode) {
+      return; // Container not found
+    }
+
+    var existingHook = parentNode.querySelector('.-anki-quick-adder-hook');
+
+    if (existingHook) {
+      return; // Hook already exists
+    }
+
+    var children = Array.from(parentNode.childNodes);
+    var firstFloatLeftNode = children.find(function (node) {
+      return node.style.float == 'left';
+    });
+    var hook = createHook();
+    hook.style.float = 'right';
+    hook.style.top = '15px';
+    hook.style.right = '10px';
+    parentNode.insertBefore(hook, firstFloatLeftNode);
+  }, 500);
 }
 
 const ankiRequestOnFail = async (response, message) => {
@@ -333,7 +254,7 @@ const createHook = userdata => {
   textNode.className = 'text';
   textNode.innerText = 'Add';
   const hookNode = document.createElement('div');
-  hookNode.setAttribute('name', "Anki Add Hooks for WordReference.com");
+  hookNode.setAttribute('name', "GoogleTranslate AnkiQuickAdder Hook");
   hookNode.className = '-anki-quick-adder-hook';
   hookNode.title = 'Create an Anki card from this translation';
 
