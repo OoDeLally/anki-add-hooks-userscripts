@@ -37,7 +37,7 @@ Add a button on translation websites to create an Anki card from a translation.
 ## Create a hook for another website
 
 1- Create your own `src/hooks/my_website_com.js` following this model:
-```
+```js
 // @name         Anki Add Hooks for My Website
 // @version      0.1
 // @description  Generate a hook for AnkiConnect on My Website
