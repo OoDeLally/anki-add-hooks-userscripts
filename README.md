@@ -40,22 +40,26 @@ Add a button on translation websites to create an Anki card from a translation.
 // @author       Your Name
 // @include      /mywebsite.com/
 
-function extractFrontText(parentNode) {
-  // Called once the user click on a hook.
-  // First argument is exactly what you gave to createHook()
+// Called once the user click on a hook.
+function extractFrontText(data) {
+  // First argument is exactly what you gave to createHook().
   return 'card front text';
 }
 
-function extractBackText(parentNode) {
-  // Called once the user click on a hook.
-  // First argument is exactly what you gave to createHook()
+// Called once the user click on a hook.
+function extractBackText(data) {
+  // First argument is exactly what you gave to createHook().
   return 'card back text';
 }
 
+// Called after the page is loaded.
 function run(){
-  // Called after the page is loaded.
   const parentNode = locateParentNode();
-  const hook = createHook(parentNode); // createHook() is available
+
+  // `data` can be anything and will be passed as it is to `extractFrontText` and `extractBackText`.
+  const data = {parentNode, foo: 'additional info you want to pass'}
+
+  const hook = createHook(data); // createHook() is available.
   parentNode.append(hook);
 }
 ```
