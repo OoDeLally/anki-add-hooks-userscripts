@@ -60,7 +60,7 @@ const hookOnClick = async (hookNode, frontText, backText, directionCode) => {
           Front: frontText,
           Back: backText,
         },
-        tags: [],
+        tags: [PLACEHOLDER_HOOK_NAME],
       }
     }
   });

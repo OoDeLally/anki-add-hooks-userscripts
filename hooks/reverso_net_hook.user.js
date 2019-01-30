@@ -306,7 +306,7 @@ const hookOnClick = async (hookNode, frontText, backText, directionCode) => {
           Front: frontText,
           Back: backText
         },
-        tags: []
+        tags: ["Anki Add Hooks for Reverso"]
       }
     }
   });

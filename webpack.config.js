@@ -1,6 +1,8 @@
 const generateUserscriptBanner = require('./generate_userscript_banner');
 const webpack = require('webpack');
 const glob = require("glob");
+const extraWatchWebpackPlugin = require('extra-watch-webpack-plugin');
+
 
 const entries = glob.sync('./src/hooks/*.js').reduce(
   (obj, val) => {obj[val.match(/\/([^/]+)\.js$/)[1]] = val; return obj}, {}
@@ -38,6 +40,12 @@ module.exports = {
     new webpack.BannerPlugin({
       banner: (context) => generateUserscriptBanner('./src/template.js', context),
       raw: true
+    }),
+    new extraWatchWebpackPlugin({
+      files: [
+        'src/template.js',
+        'src/style.css',
+      ]
     })
   ]
 };
