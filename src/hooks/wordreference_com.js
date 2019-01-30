@@ -107,6 +107,11 @@ function getTables() {
   return document.querySelectorAll('.WRD');
 }
 
+function extractDirection() {
+  const languageCodes = getLanguageCodes();
+  return `${languageCodes[0]} -> ${languageCodes[1]}`;
+}
+
 
 function run(){
   getTables().forEach(addHooksInTable);

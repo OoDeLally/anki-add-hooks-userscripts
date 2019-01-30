@@ -1,13 +1,12 @@
 // ==UserScript==
-// @namespace    https://github.com/OoDeLally
-// @description  Generate a hook for AnkiConnect on Lingea.cz
+// @namespace    https://github.com/OoDeLally/anki-add-hooks-userscripts
 // @grant        GM.xmlHttpRequest
 // @grant        GM.setValue
 // @grant        GM.getValue
 // @connect      localhost
-// @name         GoogleTranslate AnkiQuickAdder Hook
+// @name         Anki Add Hooks for Google Translate
 // @version      0.1
-// @description  Generate a hook for AnkiQuickAdder on Google Translate
+// @description  Generate a hook for AnkiConnect on Google Translate
 // @author       Pascal Heitz
 // @include      /translate\.google\.com\//
 // ==/UserScript==
@@ -106,22 +105,34 @@
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-// @name         GoogleTranslate AnkiQuickAdder Hook
+// @name         Anki Add Hooks for Google Translate
 // @version      0.1
-// @description  Generate a hook for AnkiQuickAdder on Google Translate
+// @description  Generate a hook for AnkiConnect on Google Translate
 // @author       Pascal Heitz
 // @include      /translate\.google\.com\//
+function getSourceLangage() {
+  return document.querySelector('.sl-sugg .jfk-button-checked').innerText.split(/ *- */)[0];
+}
+
+function getTargetLangage() {
+  return document.querySelector('.tl-sugg .jfk-button-checked').innerText;
+}
+
 function extractFrontText() {
   // source language could be written as "ENGLISH - DETECTED" and we only want "ENGLISH"
-  var sourceLanguage = document.querySelector('.sl-sugg .jfk-button-checked').innerText.split(/ *- */)[0];
+  var sourceLanguage = getSourceLangage();
   var sourceSentence = document.querySelector('textarea#source').value;
   return "".concat(sourceLanguage, "\n").concat(sourceSentence);
 }
 
 function extractBackText() {
-  var targetLanguage = document.querySelector('.tl-sugg .jfk-button-checked').innerText;
+  var targetLanguage = getTargetLangage();
   var translatedSentence = document.querySelector('.translation').innerText;
   return "".concat(targetLanguage, "\n").concat(translatedSentence);
+}
+
+function extractDirection() {
+  return "".concat(getSourceLangage(), " -> ").concat(getTargetLangage());
 }
 
 function run() {
@@ -150,20 +161,24 @@ function run() {
   }, 500);
 }
 
-const ankiRequestOnFail = async (response, message) => {
+const ankiRequestOnFail = async (response, message, directionCode) => {
   console.error('Anki request response:', response);
   console.error(message);
 
   if (message.includes('deck was not found')) {
-    await GM.setValue('deckName', null);
+    await GM.setValue(getDeckNameMapKey(directionCode), null);
   }
 
   if (message.includes('model was not found')) {
-    await GM.setValue('modelName', null);
+    await GM.setValue(getModelNameMapKey(directionCode), null);
   }
 
   alert(`AnkiConnect returned an error:\n${message}`);
 };
+
+const getDeckNameMapKey = directionCode => `deckName_${directionCode}`;
+
+const getModelNameMapKey = directionCode => `modelName_${directionCode}`;
 
 const ankiRequestOnSuccess = hookNode => {
   hookNode.classList.add('-anki-quick-adder-hook-added');
@@ -172,29 +187,31 @@ const ankiRequestOnSuccess = hookNode => {
   hookNode.onclick = () => {};
 };
 
-const hookOnClick = async (hookNode, frontText, backText) => {
-  let deckName = await GM.getValue('deckName');
+const hookOnClick = async (hookNode, frontText, backText, directionCode) => {
+  const deckNameMapKey = getDeckNameMapKey(directionCode);
+  let deckName = await GM.getValue(deckNameMapKey);
 
   if (!deckName) {
-    deckName = prompt('Enter the name of the deck you want to add cards from this website', 'Default');
+    deckName = prompt(`Enter the name of the deck you want to add '${directionCode}' cards from this website`, 'Default');
 
     if (!deckName) {
       return;
     }
 
-    GM.setValue('deckName', deckName);
+    GM.setValue(deckNameMapKey, deckName);
   }
 
-  let modelName = await GM.getValue('modelName');
+  const modelNameMapKey = getModelNameMapKey(directionCode);
+  let modelName = await GM.getValue(modelNameMapKey);
 
   if (!modelName) {
-    modelName = prompt('Enter the name of the card model you want to create', 'Basic (and reversed card)');
+    modelName = prompt(`Enter the name of the card model you want to create for '${directionCode}'`, 'Basic (and reversed card)');
 
     if (!modelName) {
       return;
     }
 
-    await GM.setValue('modelName', modelName);
+    await GM.setValue(modelNameMapKey, modelName);
   }
 
   const dataStr = JSON.stringify({
@@ -217,10 +234,10 @@ const hookOnClick = async (hookNode, frontText, backText) => {
     url: 'http://localhost:8765',
     data: dataStr,
     onabort: response => {
-      ankiRequestOnFail(response, 'Request was aborted');
+      ankiRequestOnFail(response, 'Request was aborted', directionCode);
     },
     onerror: response => {
-      ankiRequestOnFail(response, 'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.');
+      ankiRequestOnFail(response, 'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.', directionCode);
     },
     onload: response => {
       const result = JSON.parse(response.responseText);
@@ -254,7 +271,7 @@ const createHook = userdata => {
   textNode.className = 'text';
   textNode.innerText = 'Add';
   const hookNode = document.createElement('div');
-  hookNode.setAttribute('name', "GoogleTranslate AnkiQuickAdder Hook");
+  hookNode.setAttribute('name', "Anki Add Hooks for Google Translate");
   hookNode.className = '-anki-quick-adder-hook';
   hookNode.title = 'Create an Anki card from this translation';
 
@@ -273,7 +290,14 @@ const createHook = userdata => {
       throw Error('Provided extractBackText() fonction did not return a string');
     }
 
-    hookOnClick(hookNode, frontText, backText);
+    const directionCode = extractDirection(userdata);
+
+    if (typeof frontText != 'string') {
+      console.error('Found', directionCode);
+      throw Error('Provided extractDirection() fonction did not return a string');
+    }
+
+    hookOnClick(hookNode, frontText, backText, directionCode);
     event.preventDefault();
     event.stopPropagation();
   };

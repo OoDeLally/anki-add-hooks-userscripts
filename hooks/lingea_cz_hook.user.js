@@ -1,12 +1,11 @@
 // ==UserScript==
-// @namespace    https://github.com/OoDeLally
-// @description  Generate a hook for AnkiConnect on Lingea.cz
+// @namespace    https://github.com/OoDeLally/anki-add-hooks-userscripts
 // @grant        GM.xmlHttpRequest
 // @grant        GM.setValue
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for lingea.cz
-// @version      0.3
+// @version      0.1
 // @description  Generate a hook for AnkiConnect on Lingea.cz
 // @author       Pascal Heitz
 // @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
@@ -107,12 +106,12 @@
 /***/ (function(module, exports) {
 
 // @name         Anki Add Hooks for lingea.cz
-// @version      0.3
+// @version      0.1
 // @description  Generate a hook for AnkiConnect on Lingea.cz
 // @author       Pascal Heitz
 // @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
 function extractFrontText(data) {
-  var sourceSentence = document.querySelector('h1').innerText;
+  var sourceSentence = document.querySelector('table.entry .head .lex_ful_entr').innerText;
   return sourceSentence;
 }
 
@@ -124,6 +123,16 @@ function extractBackText(data) {
     return tr.innerText;
   }).join('\n');
   return definitionText;
+}
+
+function extractDirection() {
+  var match = window.location.href.match(/lingea\.cz\/(\w+-\w+)\//);
+
+  if (!match) {
+    throw Error('Failed to extract direction');
+  }
+
+  return match[1];
 }
 
 function run() {
@@ -145,20 +154,24 @@ function run() {
   }, 500);
 }
 
-const ankiRequestOnFail = async (response, message) => {
+const ankiRequestOnFail = async (response, message, directionCode) => {
   console.error('Anki request response:', response);
   console.error(message);
 
   if (message.includes('deck was not found')) {
-    await GM.setValue('deckName', null);
+    await GM.setValue(getDeckNameMapKey(directionCode), null);
   }
 
   if (message.includes('model was not found')) {
-    await GM.setValue('modelName', null);
+    await GM.setValue(getModelNameMapKey(directionCode), null);
   }
 
   alert(`AnkiConnect returned an error:\n${message}`);
 };
+
+const getDeckNameMapKey = directionCode => `deckName_${directionCode}`;
+
+const getModelNameMapKey = directionCode => `modelName_${directionCode}`;
 
 const ankiRequestOnSuccess = hookNode => {
   hookNode.classList.add('-anki-quick-adder-hook-added');
@@ -167,29 +180,31 @@ const ankiRequestOnSuccess = hookNode => {
   hookNode.onclick = () => {};
 };
 
-const hookOnClick = async (hookNode, frontText, backText) => {
-  let deckName = await GM.getValue('deckName');
+const hookOnClick = async (hookNode, frontText, backText, directionCode) => {
+  const deckNameMapKey = getDeckNameMapKey(directionCode);
+  let deckName = await GM.getValue(deckNameMapKey);
 
   if (!deckName) {
-    deckName = prompt('Enter the name of the deck you want to add cards from this website', 'Default');
+    deckName = prompt(`Enter the name of the deck you want to add '${directionCode}' cards from this website`, 'Default');
 
     if (!deckName) {
       return;
     }
 
-    GM.setValue('deckName', deckName);
+    GM.setValue(deckNameMapKey, deckName);
   }
 
-  let modelName = await GM.getValue('modelName');
+  const modelNameMapKey = getModelNameMapKey(directionCode);
+  let modelName = await GM.getValue(modelNameMapKey);
 
   if (!modelName) {
-    modelName = prompt('Enter the name of the card model you want to create', 'Basic (and reversed card)');
+    modelName = prompt(`Enter the name of the card model you want to create for '${directionCode}'`, 'Basic (and reversed card)');
 
     if (!modelName) {
       return;
     }
 
-    await GM.setValue('modelName', modelName);
+    await GM.setValue(modelNameMapKey, modelName);
   }
 
   const dataStr = JSON.stringify({
@@ -212,10 +227,10 @@ const hookOnClick = async (hookNode, frontText, backText) => {
     url: 'http://localhost:8765',
     data: dataStr,
     onabort: response => {
-      ankiRequestOnFail(response, 'Request was aborted');
+      ankiRequestOnFail(response, 'Request was aborted', directionCode);
     },
     onerror: response => {
-      ankiRequestOnFail(response, 'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.');
+      ankiRequestOnFail(response, 'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.', directionCode);
     },
     onload: response => {
       const result = JSON.parse(response.responseText);
@@ -268,7 +283,14 @@ const createHook = userdata => {
       throw Error('Provided extractBackText() fonction did not return a string');
     }
 
-    hookOnClick(hookNode, frontText, backText);
+    const directionCode = extractDirection(userdata);
+
+    if (typeof frontText != 'string') {
+      console.error('Found', directionCode);
+      throw Error('Provided extractDirection() fonction did not return a string');
+    }
+
+    hookOnClick(hookNode, frontText, backText, directionCode);
     event.preventDefault();
     event.stopPropagation();
   };

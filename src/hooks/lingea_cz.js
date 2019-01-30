@@ -1,5 +1,5 @@
 // @name         Anki Add Hooks for lingea.cz
-// @version      0.3
+// @version      0.1
 // @description  Generate a hook for AnkiConnect on Lingea.cz
 // @author       Pascal Heitz
 // @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
@@ -7,7 +7,7 @@
 
 
 function extractFrontText(data) {
-  const sourceSentence = document.querySelector('h1').innerText;
+  const sourceSentence = document.querySelector('table.entry .head .lex_ful_entr').innerText;
   return sourceSentence;
 }
 
@@ -18,6 +18,13 @@ function extractBackText(data) {
   return definitionText;
 }
 
+function extractDirection() {
+  const match = window.location.href.match(/lingea\.cz\/(\w+-\w+)\//);
+  if (!match) {
+    throw Error('Failed to extract direction');
+  }
+  return match[1];
+}
 
 
 function run(){

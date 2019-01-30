@@ -32,7 +32,7 @@ const extractMetadata = (programPath, name) => {
 
 const verifyFunctionExists = (name, nodes) => {
   if (!nodes.find(node => node.type == 'FunctionDeclaration' && node.id.name == name)) {
-    throw Error(`Missing function $${name}()`);
+    throw Error(`Missing function ${name}()`);
   }
 }
 
@@ -61,10 +61,13 @@ module.exports = function(babel, {templateFile, styleFile}) {
         verifyFunctionExists('run', userscriptDeclarations);
         verifyFunctionExists('extractFrontText', userscriptDeclarations);
         verifyFunctionExists('extractBackText', userscriptDeclarations);
+        verifyFunctionExists('extractDirection', userscriptDeclarations);
         verifyIdentifierDoesntExists('createHook', userscriptDeclarations);
         verifyIdentifierDoesntExists('hookOnClick', userscriptDeclarations);
         verifyIdentifierDoesntExists('ankiRequestOnSuccess', userscriptDeclarations);
         verifyIdentifierDoesntExists('ankiRequestOnFail', userscriptDeclarations);
+        verifyIdentifierDoesntExists('getDeckNameMapKey', userscriptDeclarations);
+        verifyIdentifierDoesntExists('getModelNameMapKey', userscriptDeclarations);
 
         const templateFileContent = fs.readFileSync(templateFile, 'utf-8');
         const buildUserScript = babelTemplate(templateFileContent);

@@ -5,19 +5,29 @@
 // @include      /translate\.google\.com\//
 
 
+function getSourceLangage() {
+  return document.querySelector('.sl-sugg .jfk-button-checked').innerText.split(/ *- */)[0];
+}
+
+function getTargetLangage() {
+  return document.querySelector('.tl-sugg .jfk-button-checked').innerText;
+}
+
 function extractFrontText() {
   // source language could be written as "ENGLISH - DETECTED" and we only want "ENGLISH"
-  const sourceLanguage = document.querySelector('.sl-sugg .jfk-button-checked').innerText.split(/ *- */)[0];
+  const sourceLanguage = getSourceLangage();
   const sourceSentence = document.querySelector('textarea#source').value;
   return `${sourceLanguage}\n${sourceSentence}`;
 }
 
-
-
 function extractBackText() {
-  const targetLanguage = document.querySelector('.tl-sugg .jfk-button-checked').innerText;
+  const targetLanguage = getTargetLangage();
   const translatedSentence = document.querySelector('.translation').innerText;
   return `${targetLanguage}\n${translatedSentence}`;
+}
+
+function extractDirection() {
+  return `${getSourceLangage()} -> ${getTargetLangage()}`;
 }
 
 
