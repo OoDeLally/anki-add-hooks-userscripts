@@ -20,9 +20,9 @@ Add a button on translation websites to create an Anki card from a translation.
 ## Setup
 
 
-1- Install Tampermonkey: https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo.
+1- Install Greasemonkey or Tampermonkey.
 
-2- Install the Hook User Scripts from `/hooks/` on Tampermonkey. Click on the link above.
+2- Click on some of the link above to install the Hook User Scripts.
 
 3- Install and run Anki Desktop *with the AnkiConnect add-on*. The Anki app must be running when the hook is clicked on a website.
 
@@ -32,7 +32,7 @@ Add a button on translation websites to create an Anki card from a translation.
 
 ## Create a hook for another website
 
-1- Create your own `source/myscript_hook.js`, and define in it the following functions:
+1- Create your own `src/hooks/my_website_com.js`, and define in it the following functions:
   * **run()** is called after the page is loaded. It must create hooks and place them in the DOM.
   Use `createHook(userdata)` to generate a hook node.
   `createHook(userdata)` returns a DOM node.
@@ -41,6 +41,6 @@ Add a button on translation websites to create an Anki card from a translation.
   * **extractFrontText(userdata)** is called once the user clicks on a hook. It must return a string containing the front value of the card. `userdata` comes from `createHook(userdata)` in the `run()` you defined.
   * **extractBackText(userdata)** is called once the user clicks on a hook. It must return a string containing the back value of the card. `userdata` comes from `createHook(userdata)` in the `run()` you defined.
 
-2- Compile it to `hooks/myscript_hook.user.js` using **FIXME**
+2- Compile it to `hooks/my_website_com_hook.user.js` by using `npm run build`.
 
 3- Make a pull-request if you think it can be useful for other people.
