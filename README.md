@@ -32,15 +32,36 @@ Add a button on translation websites to create an Anki card from a translation.
 
 ## Create a hook for another website
 
-1- Create your own `src/hooks/my_website_com.js`, and define in it the following functions:
-  * **run()** is called after the page is loaded. It must create hooks and place them in the DOM.
-  Use `createHook(userdata)` to generate a hook node.
-  `createHook(userdata)` returns a DOM node.
-  `userdata` will be passed as it is to `extractFrontText(userdata)` and `extractBackText(userdata)`.
-  Use it for example to provide the relative parent node, in case you have several hooks in the page.
-  * **extractFrontText(userdata)** is called once the user clicks on a hook. It must return a string containing the front value of the card. `userdata` comes from `createHook(userdata)` in the `run()` you defined.
-  * **extractBackText(userdata)** is called once the user clicks on a hook. It must return a string containing the back value of the card. `userdata` comes from `createHook(userdata)` in the `run()` you defined.
+1- Create your own `src/hooks/my_website_com.js` following this model:
+```
+// @name         Anki Add Hooks for My Website
+// @version      0.1
+// @description  Generate a hook for AnkiConnect on My Website
+// @author       Your Name
+// @include      /mywebsite.com/
 
-2- Compile it to `hooks/my_website_com_hook.user.js` by using `npm run build`.
+function extractFrontText(parentNode) {
+  // Called once the user click on a hook.
+  // First argument is exactly what you gave to createHook()
+  return 'card front text';
+}
+
+function extractBackText(parentNode) {
+  // Called once the user click on a hook.
+  // First argument is exactly what you gave to createHook()
+  return 'card back text';
+}
+
+function run(){
+  // Called after the page is loaded.
+  const parentNode = locateParentNode();
+  const hook = createHook(parentNode); // createHook() is available
+  parentNode.append(hook);
+}
+```
+
+
+
+2- Run `npm run build` to compile it to `hooks/my_website_com_hook.user.js`.
 
 3- Make a pull-request if you think it can be useful for other people.

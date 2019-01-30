@@ -1,6 +1,6 @@
-// @name         GoogleTranslate AnkiQuickAdder Hook
+// @name         Anki Add Hooks for Google Translate
 // @version      0.1
-// @description  Generate a hook for AnkiQuickAdder on Google Translate
+// @description  Generate a hook for AnkiConnect on Google Translate
 // @author       Pascal Heitz
 // @include      /translate\.google\.com\//
 
