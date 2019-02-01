@@ -7,7 +7,7 @@
 
 
 function extractFrontText(data) {
-  const sourceSentence = document.querySelector('table.entry .head .lex_ful_entr').innerText;
+  const sourceSentence = document.querySelector('table.entry  .head .lex_ful_entr').innerText;
   return sourceSentence;
 }
 
@@ -29,7 +29,7 @@ function extractDirection() {
 
 function run(){
   setInterval(() => {
-    const parentNode = document.querySelector('.entry tr.head td');
+    const parentNode = document.querySelector('.entry  tr.head td');
     if (!parentNode) {
       return // Container not found
     }

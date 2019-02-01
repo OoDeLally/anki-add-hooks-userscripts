@@ -13,6 +13,7 @@ const openFileAndExtractMetaDataLines = (filePath) => {
 
 
 module.exports = (templateFile, context) => {
+  console.log('BANNER')
   let lines = ['// ==UserScript=='];
 
   // From the template
