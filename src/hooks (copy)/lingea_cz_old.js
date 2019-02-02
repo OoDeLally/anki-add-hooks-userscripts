@@ -4,24 +4,21 @@
 // @author       Pascal Heitz
 // @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
 
-require(`expose-loader?AnkiAddHooks!../template.js`);
 
 
-export const hookName = 'lingea_cz';
-
-export const extractFrontText = (data) => {
+function extractFrontText(data) {
   const sourceSentence = document.querySelector('table.entry  .head .lex_ful_entr').innerText;
   return sourceSentence;
 }
 
-export const extractBackText = (data) => {
+function extractBackText(data) {
   const translationRows = Array.from(document.querySelectorAll('.entry tr'))
     .filter(tr => !tr.className || !tr.className.includes('head'));
   const definitionText = translationRows.map(tr => tr.innerText).join('\n');
   return definitionText;
 }
 
-export const extractDirection = () => {
+function extractDirection() {
   const match = window.location.href.match(/lingea\.cz\/(\w+-\w+)\//);
   if (!match) {
     throw Error('Failed to extract direction');
@@ -29,7 +26,8 @@ export const extractDirection = () => {
   return match[1];
 }
 
-export const run = () => {
+
+function run(){
   setInterval(() => {
     const parentNode = document.querySelector('.entry  tr.head td');
     if (!parentNode) {
@@ -39,7 +37,7 @@ export const run = () => {
     if (existingHook) {
       return // Hook already exists
     }
-    const hook = AnkiAddHooks.createHook();
+    const hook = createHook();
     hook.style.position = 'absolute';
     hook.style.right = '10px';
     parentNode.appendChild(hook);

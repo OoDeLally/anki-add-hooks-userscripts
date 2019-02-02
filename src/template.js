@@ -1,13 +1,3 @@
-// ==UserScript==
-// @namespace    https://github.com/OoDeLally/anki-add-hooks-userscripts
-// @grant        GM.xmlHttpRequest
-// @grant        GM.setValue
-// @grant        GM.getValue
-// @connect      localhost
-// ==/UserScript==
-
-
-
 const ankiRequestOnFail = async (response, message, directionCode) => {
   console.error('Anki request response:', response)
   console.error(message)
@@ -60,7 +50,7 @@ const hookOnClick = async (hookNode, frontText, backText, directionCode) => {
           Front: frontText,
           Back: backText,
         },
-        tags: [PLACEHOLDER_HOOK_NAME],
+        tags: [hookName],
       }
     }
   });
@@ -103,7 +93,7 @@ const createHook = (userdata) => {
   textNode.className = '-anki-quick-adder-hook-text';
   textNode.innerText = 'Add';
   const hookNode = document.createElement('div');
-  hookNode.setAttribute('name', PLACEHOLDER_HOOK_NAME);
+  hookNode.setAttribute('name', hookName);
   hookNode.className = '-anki-quick-adder-hook';
   hookNode.title = 'Create an Anki card from this translation';
   hookNode.onclick = (event) => {

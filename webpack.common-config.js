@@ -8,15 +8,13 @@ module.exports = {
   ),
 
   babelRule: {
-    test: /\.m?js$/,
-    exclude: /node_modules/,
+    test: __dirname + '/src/template.js',
     use: {
       loader: 'babel-loader',
       options: {
         presets: ['@babel/preset-env'],
         plugins: [
           ['./generate_userscript', {
-            templateFile: './src/template.js',
             styleFile: './src/style.css'
           }]
         ]

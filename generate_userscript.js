@@ -30,44 +30,12 @@ const extractMetadata = (programPath, name) => {
 }
 
 
-const verifyFunctionExists = (name, nodes) => {
-  if (!nodes.find(node => node.type == 'FunctionDeclaration' && node.id.name == name)) {
-    throw Error(`Missing function ${name}()`);
-  }
-}
-
-const verifyIdentifierDoesntExists = (name, nodes) => {
-  if (nodes.find(node =>
-    node.id && node.id.name == name ||
-    node.declarations && node.declarations.find(declaration => declaration.id.name == name)
-  )) {
-    throw Error(`Identifier '${name}' is reserved and must not be used`);
-  }
-}
-
-
-
-module.exports = function(babel, {templateFile, styleFile}) {
+module.exports = function(babel, {styleFile}) {
   return {
     visitor: {
       Program(programPath, state) {
         // console.log('programPath.node.body:', programPath.node.body)
         const nameMetadataValue = extractMetadata(programPath, 'name');
-        extractMetadata(programPath, 'version');
-        extractMetadata(programPath, 'include');
-
-        const userscriptDeclarations = programPath.node.body;
-
-        verifyFunctionExists('run', userscriptDeclarations);
-        verifyFunctionExists('extractFrontText', userscriptDeclarations);
-        verifyFunctionExists('extractBackText', userscriptDeclarations);
-        verifyFunctionExists('extractDirection', userscriptDeclarations);
-        verifyIdentifierDoesntExists('createHook', userscriptDeclarations);
-        verifyIdentifierDoesntExists('hookOnClick', userscriptDeclarations);
-        verifyIdentifierDoesntExists('ankiRequestOnSuccess', userscriptDeclarations);
-        verifyIdentifierDoesntExists('ankiRequestOnFail', userscriptDeclarations);
-        verifyIdentifierDoesntExists('getDeckNameMapKey', userscriptDeclarations);
-        verifyIdentifierDoesntExists('getModelNameMapKey', userscriptDeclarations);
 
         const templateFileContent = fs.readFileSync(templateFile, 'utf-8');
         const buildUserScript = babelTemplate(templateFileContent);
@@ -79,12 +47,6 @@ module.exports = function(babel, {templateFile, styleFile}) {
         });
 
         const resultProgram = babelTypes.program(ast);
-
-        for (let expression of userscriptDeclarations.reverse()) {
-          resultProgram.body.unshift(expression);
-        }
-
-        programPath.parent.program = resultProgram;
 
       },
     },
