@@ -24,19 +24,20 @@ Add a button on translation websites to create an Anki card from a translation.
 ## Quick setup
 
 
-1- Install Greasemonkey or Tampermonkey.
+1- Install [Greasemonkey for Firefox](https://addons.mozilla.org/firefox/addon/greasemonkey/) or [Tampermonkey for Chrome](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo).
 
-2- Click on some of the link above to install the Hook User Scripts.
+2- Click on some of the links above to install the Hook User Scripts on the websites of your choice.
 
-3- Install and run Anki Desktop *with the AnkiConnect add-on*. The Anki app must be running when the hook is clicked on a website.
+3- Install and run Anki Desktop **with the AnkiConnect add-on**. The Anki app must be running when the hook is clicked on a website.
 
-4- Anki's "Add" Button should appear on the translation pages of the websites you installed.
+4- Anki's "Add" Button will appear on the translation pages of the websites you installed.
 
+5- [File an issue](https://github.com/OoDeLally/anki-add-hooks-userscripts/issues) for any unexpected behavior.
 
 
 ## Create a hook for another website
 
-1- Create your own `src/hooks/my_website_com.js` following this model:
+1- Create your own `src/hooks/my_website_com.js` exporting the following:
 ```js
 // @name         Anki Add Hooks for My Website
 // @version      0.1
@@ -44,20 +45,23 @@ Add a button on translation websites to create an Anki card from a translation.
 // @author       Your Name
 // @include      /mywebsite.com/
 
+// Added cards will be tagged with that name.
+export const hookName = 'my_website.com';
+
 // Called once the user click on a hook.
-function extractFrontText(data) {
+export const extractFrontText = (data) => {
   // First argument is exactly what you gave to createHook().
   return 'card front text';
 }
 
 // Called once the user click on a hook.
-function extractBackText(data) {
+export const extractBackText = (data) => {
   // First argument is exactly what you gave to createHook().
   return 'card back text';
 }
 
 // Called once the user click on a hook.
-function extractDirection(data) {
+export const extractDirection = (data) => {
   // First argument is exactly what you gave to createHook().
   // The returned string will be used to associate a deck name. It is useful if the
   // user wants different target decks depending on the translation direction.
@@ -67,13 +71,13 @@ function extractDirection(data) {
 }
 
 // Called after the page is loaded.
-function run(){
+export const run = (createHook) => {
   const parentNode = locateParentNode();
 
   // `data` can be anything and will be passed as it is to `extractFrontText` and `extractBackText`.
   const data = {parentNode, foo: 'additional info you want to pass'}
 
-  const hook = createHook(data); // createHook() is available.
+  const hook = createHook(data);
   parentNode.append(hook);
 }
 ```
