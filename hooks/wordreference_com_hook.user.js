@@ -55,7 +55,7 @@
         } else {
           trGroups.push(currentTrGroup);
           currentTrGroup = [trNode];
-          currentTrClass = currentTrClass == 'even' ? 'odd' : 'even';
+          currentTrClass = currentTrClass === 'even' ? 'odd' : 'even';
         }
       });
     trGroups.push(currentTrGroup);
@@ -71,7 +71,7 @@
     if (!firstCellStrong) {
       return null; // Not a real definition row
     }
-    const firstCellStrongChildren = Array.from(firstCellStrong.childNodes).filter(node => node.nodeName != 'A');
+    const firstCellStrongChildren = Array.from(firstCellStrong.childNodes).filter(node => node.nodeName !== 'A');
     const firstChildText = firstCellStrongChildren.map(node => node.textContent).join('');
     const remainingChildrenTexts = Array.from(firstCell.childNodes)
       .slice(1)
