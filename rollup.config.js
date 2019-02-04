@@ -2,6 +2,7 @@ import glob from 'glob';
 import fs from 'fs';
 import userScriptCss from 'rollup-plugin-userscript-css';
 import alias from 'rollup-plugin-alias';
+import path from 'path';
 
 
 const getMetatagLinesFromFile = filePath => {
@@ -19,10 +20,10 @@ const createMetatags = entryFile => {
 }
 
 
-const makeConfig = entryFile => ({
+const makeConfig = (entryFile, entryFileIndex) => ({
   input: './src/template.js',
   output: {
-    file: `./hooks/${entryFile.match(/\/([^/]+)\.js$/)[1]}_hook.user.js`,
+    file: `./hooks/${path.basename(entryFile, '.js')}_hook.user.js`,
     name: 'AnkiAddHooks',
     format: 'iife',
     banner: createMetatags(entryFile),

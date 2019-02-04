@@ -154,7 +154,7 @@
   };
 
 
-  const createHook = (userdata) => {
+  const createHook = userdata => {
     if (!extractFrontText || typeof extractFrontText != 'function') {
       throw Error('Missing function extractFrontText()');
     }

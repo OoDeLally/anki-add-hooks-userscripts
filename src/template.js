@@ -80,7 +80,7 @@ const hookOnClick = async (hookNode, frontText, backText, directionCode) => {
 }
 
 
-const createHook = (userdata) => {
+const createHook = userdata => {
   if (!siteSpecificFunctions.extractFrontText || typeof siteSpecificFunctions.extractFrontText != 'function') {
     throw Error('Missing function extractFrontText()');
   }
