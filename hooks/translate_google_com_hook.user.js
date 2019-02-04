@@ -36,13 +36,11 @@
   // @include      /translate\.google\.com\//
 
 
-  const getSourceLangage = () => {
-    return document.querySelector('.sl-sugg .jfk-button-checked').innerText.split(/ *- */)[0];
-  };
+  const getSourceLangage = () => document.querySelector('.sl-sugg .jfk-button-checked').innerText.split(/ *- */)[0];
 
-  const getTargetLangage = () => {
-    return document.querySelector('.tl-sugg .jfk-button-checked').innerText;
-  };
+
+  const getTargetLangage = () => document.querySelector('.tl-sugg .jfk-button-checked').innerText;
+
 
   const hookName = 'translate.google.com';
 
@@ -60,24 +58,21 @@
     return `${targetLanguage}\n${translatedSentence}`;
   };
 
-  const extractDirection = () => {
-    return `${getSourceLangage()} -> ${getTargetLangage()}`;
-  };
+  const extractDirection = () => `${getSourceLangage()} -> ${getTargetLangage()}`;
 
 
-
-  const run = createHook => {
+  const run = (createHook) => {
     setInterval(() => {
       const parentNode = document.querySelector('.result-footer');
       if (!parentNode) {
-        return // Container not found
+        return; // Container not found
       }
       const existingHook = parentNode.querySelector('.-anki-quick-adder-hook');
       if (existingHook) {
-        return // Hook already exists
+        return; // Hook already exists
       }
       const children = Array.from(parentNode.childNodes);
-      const firstFloatLeftNode = children.find(node => node.style.float == 'left');
+      const firstFloatLeftNode = children.find(node => node.style.float === 'left');
       const hook = createHook();
       hook.style.float = 'right';
       hook.style.top = '15px';
@@ -85,6 +80,12 @@
       parentNode.insertBefore(hook, firstFloatLeftNode);
     }, 500);
   };
+
+  /* global GM */
+
+
+  const getDeckNameMapKey = directionCode => `deckName_${directionCode.toLowerCase()}`;
+  const getModelNameMapKey = directionCode => `modelName_${directionCode.toLowerCase()}`;
 
   const ankiRequestOnFail = async (response, message, directionCode) => {
     console.error('Anki request response:', response);
@@ -98,9 +99,6 @@
     alert(`AnkiConnect returned an error:\n${message}`);
   };
 
-  const getDeckNameMapKey = directionCode => `deckName_${directionCode.toLowerCase()}`;
-  const getModelNameMapKey = directionCode => `modelName_${directionCode.toLowerCase()}`;
-
   const ankiRequestOnSuccess = (hookNode) => {
     hookNode.classList.add('-anki-quick-adder-hook-added');
     hookNode.querySelector('.-anki-quick-adder-hook-text').innerText = 'Added';
@@ -113,7 +111,7 @@
     if (!deckName) {
       deckName = prompt(`Enter the name of the deck you want to add '${directionCode}' cards from this website`, 'Default');
       if (!deckName) {
-        return // Cancel
+        return; // Cancel
       }
       GM.setValue(deckNameMapKey, deckName);
     }
@@ -122,7 +120,7 @@
     if (!modelName) {
       modelName = prompt(`Enter the name of the card model you want to create for '${directionCode}'`, 'Basic (and reversed card)');
       if (!modelName) {
-        return // Cancel
+        return; // Cancel
       }
       await GM.setValue(modelNameMapKey, modelName);
     }
@@ -132,43 +130,39 @@
       version: 6,
       params: {
         note: {
-          deckName: deckName,
-          modelName: modelName,
+          deckName,
+          modelName,
           fields: {
             Front: frontText,
             Back: backText,
           },
           tags: [hookName],
-        }
-      }
+        },
+      },
     });
-    return GM.xmlHttpRequest({
+    await GM.xmlHttpRequest({
       method: 'POST',
       url: 'http://localhost:8765',
       data: dataStr,
-      onabort: response => {
-        ankiRequestOnFail(response, 'Request was aborted', directionCode);
-      },
-      onerror: response => {
-        ankiRequestOnFail(response, 'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.', directionCode);
-      },
-      onload: response => {
+      onabort: response => ankiRequestOnFail(response, 'Request was aborted', directionCode),
+      onerror: response => ankiRequestOnFail(response, 'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.', directionCode),
+      onload: (response) => {
         const result = JSON.parse(response.responseText);
         if (result.error) {
           ankiRequestOnFail(response, result.error);
-          return
+          return;
         }
         ankiRequestOnSuccess(hookNode);
-      }
-    })
+      },
+    });
   };
 
 
-  const createHook = userdata => {
-    if (!extractFrontText || typeof extractFrontText != 'function') {
+  const createHook = (userdata) => {
+    if (!extractFrontText || typeof extractFrontText !== 'function') {
       throw Error('Missing function extractFrontText()');
     }
-    if (!extractBackText || typeof extractBackText != 'function') {
+    if (!extractBackText || typeof extractBackText !== 'function') {
       throw Error('Missing function extractBackText()');
     }
     const starNodeBig = document.createElement('div');
@@ -186,17 +180,17 @@
     hookNode.title = 'Create an Anki card from this translation';
     hookNode.onclick = (event) => {
       const frontText = extractFrontText(userdata);
-      if (typeof frontText != 'string') {
+      if (typeof frontText !== 'string') {
         console.error('Found', frontText);
         throw Error('Provided siteSpecificFunctions.extractFrontText() fonction did not return a string');
       }
       const backText = extractBackText(userdata);
-      if (typeof frontText != 'string') {
+      if (typeof frontText !== 'string') {
         console.error('Found', backText);
         throw Error('Provided siteSpecificFunctions.extractBackText() fonction did not return a string');
       }
       const directionCode = extractDirection(userdata);
-      if (typeof frontText != 'string') {
+      if (typeof frontText !== 'string') {
         console.error('Found', directionCode);
         throw Error('Provided siteSpecificFunctions.extractDirection() fonction did not return a string');
       }
@@ -211,8 +205,6 @@
   };
 
 
-  (function() {
-    run(createHook);
-  })();
+  run(createHook);
 
 }());

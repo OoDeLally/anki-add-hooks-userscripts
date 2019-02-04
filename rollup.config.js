@@ -5,22 +5,22 @@ import alias from 'rollup-plugin-alias';
 import path from 'path';
 
 
-const getMetatagLinesFromFile = filePath => {
+const getMetatagLinesFromFile = (filePath) => {
   const templateFileContent = fs.readFileSync(filePath, 'utf-8');
   const templateLines = templateFileContent.split(/[\n\r]+/);
   return templateLines.filter(text => /^\s*\/\/\s*@\w+\b/.test(text));
-}
+};
 
-const createMetatags = entryFile => {
+const createMetatags = (entryFile) => {
   let output = '// ==UserScript==\n';
   output += fs.readFileSync('./src/userscript_metatags.js', 'utf-8');
-  output += getMetatagLinesFromFile(entryFile).join('\n') + '\n';
-  output += '// ==/UserScript==\n'
+  output += `${getMetatagLinesFromFile(entryFile).join('\n')}\n`;
+  output += '// ==/UserScript==\n';
   return output;
-}
+};
 
 
-const makeConfig = (entryFile, entryFileIndex) => ({
+const makeConfig = entryFile => ({
   input: './src/template.js',
   output: {
     file: `./hooks/${path.basename(entryFile, '.js')}_hook.user.js`,
@@ -35,7 +35,6 @@ const makeConfig = (entryFile, entryFileIndex) => ({
     }),
   ],
 });
-
 
 
 export default glob.sync('./src/hooks/*.js').map(makeConfig);

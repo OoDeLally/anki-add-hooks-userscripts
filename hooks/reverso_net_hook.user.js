@@ -48,14 +48,14 @@
   const extractMainTranslationFrontText = () => {
     const word = document.querySelector('h2').innerText;
     if (!word) {
-      throw Error('Could not find source word')
+      throw Error('Could not find source word');
     }
     const text = `${getLanguageCodes()[0]}\n${word}`;
     return text;
   };
 
   const extractMainTranslationBackText = () => {
-    const blocks = Array.from(document.querySelectorAll('#TableHTMLResult div')).filter(div => div.getAttribute('border') == '1');
+    const blocks = Array.from(document.querySelectorAll('#TableHTMLResult div')).filter(div => div.getAttribute('border') === '1');
     blocks.shift(); // The first block is the source word.
     const text = `${getLanguageCodes()[1]}\n${blocks.map(block => block.innerText).join('\n')}`;
     return text;
@@ -77,31 +77,30 @@
   const hookName = 'reverso.net';
 
 
-  const extractFrontText = ({type, parentNode}) => {
-    if (type == 'mainDictionary') {
+  const extractFrontText = ({ type, parentNode }) => {
+    if (type === 'mainDictionary') {
       return extractMainTranslationFrontText();
-    } else if (type == 'collaborativeDictionary') {
-      return extractCollaborativeTranslationFrontText(parentNode);
-    } else {
-      throw Error(`Unknown type ${type}`)
     }
+    if (type === 'collaborativeDictionary') {
+      return extractCollaborativeTranslationFrontText(parentNode);
+    }
+    throw Error(`Unknown type ${type}`);
   };
 
-  const extractBackText = ({type, parentNode}) => {
-    if (type == 'mainDictionary') {
+  const extractBackText = ({ type, parentNode }) => {
+    if (type === 'mainDictionary') {
       return extractMainTranslationBackText();
-    } else if (type == 'collaborativeDictionary') {
-      return extractCollaborativeTranslationBackText(parentNode);
-    } else {
-      throw Error(`Unknown type ${type}`)
     }
+    if (type === 'collaborativeDictionary') {
+      return extractCollaborativeTranslationBackText(parentNode);
+    }
+    throw Error(`Unknown type ${type}`);
   };
 
   const extractDirection = () => {
     const languageCodes = getLanguageCodes();
     return `${languageCodes[0]} -> ${languageCodes[1]}`;
   };
-
 
 
   const run = (createHook) => {
@@ -120,16 +119,22 @@
     }
 
     // 2- collaborative dictionary
-    const collaborativeDefinitionsRows = Array.from(document.querySelectorAll('.CDResTable tr')).filter(tr => tr.getAttribute('valign') == 'top');
-    for (let rowNode of collaborativeDefinitionsRows) {
-      const hook = createHook({type: 'collaborativeDictionary', parentNode: rowNode});
+    const collaborativeDefinitionsRows = Array.from(document.querySelectorAll('.CDResTable tr')).filter(tr => tr.getAttribute('valign') === 'top');
+    collaborativeDefinitionsRows.forEach((rowNode) => {
+      const hook = createHook({ type: 'collaborativeDictionary', parentNode: rowNode });
       hook.style.position = 'absolute';
       hook.style.left = '105px';
       const parentNode = rowNode.querySelector('.CDResAct');
       parentNode.style.position = 'relative';
       parentNode.append(hook);
-    }
+    });
   };
+
+  /* global GM */
+
+
+  const getDeckNameMapKey = directionCode => `deckName_${directionCode.toLowerCase()}`;
+  const getModelNameMapKey = directionCode => `modelName_${directionCode.toLowerCase()}`;
 
   const ankiRequestOnFail = async (response, message, directionCode) => {
     console.error('Anki request response:', response);
@@ -143,9 +148,6 @@
     alert(`AnkiConnect returned an error:\n${message}`);
   };
 
-  const getDeckNameMapKey = directionCode => `deckName_${directionCode.toLowerCase()}`;
-  const getModelNameMapKey = directionCode => `modelName_${directionCode.toLowerCase()}`;
-
   const ankiRequestOnSuccess = (hookNode) => {
     hookNode.classList.add('-anki-quick-adder-hook-added');
     hookNode.querySelector('.-anki-quick-adder-hook-text').innerText = 'Added';
@@ -158,7 +160,7 @@
     if (!deckName) {
       deckName = prompt(`Enter the name of the deck you want to add '${directionCode}' cards from this website`, 'Default');
       if (!deckName) {
-        return // Cancel
+        return; // Cancel
       }
       GM.setValue(deckNameMapKey, deckName);
     }
@@ -167,7 +169,7 @@
     if (!modelName) {
       modelName = prompt(`Enter the name of the card model you want to create for '${directionCode}'`, 'Basic (and reversed card)');
       if (!modelName) {
-        return // Cancel
+        return; // Cancel
       }
       await GM.setValue(modelNameMapKey, modelName);
     }
@@ -177,43 +179,39 @@
       version: 6,
       params: {
         note: {
-          deckName: deckName,
-          modelName: modelName,
+          deckName,
+          modelName,
           fields: {
             Front: frontText,
             Back: backText,
           },
           tags: [hookName],
-        }
-      }
+        },
+      },
     });
-    return GM.xmlHttpRequest({
+    await GM.xmlHttpRequest({
       method: 'POST',
       url: 'http://localhost:8765',
       data: dataStr,
-      onabort: response => {
-        ankiRequestOnFail(response, 'Request was aborted', directionCode);
-      },
-      onerror: response => {
-        ankiRequestOnFail(response, 'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.', directionCode);
-      },
-      onload: response => {
+      onabort: response => ankiRequestOnFail(response, 'Request was aborted', directionCode),
+      onerror: response => ankiRequestOnFail(response, 'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.', directionCode),
+      onload: (response) => {
         const result = JSON.parse(response.responseText);
         if (result.error) {
           ankiRequestOnFail(response, result.error);
-          return
+          return;
         }
         ankiRequestOnSuccess(hookNode);
-      }
-    })
+      },
+    });
   };
 
 
-  const createHook = userdata => {
-    if (!extractFrontText || typeof extractFrontText != 'function') {
+  const createHook = (userdata) => {
+    if (!extractFrontText || typeof extractFrontText !== 'function') {
       throw Error('Missing function extractFrontText()');
     }
-    if (!extractBackText || typeof extractBackText != 'function') {
+    if (!extractBackText || typeof extractBackText !== 'function') {
       throw Error('Missing function extractBackText()');
     }
     const starNodeBig = document.createElement('div');
@@ -231,17 +229,17 @@
     hookNode.title = 'Create an Anki card from this translation';
     hookNode.onclick = (event) => {
       const frontText = extractFrontText(userdata);
-      if (typeof frontText != 'string') {
+      if (typeof frontText !== 'string') {
         console.error('Found', frontText);
         throw Error('Provided siteSpecificFunctions.extractFrontText() fonction did not return a string');
       }
       const backText = extractBackText(userdata);
-      if (typeof frontText != 'string') {
+      if (typeof frontText !== 'string') {
         console.error('Found', backText);
         throw Error('Provided siteSpecificFunctions.extractBackText() fonction did not return a string');
       }
       const directionCode = extractDirection(userdata);
-      if (typeof frontText != 'string') {
+      if (typeof frontText !== 'string') {
         console.error('Found', directionCode);
         throw Error('Provided siteSpecificFunctions.extractDirection() fonction did not return a string');
       }
@@ -256,8 +254,6 @@
   };
 
 
-  (function() {
-    run(createHook);
-  })();
+  run(createHook);
 
 }());

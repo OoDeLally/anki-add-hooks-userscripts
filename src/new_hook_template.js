@@ -10,26 +10,25 @@
 // @include      /mywebsite.com/ // FIXME
 
 
-
 // Added cards will be tagged with that name.
 export const hookName = 'my_website.com';
 
 // Called once the user click on a hook.
-export const extractFrontText = data => {
+export const extractFrontText = (data) => {
   // First argument `data` is exactly what you gave to createHook().
   // FIXME
   return 'card front text';
-}
+};
 
 // Called once the user click on a hook.
-export const extractBackText = data => {
+export const extractBackText = (data) => {
   // First argument `data` is exactly what you gave to createHook().
   // FIXME
   return 'card back text';
-}
+};
 
 // Called once the user click on a hook.
-export const extractDirection = data => {
+export const extractDirection = (data) => {
   // First argument `data` is exactly what you gave to createHook().
   // The returned string will be used to associate a deck name. It is useful if the
   // user wants different target decks depending on the translation direction.
@@ -37,16 +36,16 @@ export const extractDirection = data => {
   // while 'de -> en' and 'en -> de' will be associated to deck "Learning German"
   // FIXME
   return 'fr -> en';
-}
+};
 
 // Called after the page is loaded.
-export const run = createHook => {
+export const run = (createHook) => {
   // FIXME
   const parentNode = locateParentNode();
 
   // `data` can be anything and will be passed as it is to `extractFrontText` and `extractBackText`.
-  const data = {parentNode, foo: 'additional info you want to pass'}
+  const data = { parentNode, foo: 'additional info you want to pass' };
 
   const hook = createHook(data);
   parentNode.append(hook);
-}
+};

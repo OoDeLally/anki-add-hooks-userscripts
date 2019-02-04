@@ -1,12 +1,10 @@
 import glob from 'glob';
-import fs from 'fs';
 import userScriptCss from 'rollup-plugin-userscript-css';
 import alias from 'rollup-plugin-alias';
 import path from 'path';
 
 
-
-const makeConfig = (entryFile, entryFileIndex) => ({
+const makeConfig = entryFile => ({
   input: './src/template.js',
   output: {
     file: `./dev-hooks/${path.basename(entryFile, '.js')}_dev_hook.user.js`,
@@ -14,7 +12,7 @@ const makeConfig = (entryFile, entryFileIndex) => ({
     format: 'iife',
   },
   watch: {
-    input: ['./src/*.js', './src/style.css']
+    input: ['./src/*.js', './src/style.css'],
   },
   plugins: [
     userScriptCss(),
@@ -23,7 +21,6 @@ const makeConfig = (entryFile, entryFileIndex) => ({
     }),
   ],
 });
-
 
 
 export default glob.sync('./src/hooks/*.js').map(makeConfig);

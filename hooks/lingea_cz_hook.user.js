@@ -36,15 +36,14 @@
   // @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
 
 
-
   const hookName = 'lingea.cz';
 
-  const extractFrontText = (data) => {
+  const extractFrontText = () => {
     const sourceSentence = document.querySelector('table.entry  .head .lex_ful_entr').innerText;
     return sourceSentence;
   };
 
-  const extractBackText = (data) => {
+  const extractBackText = () => {
     const translationRows = Array.from(document.querySelectorAll('.entry tr'))
       .filter(tr => !tr.className || !tr.className.includes('head'));
     const definitionText = translationRows.map(tr => tr.innerText).join('\n');
@@ -59,15 +58,15 @@
     return match[1];
   };
 
-  const run = createHook => {
+  const run = (createHook) => {
     setInterval(() => {
       const parentNode = document.querySelector('.entry  tr.head td');
       if (!parentNode) {
-        return // Container not found
+        return; // Container not found
       }
       const existingHook = parentNode.querySelector('.-anki-quick-adder-hook');
       if (existingHook) {
-        return // Hook already exists
+        return; // Hook already exists
       }
       const hook = createHook();
       hook.style.position = 'absolute';
@@ -75,6 +74,12 @@
       parentNode.appendChild(hook);
     }, 500);
   };
+
+  /* global GM */
+
+
+  const getDeckNameMapKey = directionCode => `deckName_${directionCode.toLowerCase()}`;
+  const getModelNameMapKey = directionCode => `modelName_${directionCode.toLowerCase()}`;
 
   const ankiRequestOnFail = async (response, message, directionCode) => {
     console.error('Anki request response:', response);
@@ -88,9 +93,6 @@
     alert(`AnkiConnect returned an error:\n${message}`);
   };
 
-  const getDeckNameMapKey = directionCode => `deckName_${directionCode.toLowerCase()}`;
-  const getModelNameMapKey = directionCode => `modelName_${directionCode.toLowerCase()}`;
-
   const ankiRequestOnSuccess = (hookNode) => {
     hookNode.classList.add('-anki-quick-adder-hook-added');
     hookNode.querySelector('.-anki-quick-adder-hook-text').innerText = 'Added';
@@ -103,7 +105,7 @@
     if (!deckName) {
       deckName = prompt(`Enter the name of the deck you want to add '${directionCode}' cards from this website`, 'Default');
       if (!deckName) {
-        return // Cancel
+        return; // Cancel
       }
       GM.setValue(deckNameMapKey, deckName);
     }
@@ -112,7 +114,7 @@
     if (!modelName) {
       modelName = prompt(`Enter the name of the card model you want to create for '${directionCode}'`, 'Basic (and reversed card)');
       if (!modelName) {
-        return // Cancel
+        return; // Cancel
       }
       await GM.setValue(modelNameMapKey, modelName);
     }
@@ -122,43 +124,39 @@
       version: 6,
       params: {
         note: {
-          deckName: deckName,
-          modelName: modelName,
+          deckName,
+          modelName,
           fields: {
             Front: frontText,
             Back: backText,
           },
           tags: [hookName],
-        }
-      }
+        },
+      },
     });
-    return GM.xmlHttpRequest({
+    await GM.xmlHttpRequest({
       method: 'POST',
       url: 'http://localhost:8765',
       data: dataStr,
-      onabort: response => {
-        ankiRequestOnFail(response, 'Request was aborted', directionCode);
-      },
-      onerror: response => {
-        ankiRequestOnFail(response, 'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.', directionCode);
-      },
-      onload: response => {
+      onabort: response => ankiRequestOnFail(response, 'Request was aborted', directionCode),
+      onerror: response => ankiRequestOnFail(response, 'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.', directionCode),
+      onload: (response) => {
         const result = JSON.parse(response.responseText);
         if (result.error) {
           ankiRequestOnFail(response, result.error);
-          return
+          return;
         }
         ankiRequestOnSuccess(hookNode);
-      }
-    })
+      },
+    });
   };
 
 
-  const createHook = userdata => {
-    if (!extractFrontText || typeof extractFrontText != 'function') {
+  const createHook = (userdata) => {
+    if (!extractFrontText || typeof extractFrontText !== 'function') {
       throw Error('Missing function extractFrontText()');
     }
-    if (!extractBackText || typeof extractBackText != 'function') {
+    if (!extractBackText || typeof extractBackText !== 'function') {
       throw Error('Missing function extractBackText()');
     }
     const starNodeBig = document.createElement('div');
@@ -176,17 +174,17 @@
     hookNode.title = 'Create an Anki card from this translation';
     hookNode.onclick = (event) => {
       const frontText = extractFrontText(userdata);
-      if (typeof frontText != 'string') {
+      if (typeof frontText !== 'string') {
         console.error('Found', frontText);
         throw Error('Provided siteSpecificFunctions.extractFrontText() fonction did not return a string');
       }
       const backText = extractBackText(userdata);
-      if (typeof frontText != 'string') {
+      if (typeof frontText !== 'string') {
         console.error('Found', backText);
         throw Error('Provided siteSpecificFunctions.extractBackText() fonction did not return a string');
       }
       const directionCode = extractDirection(userdata);
-      if (typeof frontText != 'string') {
+      if (typeof frontText !== 'string') {
         console.error('Found', directionCode);
         throw Error('Provided siteSpecificFunctions.extractDirection() fonction did not return a string');
       }
@@ -201,8 +199,6 @@
   };
 
 
-  (function() {
-    run(createHook);
-  })();
+  run(createHook);
 
 }());

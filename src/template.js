@@ -1,10 +1,15 @@
-import './style.css'
-import * as siteSpecificFunctions from '__SITE_SPECIFIC_FUNCTIONS__'
+/* global GM */
 
+import './style.css';
+import * as siteSpecificFunctions from '__SITE_SPECIFIC_FUNCTIONS__'; // eslint-disable-line import/no-unresolved
+
+
+const getDeckNameMapKey = directionCode => `deckName_${directionCode.toLowerCase()}`;
+const getModelNameMapKey = directionCode => `modelName_${directionCode.toLowerCase()}`;
 
 const ankiRequestOnFail = async (response, message, directionCode) => {
-  console.error('Anki request response:', response)
-  console.error(message)
+  console.error('Anki request response:', response);
+  console.error(message);
   if (message.includes('deck was not found')) {
     await GM.setValue(getDeckNameMapKey(directionCode), null);
   }
@@ -12,16 +17,13 @@ const ankiRequestOnFail = async (response, message, directionCode) => {
     await GM.setValue(getModelNameMapKey(directionCode), null);
   }
   alert(`AnkiConnect returned an error:\n${message}`);
-}
-
-const getDeckNameMapKey = directionCode => `deckName_${directionCode.toLowerCase()}`;
-const getModelNameMapKey = directionCode => `modelName_${directionCode.toLowerCase()}`;
+};
 
 const ankiRequestOnSuccess = (hookNode) => {
   hookNode.classList.add('-anki-quick-adder-hook-added');
   hookNode.querySelector('.-anki-quick-adder-hook-text').innerText = 'Added';
   hookNode.onclick = () => {};
-}
+};
 
 const hookOnClick = async (hookNode, frontText, backText, directionCode) => {
   const deckNameMapKey = getDeckNameMapKey(directionCode);
@@ -29,7 +31,7 @@ const hookOnClick = async (hookNode, frontText, backText, directionCode) => {
   if (!deckName) {
     deckName = prompt(`Enter the name of the deck you want to add '${directionCode}' cards from this website`, 'Default');
     if (!deckName) {
-      return // Cancel
+      return; // Cancel
     }
     GM.setValue(deckNameMapKey, deckName);
   }
@@ -38,7 +40,7 @@ const hookOnClick = async (hookNode, frontText, backText, directionCode) => {
   if (!modelName) {
     modelName = prompt(`Enter the name of the card model you want to create for '${directionCode}'`, 'Basic (and reversed card)');
     if (!modelName) {
-      return // Cancel
+      return; // Cancel
     }
     await GM.setValue(modelNameMapKey, modelName);
   }
@@ -48,46 +50,42 @@ const hookOnClick = async (hookNode, frontText, backText, directionCode) => {
     version: 6,
     params: {
       note: {
-        deckName: deckName,
-        modelName: modelName,
+        deckName,
+        modelName,
         fields: {
           Front: frontText,
           Back: backText,
         },
         tags: [siteSpecificFunctions.hookName],
-      }
-    }
+      },
+    },
   });
-  return GM.xmlHttpRequest({
+  await GM.xmlHttpRequest({
     method: 'POST',
     url: 'http://localhost:8765',
     data: dataStr,
-    onabort: response => {
-      ankiRequestOnFail(response, 'Request was aborted', directionCode);
-    },
-    onerror: response => {
-      ankiRequestOnFail(response, 'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.', directionCode)
-    },
-    onload: response => {
+    onabort: response => ankiRequestOnFail(response, 'Request was aborted', directionCode),
+    onerror: response => ankiRequestOnFail(response, 'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.', directionCode),
+    onload: (response) => {
       const result = JSON.parse(response.responseText);
       if (result.error) {
         ankiRequestOnFail(response, result.error);
-        return
+        return;
       }
-      ankiRequestOnSuccess(hookNode)
-    }
-  })
-}
+      ankiRequestOnSuccess(hookNode);
+    },
+  });
+};
 
 
-const createHook = userdata => {
-  if (!siteSpecificFunctions.extractFrontText || typeof siteSpecificFunctions.extractFrontText != 'function') {
+const createHook = (userdata) => {
+  if (!siteSpecificFunctions.extractFrontText || typeof siteSpecificFunctions.extractFrontText !== 'function') {
     throw Error('Missing function extractFrontText()');
   }
-  if (!siteSpecificFunctions.extractBackText || typeof siteSpecificFunctions.extractBackText != 'function') {
+  if (!siteSpecificFunctions.extractBackText || typeof siteSpecificFunctions.extractBackText !== 'function') {
     throw Error('Missing function extractBackText()');
   }
-  if (!siteSpecificFunctions.hookName || typeof siteSpecificFunctions.hookName != 'string') {
+  if (!siteSpecificFunctions.hookName || typeof siteSpecificFunctions.hookName !== 'string') {
     throw Error('Missing string property `hookName`');
   }
   const starNodeBig = document.createElement('div');
@@ -105,17 +103,17 @@ const createHook = userdata => {
   hookNode.title = 'Create an Anki card from this translation';
   hookNode.onclick = (event) => {
     const frontText = siteSpecificFunctions.extractFrontText(userdata);
-    if (typeof frontText != 'string') {
+    if (typeof frontText !== 'string') {
       console.error('Found', frontText);
       throw Error('Provided siteSpecificFunctions.extractFrontText() fonction did not return a string');
     }
     const backText = siteSpecificFunctions.extractBackText(userdata);
-    if (typeof frontText != 'string') {
+    if (typeof frontText !== 'string') {
       console.error('Found', backText);
       throw Error('Provided siteSpecificFunctions.extractBackText() fonction did not return a string');
     }
     const directionCode = siteSpecificFunctions.extractDirection(userdata);
-    if (typeof frontText != 'string') {
+    if (typeof frontText !== 'string') {
       console.error('Found', directionCode);
       throw Error('Provided siteSpecificFunctions.extractDirection() fonction did not return a string');
     }
@@ -127,10 +125,7 @@ const createHook = userdata => {
   hookNode.appendChild(starNodeSmall);
   hookNode.appendChild(textNode);
   return hookNode;
-}
+};
 
 
-(function() {
-  'use strict';
-  siteSpecificFunctions.run(createHook);
-})();
+siteSpecificFunctions.run(createHook);
