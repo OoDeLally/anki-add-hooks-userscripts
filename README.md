@@ -24,66 +24,29 @@ Add a button on translation websites to create an Anki card from a translation.
 ## Quick setup
 
 
-1- Install [Greasemonkey for Firefox](https://addons.mozilla.org/firefox/addon/greasemonkey/) or [Tampermonkey for Chrome](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo).
+1- Install [Tampermonkey for Chrome](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo).
 
 2- Click on some of the links above to install the Hook User Scripts on the websites of your choice.
 
 3- Install and run Anki Desktop **with the AnkiConnect add-on**. The Anki app must be running when the hook is clicked on a website.
 
-4- Anki's "Add" Button will appear on the translation pages of the websites you installed.
+4- Anki's "Add" Button will appear on the translation pages for the websites you installed.
 
 5- [File an issue](https://github.com/OoDeLally/anki-add-hooks-userscripts/issues) for any unexpected behavior.
 
 
 ## Create a hook for another website
 
-1- Create your own `src/hooks/my_website_com.js` exporting the following:
-```js
-// @name         Anki Add Hooks for My Website
-// @version      0.1
-// @description  Generate a hook for AnkiConnect on My Website
-// @author       Your Name
-// @include      /mywebsite.com/
+1- Make sure Tampermonkey has `Native Script Import` enabled in settings.
 
-// Added cards will be tagged with that name.
-export const hookName = 'my_website.com';
+2- Install the script [./dev.user.js](https://github.com/OoDeLally/anki-add-hooks-userscripts/blob/master/dev.user.js) after having fixed the `@include` and `@require` metatags.
 
-// Called once the user click on a hook.
-export const extractFrontText = (data) => {
-  // First argument is exactly what you gave to createHook().
-  return 'card front text';
-}
+3- Create your own `src/hooks/my_website_com.js` from the provided template [src/new_hook_template.js](https://github.com/OoDeLally/anki-add-hooks-userscripts/blob/master/src/new_hook_template.js) and fix inside all the metatags and the exported members.
 
-// Called once the user click on a hook.
-export const extractBackText = (data) => {
-  // First argument is exactly what you gave to createHook().
-  return 'card back text';
-}
+4- Run `npm run dev-build` to compile it to `dev-hooks/my_website_com_dev_hook.user.js`.
 
-// Called once the user click on a hook.
-export const extractDirection = (data) => {
-  // First argument is exactly what you gave to createHook().
-  // The returned string will be used to associate a deck name. It is useful if the
-  // user wants different target decks depending on the translation direction.
-  // e.g.  'fr -> en' and 'en -> fr' will be associated to deck "Learning French",
-  // while 'de -> en' and 'en -> de' will be associated to deck "Learning German"
-  return 'fr -> en';
-}
+5- Now when you modify and save `src/hooks/my_website_com.js`, you just need to reload your website to see the result of your modifications, without having to reinstall your script everytime!
 
-// Called after the page is loaded.
-export const run = (createHook) => {
-  const parentNode = locateParentNode();
+6- When you are happy with your script, run `npm run build` to compile it to the final userscript `hooks/my_website_com_hook.user.js`.
 
-  // `data` can be anything and will be passed as it is to `extractFrontText` and `extractBackText`.
-  const data = {parentNode, foo: 'additional info you want to pass'}
-
-  const hook = createHook(data);
-  parentNode.append(hook);
-}
-```
-
-
-
-2- Run `npm run build` to compile it to `hooks/my_website_com_hook.user.js`.
-
-3- Make a pull-request if you think it can be useful for other people.
+7- Make a pull-request if you think it can be useful for other people.
