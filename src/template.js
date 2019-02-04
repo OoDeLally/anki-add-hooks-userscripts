@@ -1,3 +1,7 @@
+import './style.css'
+import * as siteSpecificFunctions from '__SITE_SPECIFIC_FUNCTIONS__'
+
+
 const ankiRequestOnFail = async (response, message, directionCode) => {
   console.error('Anki request response:', response)
   console.error(message)
@@ -50,7 +54,7 @@ const hookOnClick = async (hookNode, frontText, backText, directionCode) => {
           Front: frontText,
           Back: backText,
         },
-        tags: [hookName],
+        tags: [siteSpecificFunctions.hookName],
       }
     }
   });
@@ -77,11 +81,14 @@ const hookOnClick = async (hookNode, frontText, backText, directionCode) => {
 
 
 const createHook = (userdata) => {
-  if (!extractFrontText || typeof extractFrontText != 'function') {
-    throw Error('Second argument must be a function which extract text for the front side of the card');
+  if (!siteSpecificFunctions.extractFrontText || typeof siteSpecificFunctions.extractFrontText != 'function') {
+    throw Error('Missing function extractFrontText()');
   }
-  if (!extractBackText || typeof extractBackText != 'function') {
-    throw Error('Third argument must be a function which extract text for the back side of the card');
+  if (!siteSpecificFunctions.extractBackText || typeof siteSpecificFunctions.extractBackText != 'function') {
+    throw Error('Missing function extractBackText()');
+  }
+  if (!siteSpecificFunctions.hookName || typeof siteSpecificFunctions.hookName != 'string') {
+    throw Error('Missing string property `hookName`');
   }
   const starNodeBig = document.createElement('div');
   starNodeBig.innerText = '★';
@@ -93,24 +100,24 @@ const createHook = (userdata) => {
   textNode.className = '-anki-quick-adder-hook-text';
   textNode.innerText = 'Add';
   const hookNode = document.createElement('div');
-  hookNode.setAttribute('name', hookName);
+  hookNode.setAttribute('name', siteSpecificFunctions.hookName);
   hookNode.className = '-anki-quick-adder-hook';
   hookNode.title = 'Create an Anki card from this translation';
   hookNode.onclick = (event) => {
-    const frontText = extractFrontText(userdata);
+    const frontText = siteSpecificFunctions.extractFrontText(userdata);
     if (typeof frontText != 'string') {
       console.error('Found', frontText);
-      throw Error('Provided extractFrontText() fonction did not return a string');
+      throw Error('Provided siteSpecificFunctions.extractFrontText() fonction did not return a string');
     }
-    const backText = extractBackText(userdata);
+    const backText = siteSpecificFunctions.extractBackText(userdata);
     if (typeof frontText != 'string') {
       console.error('Found', backText);
-      throw Error('Provided extractBackText() fonction did not return a string');
+      throw Error('Provided siteSpecificFunctions.extractBackText() fonction did not return a string');
     }
-    const directionCode = extractDirection(userdata);
+    const directionCode = siteSpecificFunctions.extractDirection(userdata);
     if (typeof frontText != 'string') {
       console.error('Found', directionCode);
-      throw Error('Provided extractDirection() fonction did not return a string');
+      throw Error('Provided siteSpecificFunctions.extractDirection() fonction did not return a string');
     }
     hookOnClick(hookNode, frontText, backText, directionCode);
     event.preventDefault();
@@ -125,10 +132,5 @@ const createHook = (userdata) => {
 
 (function() {
   'use strict';
-
-  var style = document.createElement('style');
-  style.appendChild(document.createTextNode(PLACEHOLDER_STYLE_TEXT));
-  document.getElementsByTagName('head')[0].appendChild(style);
-
-  run();
+  siteSpecificFunctions.run(createHook);
 })();

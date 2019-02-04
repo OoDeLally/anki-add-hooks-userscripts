@@ -4,10 +4,9 @@
 // @author       Pascal Heitz
 // @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
 
-require(`expose-loader?AnkiAddHooks!../template.js`);
 
 
-export const hookName = 'lingea_cz';
+export const hookName = 'lingea.cz';
 
 export const extractFrontText = (data) => {
   const sourceSentence = document.querySelector('table.entry  .head .lex_ful_entr').innerText;
@@ -29,7 +28,7 @@ export const extractDirection = () => {
   return match[1];
 }
 
-export const run = () => {
+export const run = createHook => {
   setInterval(() => {
     const parentNode = document.querySelector('.entry  tr.head td');
     if (!parentNode) {
@@ -39,7 +38,7 @@ export const run = () => {
     if (existingHook) {
       return // Hook already exists
     }
-    const hook = AnkiAddHooks.createHook();
+    const hook = createHook();
     hook.style.position = 'absolute';
     hook.style.right = '10px';
     parentNode.appendChild(hook);
