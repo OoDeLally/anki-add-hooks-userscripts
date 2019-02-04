@@ -104,7 +104,7 @@
 
 
 
-  const run = () => {
+  const run = (createHook) => {
     // There are two translation providers in reverso.
     // 1- the main reverso dictionary
     // 2- the collaborative dictionary
@@ -209,7 +209,7 @@
   };
 
 
-  const createHook$1 = userdata => {
+  const createHook = userdata => {
     if (!extractFrontText || typeof extractFrontText != 'function') {
       throw Error('Missing function extractFrontText()');
     }
@@ -257,7 +257,7 @@
 
 
   (function() {
-    run(createHook$1);
+    run(createHook);
   })();
 
 }());

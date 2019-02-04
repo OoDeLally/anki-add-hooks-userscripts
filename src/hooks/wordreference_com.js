@@ -89,7 +89,7 @@ export const extractBackText = (trGroup) => {
 
 
 
-const addHooksInTrGroup = (trGroup) => {
+const addHooksInTrGroup = (trGroup, createHook) => {
   const parent = trGroup[0].querySelector('td');
   parent.style.position = 'relative';
   const hook = createHook(trGroup);
@@ -99,8 +99,8 @@ const addHooksInTrGroup = (trGroup) => {
 }
 
 
-const addHooksInTable = (tableNode)=> {
-  getTrGroups(tableNode).forEach(addHooksInTrGroup);
+const addHooksInTable = (tableNode, createHook) => {
+  getTrGroups(tableNode).forEach(trGroup => addHooksInTrGroup(trGroup, createHook));
 }
 
 
@@ -114,6 +114,6 @@ export const extractDirection = () => {
 }
 
 
-export const run = ()=> {
-  getTables().forEach(addHooksInTable);
+export const run = createHook => {
+  getTables().forEach(tableNode => addHooksInTable(tableNode, createHook));
 }

@@ -35,7 +35,7 @@ export const extractDirection = () => {
 
 
 
-export const run = ()=> {
+export const run = createHook => {
   setInterval(() => {
     const parentNode = document.querySelector('.result-footer');
     if (!parentNode) {

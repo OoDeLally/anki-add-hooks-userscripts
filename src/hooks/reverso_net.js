@@ -73,7 +73,7 @@ export const extractDirection = () => {
 
 
 
-export const run = () => {
+export const run = (createHook) => {
   // There are two translation providers in reverso.
   // 1- the main reverso dictionary
   // 2- the collaborative dictionary

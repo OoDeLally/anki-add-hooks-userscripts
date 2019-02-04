@@ -66,7 +66,7 @@
 
 
 
-  const run = ()=> {
+  const run = createHook => {
     setInterval(() => {
       const parentNode = document.querySelector('.result-footer');
       if (!parentNode) {
@@ -164,7 +164,7 @@
   };
 
 
-  const createHook$1 = userdata => {
+  const createHook = userdata => {
     if (!extractFrontText || typeof extractFrontText != 'function') {
       throw Error('Missing function extractFrontText()');
     }
@@ -212,7 +212,7 @@
 
 
   (function() {
-    run(createHook$1);
+    run(createHook);
   })();
 
 }());

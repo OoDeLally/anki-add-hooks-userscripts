@@ -120,7 +120,7 @@
 
 
 
-  const addHooksInTrGroup = (trGroup) => {
+  const addHooksInTrGroup = (trGroup, createHook) => {
     const parent = trGroup[0].querySelector('td');
     parent.style.position = 'relative';
     const hook = createHook(trGroup);
@@ -130,8 +130,8 @@
   };
 
 
-  const addHooksInTable = (tableNode)=> {
-    getTrGroups(tableNode).forEach(addHooksInTrGroup);
+  const addHooksInTable = (tableNode, createHook) => {
+    getTrGroups(tableNode).forEach(trGroup => addHooksInTrGroup(trGroup, createHook));
   };
 
 
@@ -145,8 +145,8 @@
   };
 
 
-  const run = ()=> {
-    getTables().forEach(addHooksInTable);
+  const run = createHook => {
+    getTables().forEach(tableNode => addHooksInTable(tableNode, createHook));
   };
 
   const ankiRequestOnFail = async (response, message, directionCode) => {
@@ -227,7 +227,7 @@
   };
 
 
-  const createHook$1 = userdata => {
+  const createHook = userdata => {
     if (!extractFrontText || typeof extractFrontText != 'function') {
       throw Error('Missing function extractFrontText()');
     }
@@ -275,7 +275,7 @@
 
 
   (function() {
-    run(createHook$1);
+    run(createHook);
   })();
 
 }());
