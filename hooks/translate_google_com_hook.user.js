@@ -106,6 +106,10 @@
   };
 
   const hookOnClick = async (hookNode, frontText, backText, directionCode) => {
+    // console.log('frontText:', frontText)
+    // console.log('backText:', backText)
+    // console.log('directionCode:', directionCode)
+    // return
     const deckNameMapKey = getDeckNameMapKey(directionCode);
     let deckName = await GM.getValue(deckNameMapKey);
     if (!deckName) {
@@ -132,6 +136,9 @@
         note: {
           deckName,
           modelName,
+          options: {
+            allowDuplicate: true,
+          },
           fields: {
             Front: frontText,
             Back: backText,
@@ -184,13 +191,19 @@
         console.error('Found', frontText);
         throw Error('Provided siteSpecificFunctions.extractFrontText() fonction did not return a string');
       }
+      if (!frontText) {
+        throw Error('extractFrontText() returned an empty string');
+      }
       const backText = extractBackText(userdata);
-      if (typeof frontText !== 'string') {
+      if (typeof backText !== 'string') {
         console.error('Found', backText);
         throw Error('Provided siteSpecificFunctions.extractBackText() fonction did not return a string');
       }
+      if (!backText) {
+        throw Error('extractBackText() returned an empty string');
+      }
       const directionCode = extractDirection(userdata);
-      if (typeof frontText !== 'string') {
+      if (typeof directionCode !== 'string') {
         console.error('Found', directionCode);
         throw Error('Provided siteSpecificFunctions.extractDirection() fonction did not return a string');
       }

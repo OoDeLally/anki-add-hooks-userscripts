@@ -4,19 +4,55 @@
 // @author       Pascal Heitz
 // @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
 
+import stringifyNodeWithStyle from '../helpers/stringify_node_with_style';
+import isTextNode from '../helpers/is_text_node';
+
 
 export const hookName = 'lingea.cz';
 
+
+// On Lingea.cz each word is surrounded by a <w>.
+// It is useless for our purpose, so we drop it in order to be leaner.
+const dropWTags = (node) => {
+  node.childNodes.forEach((childNode) => {
+    if (
+      childNode.nodeName === 'W'
+      && childNode.childNodes.length === 1
+      && isTextNode(childNode.childNodes[0])
+    ) {
+      childNode.replaceWith(childNode.childNodes[0]);
+    }
+    return dropWTags(childNode);
+  });
+  return node;
+};
+
+const dropFrontTextJunk = (node) => {
+  const childNodesToRemove = [];
+  node.childNodes.forEach((childNode) => {
+    if (
+      // childNode.nodeName === 'SUP' // e.g. "do¹"
+      // ||
+      childNode.nodeValue === '*' // e.g. "do*"
+    ) {
+      childNodesToRemove.push(childNode);
+    }
+  });
+  childNodesToRemove.forEach(childNode => childNode.remove());
+  return node;
+};
+
+
 export const extractFrontText = () => {
-  const sourceSentence = document.querySelector('table.entry  .head .lex_ful_entr').innerText;
-  return sourceSentence;
+  const node = document.querySelector('table.entry  .head .lex_ful_entr');
+  return stringifyNodeWithStyle(node, dropFrontTextJunk);
 };
 
 export const extractBackText = () => {
   const translationRows = Array.from(document.querySelectorAll('.entry tr'))
     .filter(tr => !tr.className || !tr.className.includes('head'));
-  const definitionText = translationRows.map(tr => tr.innerText).join('\n');
-  return definitionText;
+  const definitionText = translationRows.map(tr => stringifyNodeWithStyle(tr, dropWTags)).join('');
+  return `<table>${definitionText}</table>`;
 };
 
 export const extractDirection = () => {
