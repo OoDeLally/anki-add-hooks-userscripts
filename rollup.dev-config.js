@@ -1,8 +1,9 @@
+import fs from 'fs';
 import glob from 'glob';
 import userScriptCss from 'rollup-plugin-userscript-css';
 import alias from 'rollup-plugin-alias';
 import path from 'path';
-
+import replace from 'rollup-plugin-replace';
 
 const makeConfig = entryFile => ({
   input: './src/template.js',
@@ -12,13 +13,16 @@ const makeConfig = entryFile => ({
     format: 'iife',
   },
   watch: {
-    input: ['./src/*.js', './src/style.css'],
+    input: ['./src/*.js', './src/*.css'],
   },
   plugins: [
     userScriptCss(),
     alias({
       __SITE_SPECIFIC_FUNCTIONS__: `${__dirname}/${entryFile}`,
     }),
+    replace({
+      __CARD_STYLE__: () => fs.readFileSync('./src/card_style.css', 'utf-8').replace(/[\n\r\s]/gm, ''),
+    })
   ],
 });
 

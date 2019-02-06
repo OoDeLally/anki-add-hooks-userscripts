@@ -3,6 +3,7 @@ import fs from 'fs';
 import userScriptCss from 'rollup-plugin-userscript-css';
 import alias from 'rollup-plugin-alias';
 import path from 'path';
+import replace from 'rollup-plugin-replace';
 
 
 const getMetatagLinesFromFile = (filePath) => {
@@ -33,6 +34,9 @@ const makeConfig = entryFile => ({
     alias({
       __SITE_SPECIFIC_FUNCTIONS__: `${__dirname}/${entryFile}`,
     }),
+    replace({
+      __CARD_STYLE__: fs.readFileSync('./src/card_style.css', 'utf-8').replace(/[\n\r\s]/gm, ''),
+    })
   ],
 });
 

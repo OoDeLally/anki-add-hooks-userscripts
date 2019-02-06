@@ -20,5 +20,7 @@ module.exports = {
     'padded-blocks': 'warn',
     'no-empty': 'warn',
     'no-trailing-spaces': 'warn',
+    'max-len': 'warn',
+    'indent': 'warn',
   }
 };

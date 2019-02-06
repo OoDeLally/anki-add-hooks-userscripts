@@ -43,25 +43,35 @@ const dropFrontTextJunk = (node) => {
 };
 
 
-export const extractFrontText = () => {
+const extractFrontText = () => {
   const node = document.querySelector('table.entry  .head .lex_ful_entr');
   return stringifyNodeWithStyle(node, dropFrontTextJunk);
 };
 
-export const extractBackText = () => {
+const extractBackText = () => {
   const translationRows = Array.from(document.querySelectorAll('.entry tr'))
     .filter(tr => !tr.className || !tr.className.includes('head'));
   const definitionText = translationRows.map(tr => stringifyNodeWithStyle(tr, dropWTags)).join('');
   return `<table>${definitionText}</table>`;
 };
 
-export const extractDirection = () => {
+const extractCardKind = () => {
   const match = window.location.href.match(/lingea\.cz\/(\w+-\w+)\//);
   if (!match) {
     throw Error('Failed to extract direction');
   }
   return match[1];
 };
+
+
+export const extract = () => ({
+  frontText: extractFrontText(),
+  backText: extractBackText(),
+  frontLanguage: null,
+  backLanguage: null,
+  cardKind: extractCardKind(),
+});
+
 
 export const run = (createHook) => {
   setInterval(() => {

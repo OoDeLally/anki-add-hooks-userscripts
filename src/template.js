@@ -1,23 +1,25 @@
 /* global GM */
 
 import './style.css';
+import './card_style.css';
 import * as siteSpecificFunctions from '__SITE_SPECIFIC_FUNCTIONS__'; // eslint-disable-line import/no-unresolved
 
 
-const getDeckNameMapKey = directionCode => `deckName_${directionCode.toLowerCase()}`;
-const getModelNameMapKey = directionCode => `modelName_${directionCode.toLowerCase()}`;
+const getDeckNameMapKey = cardKind => `deckName_${cardKind.toLowerCase()}`;
+const getModelNameMapKey = cardKind => `modelName_${cardKind.toLowerCase()}`;
 
-const ankiRequestOnFail = async (response, message, directionCode) => {
+const ankiRequestOnFail = async (response, message, cardKind) => {
   console.error('Anki request response:', response);
   console.error(message);
   if (message.includes('deck was not found')) {
-    await GM.setValue(getDeckNameMapKey(directionCode), null);
+    await GM.setValue(getDeckNameMapKey(cardKind), null);
   }
   if (message.includes('model was not found')) {
-    await GM.setValue(getModelNameMapKey(directionCode), null);
+    await GM.setValue(getModelNameMapKey(cardKind), null);
   }
   alert(`AnkiConnect returned an error:\n${message}`);
 };
+
 
 const ankiRequestOnSuccess = (hookNode) => {
   hookNode.classList.add('-anki-quick-adder-hook-added');
@@ -25,24 +27,39 @@ const ankiRequestOnSuccess = (hookNode) => {
   hookNode.onclick = () => {};
 };
 
-const hookOnClick = async (hookNode, frontText, backText, directionCode) => {
+
+const buildCardFace = (text, language, hookName) => {
+  const bannerContent = [
+    '<style>__CARD_STYLE__</style>', // Replaced at compilation by ./card_style.css
+    `<div class="banner-hook-name">${hookName}</div>`,
+  ];
+  if (language) {
+    bannerContent.push(`<div class="banner-language">${language}</div>`);
+  }
+  return `<div class="banner">${bannerContent.join('')}</div>${text}`;
+};
+
+
+const hookOnClick = async (
+  hookNode, frontText, backText, frontLanguage, backLanguage, cardKind, hookName
+) => {
   // console.log('frontText:', frontText)
   // console.log('backText:', backText)
-  // console.log('directionCode:', directionCode)
+  // console.log('cardKind:', cardKind)
   // return
-  const deckNameMapKey = getDeckNameMapKey(directionCode);
+  const deckNameMapKey = getDeckNameMapKey(cardKind);
   let deckName = await GM.getValue(deckNameMapKey);
   if (!deckName) {
-    deckName = prompt(`Enter the name of the deck you want to add '${directionCode}' cards from this website`, 'Default');
+    deckName = prompt(`Enter the name of the deck you want to add '${cardKind}' cards from this website`, 'Default');
     if (!deckName) {
       return; // Cancel
     }
     GM.setValue(deckNameMapKey, deckName);
   }
-  const modelNameMapKey = getModelNameMapKey(directionCode);
+  const modelNameMapKey = getModelNameMapKey(cardKind);
   let modelName = await GM.getValue(modelNameMapKey);
   if (!modelName) {
-    modelName = prompt(`Enter the name of the card model you want to create for '${directionCode}'`, 'Basic (and reversed card)');
+    modelName = prompt(`Enter the name of the card model you want to create for '${cardKind}'`, 'Basic (and reversed card)');
     if (!modelName) {
       return; // Cancel
     }
@@ -60,8 +77,8 @@ const hookOnClick = async (hookNode, frontText, backText, directionCode) => {
           allowDuplicate: true,
         },
         fields: {
-          Front: frontText,
-          Back: backText,
+          Front: buildCardFace(frontText, frontLanguage, hookName),
+          Back: buildCardFace(backText, backLanguage, hookName),
         },
         tags: [siteSpecificFunctions.hookName],
       },
@@ -71,12 +88,12 @@ const hookOnClick = async (hookNode, frontText, backText, directionCode) => {
     method: 'POST',
     url: 'http://localhost:8765',
     data: dataStr,
-    onabort: response => ankiRequestOnFail(response, 'Request was aborted', directionCode),
-    onerror: response => ankiRequestOnFail(response, 'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.', directionCode),
+    onabort: response => ankiRequestOnFail(response, 'Request was aborted', cardKind),
+    onerror: response => ankiRequestOnFail(response, 'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.', cardKind),
     onload: (response) => {
       const result = JSON.parse(response.responseText);
       if (result.error) {
-        ankiRequestOnFail(response, result.error);
+        ankiRequestOnFail(response, result.error, cardKind);
         return;
       }
       ankiRequestOnSuccess(hookNode);
@@ -86,11 +103,8 @@ const hookOnClick = async (hookNode, frontText, backText, directionCode) => {
 
 
 const createHook = (userdata) => {
-  if (!siteSpecificFunctions.extractFrontText || typeof siteSpecificFunctions.extractFrontText !== 'function') {
-    throw Error('Missing function extractFrontText()');
-  }
-  if (!siteSpecificFunctions.extractBackText || typeof siteSpecificFunctions.extractBackText !== 'function') {
-    throw Error('Missing function extractBackText()');
+  if (!siteSpecificFunctions.extract || typeof siteSpecificFunctions.extract !== 'function') {
+    throw Error('Missing function extract()');
   }
   if (!siteSpecificFunctions.hookName || typeof siteSpecificFunctions.hookName !== 'string') {
     throw Error('Missing string property `hookName`');
@@ -109,28 +123,41 @@ const createHook = (userdata) => {
   hookNode.className = '-anki-quick-adder-hook';
   hookNode.title = 'Create an Anki card from this translation';
   hookNode.onclick = (event) => {
-    const frontText = siteSpecificFunctions.extractFrontText(userdata);
+    const extractedFields = siteSpecificFunctions.extract(userdata);
+    if (typeof extractedFields !== 'object') {
+      console.error('Found', extractedFields);
+      throw Error('Provided siteSpecificFunctions.extract() fonction did not return an object');
+    }
+    const {
+      frontText, backText, frontLanguage, backLanguage, cardKind
+    } = extractedFields;
+
     if (typeof frontText !== 'string') {
       console.error('Found', frontText);
-      throw Error('Provided siteSpecificFunctions.extractFrontText() fonction did not return a string');
+      throw Error('Provided extract().frontText is not a string');
     }
     if (!frontText) {
-      throw Error('extractFrontText() returned an empty string');
+      throw Error('Provided extract().frontText is empty');
     }
-    const backText = siteSpecificFunctions.extractBackText(userdata);
     if (typeof backText !== 'string') {
       console.error('Found', backText);
-      throw Error('Provided siteSpecificFunctions.extractBackText() fonction did not return a string');
+      throw Error('Provided extract().backText is not a string');
     }
     if (!backText) {
-      throw Error('extractBackText() returned an empty string');
+      throw Error('Provided extract().backText is empty');
     }
-    const directionCode = siteSpecificFunctions.extractDirection(userdata);
-    if (typeof directionCode !== 'string') {
-      console.error('Found', directionCode);
-      throw Error('Provided siteSpecificFunctions.extractDirection() fonction did not return a string');
+    if (typeof cardKind !== 'string') {
+      console.error('Found', cardKind);
+      throw Error('Provided extract().cardKind is not a string');
     }
-    hookOnClick(hookNode, frontText, backText, directionCode);
+    if (!cardKind) {
+      throw Error('Provided extract().cardKind is empty');
+    }
+
+
+
+
+    hookOnClick(hookNode, frontText, backText, frontLanguage, backLanguage, cardKind, siteSpecificFunctions.hookName);
     event.preventDefault();
     event.stopPropagation();
   };

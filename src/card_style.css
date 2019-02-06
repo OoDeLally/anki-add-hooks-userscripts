@@ -1,0 +1,15 @@
+.banner {
+  height: 20px;
+  font-size: 14px;
+  color: deepskyblue;
+  text-align: left;
+}
+
+.banner-language {
+
+}
+
+
+.banner-hook-name {
+  float: right;
+}
