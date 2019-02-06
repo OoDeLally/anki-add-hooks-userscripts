@@ -22,5 +22,6 @@ module.exports = {
     'no-trailing-spaces': 'warn',
     'max-len': 'warn',
     'indent': 'warn',
+    'object-shorthand': 'warn',
   }
 };

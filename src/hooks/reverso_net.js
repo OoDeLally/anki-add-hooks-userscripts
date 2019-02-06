@@ -19,34 +19,28 @@ const extractMainTranslationFrontText = () => {
   if (!word) {
     throw Error('Could not find source word');
   }
-  const text = `${getLanguageCodes()[0]}\n${word}`;
-  return text;
+  return word;
 };
 
 const extractMainTranslationBackText = () => {
-  const blocks = Array.from(document.querySelectorAll('#TableHTMLResult div')).filter(div => div.getAttribute('border') === '1');
+  const blocks = Array.from(document.querySelectorAll('#TableHTMLResult div'))
+    .filter(div => div.getAttribute('border') === '1');
   blocks.shift(); // The first block is the source word.
-  const text = `${getLanguageCodes()[1]}\n${blocks.map(block => block.innerText).join('\n')}`;
-  return text;
+  return blocks.map(block => block.innerText).join('\n');
 };
 
 const extractCollaborativeTranslationFrontText = (parentNode) => {
   const word = parentNode.querySelector('.CDResSource').innerText;
-  const text = `${getLanguageCodes()[0]}\n${word}`;
-  return text;
+  return word;
 };
 
 const extractCollaborativeTranslationBackText = (parentNode) => {
   const word = parentNode.querySelector('.CDResTarget').innerText;
-  const text = `${getLanguageCodes()[1]}\n${word}`;
-  return text;
+  return word;
 };
 
 
-export const hookName = 'reverso.net';
-
-
-export const extractFrontText = ({ type, parentNode }) => {
+const extractFrontText = ({ type, parentNode }) => {
   if (type === 'mainDictionary') {
     return extractMainTranslationFrontText();
   }
@@ -56,7 +50,7 @@ export const extractFrontText = ({ type, parentNode }) => {
   throw Error(`Unknown type ${type}`);
 };
 
-export const extractBackText = ({ type, parentNode }) => {
+const extractBackText = ({ type, parentNode }) => {
   if (type === 'mainDictionary') {
     return extractMainTranslationBackText();
   }
@@ -66,9 +60,19 @@ export const extractBackText = ({ type, parentNode }) => {
   throw Error(`Unknown type ${type}`);
 };
 
-export const extractDirection = () => {
-  const languageCodes = getLanguageCodes();
-  return `${languageCodes[0]} -> ${languageCodes[1]}`;
+
+export const hookName = 'reverso.net';
+
+
+export const extract = (data) => {
+  const [sourceLanguage, targetLanguage] = getLanguageCodes();
+  return {
+    frontText: extractFrontText(data),
+    backText: extractBackText(data),
+    frontLanguage: sourceLanguage,
+    backLanguage: targetLanguage,
+    cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+  };
 };
 
 
@@ -80,7 +84,7 @@ export const run = (createHook) => {
   // 1- real reverso dictionary
   const mainDictionarySourceNode = document.querySelector('h2');
   if (mainDictionarySourceNode) {
-    const hook = createHook({type: 'mainDictionary'});
+    const hook = createHook({ type: 'mainDictionary' });
     hook.style.position = 'absolute';
     hook.style.right = '150px';
     hook.style.top = '10px';

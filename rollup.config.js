@@ -1,9 +1,7 @@
-import glob from 'glob';
 import fs from 'fs';
-import userScriptCss from 'rollup-plugin-userscript-css';
-import alias from 'rollup-plugin-alias';
 import path from 'path';
-import replace from 'rollup-plugin-replace';
+import _ from 'lodash';
+import { getEntryPoints, getCommonPlugins } from './rollup.common-config';
 
 
 const getMetatagLinesFromFile = (filePath) => {
@@ -20,25 +18,18 @@ const createMetatags = (entryFile) => {
   return output;
 };
 
-
-const makeConfig = entryFile => ({
+const makeConfig = (entryFile, entryName) => ({
   input: './src/template.js',
   output: {
-    file: `./hooks/${path.basename(entryFile, '.js')}_hook.user.js`,
+    file: `./hooks/${entryName}_hook.user.js`,
     name: 'AnkiAddHooks',
     format: 'iife',
     banner: createMetatags(entryFile),
   },
   plugins: [
-    userScriptCss(),
-    alias({
-      __SITE_SPECIFIC_FUNCTIONS__: `${__dirname}/${entryFile}`,
-    }),
-    replace({
-      __CARD_STYLE__: fs.readFileSync('./src/card_style.css', 'utf-8').replace(/[\n\r\s]/gm, ''),
-    })
-  ],
+    ...getCommonPlugins(entryFile),
+  ]
 });
 
 
-export default glob.sync('./src/hooks/*.js').map(makeConfig);
+export default _.map(getEntryPoints(), makeConfig);

@@ -13,30 +13,18 @@
 // Added cards will be tagged with that name.
 export const hookName = 'my_website.com';
 
-// Called once the user click on a hook.
-export const extractFrontText = (data) => {
+
+export const extract = (data) => {
   // First argument `data` is exactly what you gave to createHook().
-  // FIXME
-  return 'card front text';
+  return {
+    frontText: 'card front text', // FIXME
+    backText: 'card back text', // FIXME
+    frontLanguage: 'french', // FIXME,
+    backLanguage: 'english', // FIXME,
+    cardKind: 'french <-> english', // FIXME
+  };
 };
 
-// Called once the user click on a hook.
-export const extractBackText = (data) => {
-  // First argument `data` is exactly what you gave to createHook().
-  // FIXME
-  return 'card back text';
-};
-
-// Called once the user click on a hook.
-export const extractDirection = (data) => {
-  // First argument `data` is exactly what you gave to createHook().
-  // The returned string will be used to associate a deck name. It is useful if the
-  // user wants different target decks depending on the translation direction.
-  // e.g.  'fr -> en' and 'en -> fr' will be associated to deck "Learning French",
-  // while 'de -> en' and 'en -> de' will be associated to deck "Learning German"
-  // FIXME
-  return 'fr -> en';
-};
 
 // Called after the page is loaded.
 export const run = (createHook) => {
