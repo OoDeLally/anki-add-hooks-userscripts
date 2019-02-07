@@ -1,3 +1,8 @@
 
 // Tells if a node is a TextNode
-export default node => node.nodeType === 3;
+export default (node) => {
+  if (!node || node.nodeType === undefined) {
+    throw Error(`Provided 'node' is not a DOM node; instead found '${node}'`);
+  }
+  return node.nodeType === 3;
+};

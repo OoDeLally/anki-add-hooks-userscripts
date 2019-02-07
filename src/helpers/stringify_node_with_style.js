@@ -5,20 +5,22 @@ import { ANKI_ADD_BUTTON_CLASS } from '../constants';
 
 // Recursively clone node and assign explicit style to the clone.
 // Useful when you extract a node out of its class' scope.
-const cloneNodeWithExplicitStyle = (node) => {
-  if (node.nodeType === undefined) {
-    throw Error(`Provided 'node' is not a DOM node; instead got ${typeof node}.`);
+const cloneNodeWithExplicitStyle = (originalNode) => {
+  // console.log('originalNode:', originalNode)
+  if (originalNode.nodeType === undefined) {
+    throw Error(`Provided 'originalNode' is not a DOM node; instead got ${typeof originalNode}.`);
   }
-  if (isTextNode(node)) {
-    return node.cloneNode();
+  if (isTextNode(originalNode)) {
+    return originalNode.cloneNode();
   }
-  const cloneNode = node.cloneNode();
+  const cloneNode = originalNode.cloneNode();
+  cloneNode.removeAttribute('id');
   cloneNode.removeAttribute('class');
-  const styleText = exportNodeStyleToText(node);
-  // console.log('styleText:', styleText);
+  cloneNode.removeAttribute('name');
+  const styleText = exportNodeStyleToText(originalNode);
   cloneNode.style.cssText = styleText;
-  if (node.childNodes) {
-    node.childNodes.forEach(
+  if (originalNode.childNodes) {
+    originalNode.childNodes.forEach(
       (childNode) => {
         if (isTextNode(childNode)) {
           cloneNode.append(childNode.cloneNode());
@@ -52,16 +54,24 @@ const replaceAllCssColorToHexa = text =>
 const removeEmptyTagAttributes = text =>
   text
     .replace(/\s*style=""\s*/gm, ' ')
-    .replace(/\s*name=""\s*/gm, ' ')
-    .replace(/\s*class=""\s*/gm, ' ');
+    // .replace(/\s*name=""\s*/gm, ' ')
+    // .replace(/\s*class=""\s*/gm, ' ')
+    // .replace(/\s*id=""\s*/gm, ' ');
 
-// Create a stringified html screenshot of a node, with style! 😎
+
+// Create a stringified html screenshot of one or several node(s), with style! 😎
 // transformTree   function     transform the node tree before stringify it.
-export default (node, transformTree = (a => a)) => {
-  const transformedTree = transformTree(cloneNodeWithExplicitStyle(node));
+const stringifyNodeWithStyle = (node, transformTree = (a => a)) => {
+  if (Array.isArray(node)) {
+    return node.map(elt => stringifyNodeWithStyle(elt, transformTree)).join('');
+  }
+  const clonedTree = cloneNodeWithExplicitStyle(node);
+  const transformedTree = transformTree(clonedTree);
   if (isTextNode(transformedTree)) {
     return transformedTree.textContent;
   } else {
     return removeEmptyTagAttributes(replaceAllCssColorToHexa(transformedTree.outerHTML));
   }
 };
+
+export default stringifyNodeWithStyle;

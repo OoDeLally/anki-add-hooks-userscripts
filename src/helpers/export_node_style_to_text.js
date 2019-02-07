@@ -4,7 +4,7 @@ const ankiDefaultStyles = {
   boxSizing: 'border-box',
   clear: 'none',
   color: 'rgb(0, 0, 0)',
-  direction: 'ltr',
+  direction: ['', 'ltr'],
   flex: '0 1 auto',
   float: 'none',
   fontSize: '14px',

@@ -25,5 +25,6 @@ module.exports = {
     'object-shorthand': 'warn',
     'no-else-return': 'off',
     'comma-spacing': 'warn',
+    'prefer-const': 'warn',
   }
 };
