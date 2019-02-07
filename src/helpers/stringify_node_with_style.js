@@ -13,27 +13,27 @@ const cloneNodeWithExplicitStyle = (originalNode) => {
   if (isTextNode(originalNode)) {
     return originalNode.cloneNode();
   }
+  if (originalNode.className && originalNode.className.includes(ANKI_ADD_BUTTON_CLASS)) {
+    return null; // Ignore anki button
+  }
+  const originalNodeStyle = window.getComputedStyle(originalNode);
+  if (originalNodeStyle.display === 'none' || originalNodeStyle.opacity === '0') {
+    return null; // Ignore the hidden elements
+  }
   const cloneNode = originalNode.cloneNode();
   cloneNode.removeAttribute('id');
   cloneNode.removeAttribute('class');
   cloneNode.removeAttribute('name');
+  cloneNode.removeAttribute('title');
   const styleText = exportNodeStyleToText(originalNode);
   cloneNode.style.cssText = styleText;
   if (originalNode.childNodes) {
     originalNode.childNodes.forEach(
       (childNode) => {
-        if (isTextNode(childNode)) {
-          cloneNode.append(childNode.cloneNode());
-          return;
+        const clonedChild = cloneNodeWithExplicitStyle(childNode);
+        if (clonedChild) {
+          cloneNode.append(clonedChild);
         }
-        if (childNode.className && childNode.className.includes(ANKI_ADD_BUTTON_CLASS)) {
-          return; // Ignore anki button
-        }
-        const childNodeStyle = window.getComputedStyle(childNode);
-        if (childNodeStyle.display === 'none' || childNodeStyle.opacity === '0') {
-          return; // Ignore the hidden elements
-        }
-        cloneNode.append(cloneNodeWithExplicitStyle(childNode));
       }
     );
   }
@@ -66,6 +66,9 @@ const stringifyNodeWithStyle = (node, transformTree = (a => a)) => {
     return node.map(elt => stringifyNodeWithStyle(elt, transformTree)).join('');
   }
   const clonedTree = cloneNodeWithExplicitStyle(node);
+  if (!clonedTree) {
+    return '';
+  }
   const transformedTree = transformTree(clonedTree);
   if (isTextNode(transformedTree)) {
     return transformedTree.textContent;

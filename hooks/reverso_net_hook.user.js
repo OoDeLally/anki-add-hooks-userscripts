@@ -31,77 +31,355 @@
 
   __$styleInject(".banner {\n  height: 20px;\n  font-size: 14px;\n  color: deepskyblue;\n  text-align: left;\n}\n\n.banner-language {\n\n}\n\n\n.banner-hook-name {\n  float: right;\n}\n");
 
+  var highlightOnHookHover = (hookNode, elementsToHighlight, backgroundColor) => {
+    if (elementsToHighlight.forEach) {
+      hookNode.onmouseover = () => {
+        elementsToHighlight.forEach((elt) => {
+          elt.style.background = backgroundColor;
+        });
+      };
+      hookNode.onmouseout = () => {
+        elementsToHighlight.forEach((elt) => {
+          elt.style.background = null;
+        });
+      };
+    } else {
+      hookNode.onmouseover = () => {
+        elementsToHighlight.style.background = backgroundColor;
+      };
+      hookNode.onmouseout = () => {
+        elementsToHighlight.style.background = null;
+      };
+    }
+  };
+
+  // Tells if a node is a TextNode
+  var isTextNode = (node) => {
+    if (!node || node.nodeType === undefined) {
+      throw Error(`Provided 'node' is not a DOM node; instead found '${node}'`);
+    }
+    return node.nodeType === 3;
+  };
+
+  const ankiDefaultStyles = {
+    bottom: ['auto', '0px'],
+    boxShadow: 'none',
+    boxSizing: 'border-box',
+    clear: 'none',
+    color: 'rgb(0, 0, 0)',
+    direction: ['', 'ltr'],
+    flex: '0 1 auto',
+    float: 'none',
+    fontSize: '14px',
+    fontStyle: 'normal',
+    fontWeight: '400',
+    left: ['auto', '0px'],
+    lineHeight: '18px',
+    listStyle: 'disc outside none',
+    margin: '0px',
+    opacity: '1',
+    order: '0',
+    overflow: 'visible',
+    overflowAnchor: 'auto',
+    overflowWrap: 'normal',
+    overflowX: 'visible',
+    overflowY: 'visible',
+    padding: '0px',
+    position: 'static',
+    right: ['auto', '0px'],
+    stroke: 'none',
+    tableLayout: 'auto',
+    textAlign: 'start',
+    textDecorationLine: 'none',
+    textIndent: '0px',
+    textOrientation: 'mixed',
+    textOverflow: 'clip',
+    textSizeAdjust: '100%',
+    top: ['auto', '0px'],
+    wordBreak: 'normal',
+    wordSpacing: '0px',
+    wordWrap: 'normal',
+    zIndex: 'auto',
+    zoom: '1',
+  };
+
+  const getStyleDefaultValues = (key) => {
+    const value = ankiDefaultStyles[key];
+    return Array.isArray(value) ? value : [value];
+  };
+
+
+  const toKebabCase = text => text.replace(/([A-Z])/g, (str, letter) => `-${letter.toLowerCase()}`);
+
+
+  // export remarkable style attributes to text
+  var exportNodeStyleToText = (node) => {
+    const nodeStyle = window.getComputedStyle(node);
+    // console.log('nodeStyle:', nodeStyle);
+    const styleChunks = Object.keys(ankiDefaultStyles).reduce((elements, styleKey) => {
+      const propertyValue = nodeStyle[styleKey];
+      const defaultValues = getStyleDefaultValues(styleKey);
+      if (
+        propertyValue
+        && !defaultValues.includes(propertyValue)
+        && propertyValue !== window.getComputedStyle(node.parentNode)[styleKey]
+      ) {
+        elements.push(`${toKebabCase(styleKey)}:${propertyValue};`);
+        // console.log(`${toKebabCase(styleKey)}:${propertyValue};`);
+      }
+      return elements;
+    }, []);
+    // console.log('node.nodeName:', node.nodeName)
+    // console.log('nodeStyle.display:', nodeStyle.display)
+    if (
+      (node.nodeName === 'DIV' && nodeStyle.display !== 'block')
+      || (node.nodeName === 'TR' && nodeStyle.display !== 'table-row')
+      || (node.nodeName === 'TD' && nodeStyle.display !== 'table-cell')
+      || (node.nodeName !== 'DIV' && nodeStyle.display === 'block')
+    ) {
+      styleChunks.push(`display:${nodeStyle.display};`);
+    // console.log('`display:${nodeStyle.display};`:', `display:${nodeStyle.display};`)
+    }
+
+    if (nodeStyle.borderStyle !== 'none') {
+      styleChunks.push(`border:${nodeStyle.border};`);
+    }
+
+    if (node.style.width) {
+      styleChunks.push(`width:${node.style.width};`);
+    }
+    if (node.style.height) {
+      styleChunks.push(`height:${node.style.height};`);
+    }
+
+
+    return styleChunks.join('');
+  };
+
+  const ANKI_ADD_BUTTON_CLASS = '-anki-add-hook';
+
+  // Recursively clone node and assign explicit style to the clone.
+  // Useful when you extract a node out of its class' scope.
+  const cloneNodeWithExplicitStyle = (originalNode) => {
+    // console.log('originalNode:', originalNode)
+    if (originalNode.nodeType === undefined) {
+      throw Error(`Provided 'originalNode' is not a DOM node; instead got ${typeof originalNode}.`);
+    }
+    if (isTextNode(originalNode)) {
+      return originalNode.cloneNode();
+    }
+    if (originalNode.className && originalNode.className.includes(ANKI_ADD_BUTTON_CLASS)) {
+      return null; // Ignore anki button
+    }
+    const originalNodeStyle = window.getComputedStyle(originalNode);
+    if (originalNodeStyle.display === 'none' || originalNodeStyle.opacity === '0') {
+      return null; // Ignore the hidden elements
+    }
+    const cloneNode = originalNode.cloneNode();
+    cloneNode.removeAttribute('id');
+    cloneNode.removeAttribute('class');
+    cloneNode.removeAttribute('name');
+    cloneNode.removeAttribute('title');
+    const styleText = exportNodeStyleToText(originalNode);
+    cloneNode.style.cssText = styleText;
+    if (originalNode.childNodes) {
+      originalNode.childNodes.forEach(
+        (childNode) => {
+          const clonedChild = cloneNodeWithExplicitStyle(childNode);
+          if (clonedChild) {
+            cloneNode.append(clonedChild);
+          }
+        }
+      );
+    }
+    return cloneNode;
+  };
+
+
+  const padTo2With0 = stringNumber => (stringNumber.length === 1 ? `0${stringNumber}` : stringNumber);
+
+  const decToHexa = text => padTo2With0(parseInt(text, 10).toString(16));
+
+  const replaceAllCssColorToHexa = text =>
+    text.replace(
+      /\brgb\((\d+), (\d+), (\d+)\)/gm,
+      (str, r, g, b) => `#${decToHexa(r)}${decToHexa(g)}${decToHexa(b)}`
+    );
+
+  const removeEmptyTagAttributes = text =>
+    text
+      .replace(/\s*style=""\s*/gm, ' ');
+      // .replace(/\s*name=""\s*/gm, ' ')
+      // .replace(/\s*class=""\s*/gm, ' ')
+      // .replace(/\s*id=""\s*/gm, ' ');
+
+
+  // Create a stringified html screenshot of one or several node(s), with style! 😎
+  // transformTree   function     transform the node tree before stringify it.
+  const stringifyNodeWithStyle = (node, transformTree = (a => a)) => {
+    if (Array.isArray(node)) {
+      return node.map(elt => stringifyNodeWithStyle(elt, transformTree)).join('');
+    }
+    const clonedTree = cloneNodeWithExplicitStyle(node);
+    if (!clonedTree) {
+      return '';
+    }
+    const transformedTree = transformTree(clonedTree);
+    if (isTextNode(transformedTree)) {
+      return transformedTree.textContent;
+    } else {
+      return removeEmptyTagAttributes(replaceAllCssColorToHexa(transformedTree.outerHTML));
+    }
+  };
+
+  const cleanTreeRec = (node) => {
+    if (
+      (node.nodeName === 'SPAN' && !node.textContent.replace(/[ \t]/gm, ''))
+      || node.nodeName === 'HR'
+    ) {
+      node.remove();
+      return;
+    }
+    // Clone the array to avoid screwing the iteration when a child if removed
+    Array.from(node.childNodes)
+      .forEach(childNode => cleanTreeRec(childNode));
+  };
+
+  const cleanTree = (rootNode) => {
+    cleanTreeRec(rootNode);
+    return rootNode;
+  };
+
+  const composeFunctions = (...funs) =>
+    (...args) => {
+      let val = args;
+      funs.forEach((fun) => {
+        val = [fun(...val)];
+      });
+      return val[0];
+    };
+
+  /*
+    <div>
+      <b><h2>FirstWord</h2></b>
+      <!-- Stuff -->
+      <b>adj</b>
+      <!-- First word translation -->
+    </div>
+    <div>
+      <!-- First word translation -->
+    </div>
+    <div>
+      <b>SecondWord</b>
+      <!-- Stuff -->
+      <b>adj</b>
+      <!-- Second word translation -->
+    </div>
+    <div>
+      <!-- Second word translation -->
+    </div>
+
+    We need to separate the first div in two, because it contains information
+    for both sides of the card.
+    We take up to the second <b></b> for the first div.
+    The rest of the first div and the subsequent divs are part of the back of the card.
+  */
+  const partitionFrontAndBackInFirstDiv = (divGroup) => {
+    const nodes = Array.from(divGroup[0].childNodes);
+    const nodesToKeep = [];
+    let bNodeSeen = 0;
+    for (let nodeIndex = 0; nodeIndex < nodes.length; nodeIndex++) {
+      const node = nodes[nodeIndex];
+      nodesToKeep.push(node);
+      if (node.nodeName === 'B') {
+        bNodeSeen++;
+        if (bNodeSeen === 2) {
+          return [nodesToKeep, nodes.slice(nodeIndex + 1)];
+        }
+      }
+    }
+    return [nodesToKeep, []];
+  };
+
+
+  const extractFrontText = (divGroup) => {
+    const transformTree = composeFunctions(cleanTree);
+    return stringifyNodeWithStyle(partitionFrontAndBackInFirstDiv(divGroup)[0], transformTree);
+  };
+
+  const extractBackText = (divGroup) => {
+    const [, ...rest] = divGroup;
+    return `<div style="text-align:left;margin:auto;display:table;">
+            ${stringifyNodeWithStyle(partitionFrontAndBackInFirstDiv(divGroup)[1])}
+            ${stringifyNodeWithStyle(rest, cleanTree)}
+          </div>
+        `;
+  };
+
+
+  const getDivGroup = (wordNode, nextWordNode) => {
+    const divsToHighlight = [];
+    if (nextWordNode) {
+      let node = wordNode.parentNode;
+      while (node && node !== nextWordNode.parentNode) {
+        if (!isTextNode(node)) {
+          divsToHighlight.push(node);
+        }
+        node = node.nextSibling;
+      }
+    } else {
+      divsToHighlight.push(wordNode.parentNode);
+    }
+    return divsToHighlight;
+  };
+
+
+  const extract = divGroup => ({
+    frontText: extractFrontText(divGroup),
+    backText: extractBackText(divGroup),
+  });
+
+  const run = (createHook) => {
+    const translateBox = document.getElementsByName('translate_box')[0];
+    if (!translateBox) {
+      return;
+    }
+    const wordNodes = translateBox.querySelectorAll('div b:first-child');
+    wordNodes.forEach((wordNode, wordNodeIndex) => {
+      const divGroup = getDivGroup(wordNode, wordNodes[wordNodeIndex + 1]);
+      const hook = createHook({ type: 'collins', data: divGroup });
+      hook.style.position = 'absolute';
+      hook.style.right = '0px';
+      hook.style.top = '10px';
+      highlightOnHookHover(hook, divGroup, 'lightblue');
+      wordNode.parentNode.style.position = 'relative';
+      wordNode.parentNode.append(hook);
+    });
+  };
+
   // @name         Anki Add Hooks for Reverso
-  // @version      0.1
-  // @description  Generate a hook for AnkiConnect on Reverso
-  // @author       Pascal Heitz
-  // @include      /reverso\.net\/\w+-\w+/\w+/
-
-
-  const getLanguageCodes = () => {
-    const match = window.location.href.match(/reverso\.net\/([a-z]+)-([a-z]+)\//);
-    if (!match) {
-      throw Error('Failed to get language codes');
-    }
-    return [match[1], match[2]];
-  };
-
-
-  const extractMainTranslationFrontText = () => {
-    const word = document.querySelector('h2').innerText;
-    if (!word) {
-      throw Error('Could not find source word');
-    }
-    return word;
-  };
-
-  const extractMainTranslationBackText = () => {
-    const blocks = Array.from(document.querySelectorAll('#TableHTMLResult div'))
-      .filter(div => div.getAttribute('border') === '1');
-    blocks.shift(); // The first block is the source word.
-    return blocks.map(block => block.innerText).join('\n');
-  };
-
-  const extractCollaborativeTranslationFrontText = (parentNode) => {
-    const word = parentNode.querySelector('.CDResSource').innerText;
-    return word;
-  };
-
-  const extractCollaborativeTranslationBackText = (parentNode) => {
-    const word = parentNode.querySelector('.CDResTarget').innerText;
-    return word;
-  };
-
-
-  const extractFrontText = ({ type, parentNode }) => {
-    if (type === 'mainDictionary') {
-      return extractMainTranslationFrontText();
-    }
-    if (type === 'collaborativeDictionary') {
-      return extractCollaborativeTranslationFrontText(parentNode);
-    }
-    throw Error(`Unknown type ${type}`);
-  };
-
-  const extractBackText = ({ type, parentNode }) => {
-    if (type === 'mainDictionary') {
-      return extractMainTranslationBackText();
-    }
-    if (type === 'collaborativeDictionary') {
-      return extractCollaborativeTranslationBackText(parentNode);
-    }
-    throw Error(`Unknown type ${type}`);
-  };
 
 
   const hookName = 'reverso.net';
 
 
-  const extract = (data) => {
-    const [sourceLanguage, targetLanguage] = getLanguageCodes();
+  const extract$1 = ({ type, data }) => {
+    let [, sourceLanguage, targetLanguage] = window.location.href.match(/reverso\.net\/([a-z]+)-([a-z]+)\//);
+    let extractedData;
+    if (type === 'collins') {
+      extractedData = extract(data);
+    } else {
+      throw Error(`Unknown type '${type}'`);
+    }
+    const { reversedDirection, frontText, backText } = extractedData;
+    if (reversedDirection) {
+      const tmp = targetLanguage;
+      targetLanguage = sourceLanguage;
+      sourceLanguage = tmp;
+    }
     return {
-      frontText: extractFrontText(data),
-      backText: extractBackText(data),
+      frontText,
+      backText,
       frontLanguage: sourceLanguage,
       backLanguage: targetLanguage,
       cardKind: `${sourceLanguage} -> ${targetLanguage}`,
@@ -109,34 +387,29 @@
   };
 
 
-  const run = (createHook) => {
-    // There are two translation providers in reverso.
-    // 1- the main reverso dictionary
-    // 2- the collaborative dictionary
-
-    // 1- real reverso dictionary
-    const mainDictionarySourceNode = document.querySelector('h2');
-    if (mainDictionarySourceNode) {
-      const hook = createHook({ type: 'mainDictionary' });
-      hook.style.position = 'absolute';
-      hook.style.right = '150px';
-      hook.style.top = '10px';
-      mainDictionarySourceNode.parentNode.append(hook);
-    }
-
-    // 2- collaborative dictionary
-    const collaborativeDefinitionsRows = Array.from(document.querySelectorAll('.CDResTable tr')).filter(tr => tr.getAttribute('valign') === 'top');
-    collaborativeDefinitionsRows.forEach((rowNode) => {
-      const hook = createHook({ type: 'collaborativeDictionary', parentNode: rowNode });
-      hook.style.position = 'absolute';
-      hook.style.left = '105px';
-      const parentNode = rowNode.querySelector('.CDResAct');
-      parentNode.style.position = 'relative';
-      parentNode.append(hook);
+  // There are weird "&nbsp;" spans with a white border-bottom, that make it
+  // ugly when we put a background. So we set them to transparent instead.
+  const hideNbspSpans = () => {
+    document.querySelectorAll('.nbsp1').forEach((span) => {
+      span.style.setProperty('border-color', 'transparent', 'important');
     });
   };
 
-  const ANKI_ADD_BUTTON_CLASS = '-anki-add-hook';
+
+  const run$1 = (createHook) => {
+    hideNbspSpans();
+    run(createHook);
+
+    // const collaborativeDefinitionsRows = Array.from(document.querySelectorAll('.CDResTable tr')).filter(tr => tr.getAttribute('valign') === 'top');
+    // collaborativeDefinitionsRows.forEach((rowNode) => {
+    //   const hook = createHook({ type: 'collaborativeDictionary', parentNode: rowNode });
+    //   hook.style.position = 'absolute';
+    //   hook.style.left = '105px';
+    //   const parentNode = rowNode.querySelector('.CDResAct');
+    //   parentNode.style.position = 'relative';
+    //   parentNode.append(hook);
+    // });
+  };
 
   /* global GM */
 
@@ -185,7 +458,8 @@
   const hookOnClick = async (
     hookNode, frontText, backText, frontLanguage, backLanguage, cardKind, hookName$$1
   ) => {
-    console.log('frontText:', frontText);
+    // console.log('frontText:', frontText)
+    // console.log('backText:', backText)
     // console.log('cardKind:', cardKind)
     // return
     const deckNameMapKey = getDeckNameMapKey(cardKind);
@@ -244,7 +518,7 @@
 
 
   const createHook = (userdata) => {
-    if (!extract || typeof extract !== 'function') {
+    if (!extract$1 || typeof extract$1 !== 'function') {
       throw Error('Missing function extract()');
     }
     const starNodeBig = document.createElement('div');
@@ -263,7 +537,7 @@
     hookNode.onclick = (event) => {
       event.preventDefault();
       event.stopPropagation();
-      const extractedFields = extract(userdata);
+      const extractedFields = extract$1(userdata);
       if (typeof extractedFields !== 'object') {
         console.error('Found', extractedFields);
         throw Error('Provided siteSpecificFunctions.extract() fonction did not return an object');
@@ -310,6 +584,6 @@
   };
 
 
-  run(createHook);
+  run$1(createHook);
 
 }());

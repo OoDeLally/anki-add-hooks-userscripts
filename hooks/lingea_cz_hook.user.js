@@ -32,7 +32,12 @@
   __$styleInject(".banner {\n  height: 20px;\n  font-size: 14px;\n  color: deepskyblue;\n  text-align: left;\n}\n\n.banner-language {\n\n}\n\n\n.banner-hook-name {\n  float: right;\n}\n");
 
   // Tells if a node is a TextNode
-  var isTextNode = node => node.nodeType === 3;
+  var isTextNode = (node) => {
+    if (!node || node.nodeType === undefined) {
+      throw Error(`Provided 'node' is not a DOM node; instead found '${node}'`);
+    }
+    return node.nodeType === 3;
+  };
 
   const ankiDefaultStyles = {
     bottom: ['auto', '0px'],
@@ -40,7 +45,7 @@
     boxSizing: 'border-box',
     clear: 'none',
     color: 'rgb(0, 0, 0)',
-    direction: 'ltr',
+    direction: ['', 'ltr'],
     flex: '0 1 auto',
     float: 'none',
     fontSize: '14px',
@@ -134,33 +139,35 @@
 
   // Recursively clone node and assign explicit style to the clone.
   // Useful when you extract a node out of its class' scope.
-  const cloneNodeWithExplicitStyle = (node) => {
-    if (node.nodeType === undefined) {
-      throw Error(`Provided 'node' is not a DOM node; instead got ${typeof node}.`);
+  const cloneNodeWithExplicitStyle = (originalNode) => {
+    // console.log('originalNode:', originalNode)
+    if (originalNode.nodeType === undefined) {
+      throw Error(`Provided 'originalNode' is not a DOM node; instead got ${typeof originalNode}.`);
     }
-    if (isTextNode(node)) {
-      return node.cloneNode();
+    if (isTextNode(originalNode)) {
+      return originalNode.cloneNode();
     }
-    const cloneNode = node.cloneNode();
+    if (originalNode.className && originalNode.className.includes(ANKI_ADD_BUTTON_CLASS)) {
+      return null; // Ignore anki button
+    }
+    const originalNodeStyle = window.getComputedStyle(originalNode);
+    if (originalNodeStyle.display === 'none' || originalNodeStyle.opacity === '0') {
+      return null; // Ignore the hidden elements
+    }
+    const cloneNode = originalNode.cloneNode();
+    cloneNode.removeAttribute('id');
     cloneNode.removeAttribute('class');
-    const styleText = exportNodeStyleToText(node);
-    // console.log('styleText:', styleText);
+    cloneNode.removeAttribute('name');
+    cloneNode.removeAttribute('title');
+    const styleText = exportNodeStyleToText(originalNode);
     cloneNode.style.cssText = styleText;
-    if (node.childNodes) {
-      node.childNodes.forEach(
+    if (originalNode.childNodes) {
+      originalNode.childNodes.forEach(
         (childNode) => {
-          if (isTextNode(childNode)) {
-            cloneNode.append(childNode.cloneNode());
-            return;
+          const clonedChild = cloneNodeWithExplicitStyle(childNode);
+          if (clonedChild) {
+            cloneNode.append(clonedChild);
           }
-          if (childNode.className && childNode.className.includes(ANKI_ADD_BUTTON_CLASS)) {
-            return; // Ignore anki button
-          }
-          const childNodeStyle = window.getComputedStyle(childNode);
-          if (childNodeStyle.display === 'none' || childNodeStyle.opacity === '0') {
-            return; // Ignore the hidden elements
-          }
-          cloneNode.append(cloneNodeWithExplicitStyle(childNode));
         }
       );
     }
@@ -180,14 +187,23 @@
 
   const removeEmptyTagAttributes = text =>
     text
-      .replace(/\s*style=""\s*/gm, ' ')
-      .replace(/\s*name=""\s*/gm, ' ')
-      .replace(/\s*class=""\s*/gm, ' ');
+      .replace(/\s*style=""\s*/gm, ' ');
+      // .replace(/\s*name=""\s*/gm, ' ')
+      // .replace(/\s*class=""\s*/gm, ' ')
+      // .replace(/\s*id=""\s*/gm, ' ');
 
-  // Create a stringified html screenshot of a node, with style! 😎
+
+  // Create a stringified html screenshot of one or several node(s), with style! 😎
   // transformTree   function     transform the node tree before stringify it.
-  var stringifyNodeWithStyle = (node, transformTree = (a => a)) => {
-    const transformedTree = transformTree(cloneNodeWithExplicitStyle(node));
+  const stringifyNodeWithStyle = (node, transformTree = (a => a)) => {
+    if (Array.isArray(node)) {
+      return node.map(elt => stringifyNodeWithStyle(elt, transformTree)).join('');
+    }
+    const clonedTree = cloneNodeWithExplicitStyle(node);
+    if (!clonedTree) {
+      return '';
+    }
+    const transformedTree = transformTree(clonedTree);
     if (isTextNode(transformedTree)) {
       return transformedTree.textContent;
     } else {
@@ -327,7 +343,8 @@
   const hookOnClick = async (
     hookNode, frontText, backText, frontLanguage, backLanguage, cardKind, hookName$$1
   ) => {
-    console.log('frontText:', frontText);
+    // console.log('frontText:', frontText)
+    // console.log('backText:', backText)
     // console.log('cardKind:', cardKind)
     // return
     const deckNameMapKey = getDeckNameMapKey(cardKind);

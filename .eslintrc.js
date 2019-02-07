@@ -26,5 +26,6 @@ module.exports = {
     'no-else-return': 'off',
     'comma-spacing': 'warn',
     'prefer-const': 'warn',
+    'no-plusplus': 'off',
   }
 };

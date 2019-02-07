@@ -197,7 +197,8 @@
   const hookOnClick = async (
     hookNode, frontText, backText, frontLanguage, backLanguage, cardKind, hookName$$1
   ) => {
-    console.log('frontText:', frontText);
+    // console.log('frontText:', frontText)
+    // console.log('backText:', backText)
     // console.log('cardKind:', cardKind)
     // return
     const deckNameMapKey = getDeckNameMapKey(cardKind);
