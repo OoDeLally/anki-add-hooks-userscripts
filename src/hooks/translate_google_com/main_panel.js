@@ -1,18 +1,15 @@
 import highlightOnHookHover from '../../helpers/highlight_on_hook_hover';
+import { ANKI_ADD_BUTTON_CLASS_SELECTOR } from '../../constants';
 
 
 const frontFieldSelector = 'textarea#source';
 const backFieldSelector = '.translation';
 
 
-export const extract = () => {
-  const frontText = document.querySelector(frontFieldSelector).value;
-  const backText = document.querySelector(backFieldSelector).innerText;
-  return {
-    frontText: `<div style="text-align:center;">${frontText}</div>`,
-    backText: `<div style="text-align:center;">${backText}</div>`,
-  };
-};
+export const extract = () => ({
+  frontText: document.querySelector(frontFieldSelector).value,
+  backText: document.querySelector(backFieldSelector).innerText,
+});
 
 
 export const run = (createHook) => {
@@ -21,7 +18,7 @@ export const run = (createHook) => {
   if (!parentNode) {
     return; // Container not found
   }
-  const existingHook = parentNode.querySelector('.-anki-quick-adder-hook');
+  const existingHook = parentNode.querySelector(ANKI_ADD_BUTTON_CLASS_SELECTOR);
   if (existingHook) {
     return; // Hook already exists
   }

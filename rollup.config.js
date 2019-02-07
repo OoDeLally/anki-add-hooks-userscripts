@@ -1,5 +1,4 @@
 import fs from 'fs';
-import path from 'path';
 import _ from 'lodash';
 import { getEntryPoints, getCommonPlugins } from './rollup.common-config';
 

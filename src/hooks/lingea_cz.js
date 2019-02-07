@@ -6,6 +6,7 @@
 
 import stringifyNodeWithStyle from '../helpers/stringify_node_with_style';
 import isTextNode from '../helpers/is_text_node';
+import { ANKI_ADD_BUTTON_CLASS_SELECTOR } from '../constants';
 
 
 export const hookName = 'lingea.cz';
@@ -79,7 +80,7 @@ export const run = (createHook) => {
     if (!parentNode) {
       return; // Container not found
     }
-    const existingHook = parentNode.querySelector('.-anki-quick-adder-hook');
+    const existingHook = parentNode.querySelector(ANKI_ADD_BUTTON_CLASS_SELECTOR);
     if (existingHook) {
       return; // Hook already exists
     }

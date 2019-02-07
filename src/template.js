@@ -3,6 +3,7 @@
 import './style.css';
 import './card_style.css';
 import * as siteSpecificFunctions from '__SITE_SPECIFIC_FUNCTIONS__'; // eslint-disable-line import/no-unresolved
+import { ANKI_ADD_BUTTON_CLASS } from './constants';
 
 
 const getDeckNameMapKey = cardKind => `deckName_${cardKind.toLowerCase()}`;
@@ -22,13 +23,13 @@ const ankiRequestOnFail = async (response, message, cardKind) => {
 
 
 const ankiRequestOnSuccess = (hookNode) => {
-  hookNode.classList.add('-anki-quick-adder-hook-added');
-  hookNode.querySelector('.-anki-quick-adder-hook-text').innerText = 'Added';
+  hookNode.classList.add('-anki-add-hook-added');
+  hookNode.querySelector('.-anki-add-hook-text').innerText = 'Added';
   hookNode.onclick = () => {};
 };
 
 
-const buildCardFace = (text, language, hookName) => {
+const buildCardFace = (htmlContent, language, hookName) => {
   const bannerContent = [
     '<style>__CARD_STYLE__</style>', // Replaced at compilation by ./card_style.css
     `<div class="banner-hook-name">${hookName}</div>`,
@@ -36,15 +37,20 @@ const buildCardFace = (text, language, hookName) => {
   if (language) {
     bannerContent.push(`<div class="banner-language">${language}</div>`);
   }
-  return `<div class="banner">${bannerContent.join('')}</div>${text}`;
+  return `<div class="banner">
+            ${bannerContent.join('')}
+          </div>
+          <div style="text-align:center;width:100%;">
+          ${htmlContent}
+          </div>
+        `;
 };
 
 
 const hookOnClick = async (
   hookNode, frontText, backText, frontLanguage, backLanguage, cardKind, hookName
 ) => {
-  // console.log('frontText:', frontText)
-  // console.log('backText:', backText)
+  console.log('frontText:', frontText)
   // console.log('cardKind:', cardKind)
   // return
   const deckNameMapKey = getDeckNameMapKey(cardKind);
@@ -111,18 +117,20 @@ const createHook = (userdata) => {
   }
   const starNodeBig = document.createElement('div');
   starNodeBig.innerText = '★';
-  starNodeBig.className = '-anki-quick-adder-hook-star -anki-quick-adder-hook-star-big';
+  starNodeBig.className = '-anki-add-hook-star -anki-add-hook-star-big';
   const starNodeSmall = document.createElement('div');
   starNodeSmall.innerText = '★';
-  starNodeSmall.className = '-anki-quick-adder-hook-star -anki-quick-adder-hook-star-small';
+  starNodeSmall.className = '-anki-add-hook-star -anki-add-hook-star-small';
   const textNode = document.createElement('span');
-  textNode.className = '-anki-quick-adder-hook-text';
+  textNode.className = '-anki-add-hook-text';
   textNode.innerText = 'Add';
   const hookNode = document.createElement('div');
   hookNode.setAttribute('name', siteSpecificFunctions.hookName);
-  hookNode.className = '-anki-quick-adder-hook';
+  hookNode.className = ANKI_ADD_BUTTON_CLASS;
   hookNode.title = 'Create an Anki card from this translation';
   hookNode.onclick = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
     const extractedFields = siteSpecificFunctions.extract(userdata);
     if (typeof extractedFields !== 'object') {
       console.error('Found', extractedFields);
@@ -131,6 +139,8 @@ const createHook = (userdata) => {
     const {
       frontText, backText, frontLanguage, backLanguage, cardKind
     } = extractedFields;
+    // console.log('frontText:', frontText)
+    // console.log('backText:', backText)
 
     if (typeof frontText !== 'string') {
       console.error('Found', frontText);
@@ -154,12 +164,12 @@ const createHook = (userdata) => {
       throw Error('Provided extract().cardKind is empty');
     }
 
-
-
-
-    hookOnClick(hookNode, frontText, backText, frontLanguage, backLanguage, cardKind, siteSpecificFunctions.hookName);
-    event.preventDefault();
-    event.stopPropagation();
+    hookOnClick(
+      hookNode, frontText, backText,
+      frontLanguage, backLanguage,
+      cardKind,
+      siteSpecificFunctions.hookName
+    );
   };
   hookNode.appendChild(starNodeBig);
   hookNode.appendChild(starNodeSmall);

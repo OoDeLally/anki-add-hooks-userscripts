@@ -1,18 +1,19 @@
 import highlightOnHookHover from '../../helpers/highlight_on_hook_hover';
+import { ANKI_ADD_BUTTON_CLASS_SELECTOR } from '../../constants';
 
 
 export const extract = (parentTr) => {
   const [sourceTd, targetTd] = parentTr.querySelectorAll('td');
   return {
-    frontText: `<div style="text-align:center;">${sourceTd.innerText}</div>`,
-    backText: `<div style="text-align:center;">${targetTd.innerText}</div>`,
+    frontText: sourceTd.innerText,
+    backText: targetTd.innerText,
   };
 };
 
 
 const tryAddingToRow = (parentTr, createHook) => {
   const [, , actionTd] = parentTr.querySelectorAll('td');
-  const existingHook = actionTd.querySelector('.-anki-quick-adder-hook');
+  const existingHook = actionTd.querySelector(ANKI_ADD_BUTTON_CLASS_SELECTOR);
   if (existingHook) {
     return; // Hook already exists
   }

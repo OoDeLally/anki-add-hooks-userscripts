@@ -27,7 +27,7 @@
       return css;
   }
 
-  __$styleInject(".-anki-quick-adder-hook {\n  -moz-user-select: none;\n  -ms-user-select: none;\n  -o-user-select: none;\n  -webkit-touch-callout: none;\n  -webkit-user-select: none;\n  background-color: #aaaaaa;\n  border-radius: 5px;\n  border: 2px solid #222222;\n  box-sizing: content-box;\n  color: white;\n  cursor: pointer;\n  display: inline-block;\n  font-family: 'Roboto', sans-serif;\n  font-size: 12px;\n  font-weight: bold;\n  height: 15px;\n  line-height: 17px;\n  opacity: 0.6;\n  overflow-wrap: normal;\n  overflow: hidden;\n  padding-left: 30px;\n  padding-right: 5px;\n  position: relative;\n  right: 0px;\n  text-align: left;\n  text-indent: 0;\n  top: 0px;\n  user-select: none;\n  vertical-align: middle;\n  width: 35px;\n  z-index: 1000;\n}\n.-anki-quick-adder-hook-added {\n  border: 2px solid green;\n  opacity: 1;\n  cursor: auto;\n  color: lightgreen;\n}\n.-anki-quick-adder-hook:hover {\n  opacity: 1;\n}\n.-anki-quick-adder-hook-star {\n  display: block;\n  transform: rotate(-15deg);\n  position: absolute;\n}\n.-anki-quick-adder-hook-added .-anki-quick-adder-hook-star-small {\n  color: green;\n}\n.-anki-quick-adder-hook-star-big {\n  font-size: 40px;\n  color: white;\n  z-index: 1005;\n  left: -7px;\n  top: -1px;\n}\n.-anki-quick-adder-hook-star-small {\n  font-size: 25px;\n  color: #0099ff;\n  color: grdsdsdqwdfedwdsdwesdddsdwdn;\n  z-index: 1010;\n  left: 0px;\n  top: -1px;\n}\n\n.-anki-quick-adder-hook-text {\n\n}\n");
+  __$styleInject(".-anki-add-hook {\n  -moz-user-select: none;\n  -ms-user-select: none;\n  -o-user-select: none;\n  -webkit-touch-callout: none;\n  -webkit-user-select: none;\n  background-color: #aaaaaa;\n  border-radius: 5px;\n  border: 2px solid #222222;\n  box-sizing: content-box;\n  color: white;\n  cursor: pointer;\n  display: inline-block;\n  font-family: 'Roboto', sans-serif;\n  font-size: 12px;\n  font-weight: bold;\n  height: 15px;\n  line-height: 17px;\n  opacity: 0.6;\n  overflow-wrap: normal;\n  overflow: hidden;\n  padding-left: 30px;\n  padding-right: 5px;\n  position: relative;\n  right: 0px;\n  text-align: left;\n  text-indent: 0;\n  top: 0px;\n  user-select: none;\n  vertical-align: middle;\n  width: 35px;\n  z-index: 1000;\n}\n.-anki-add-hook-added {\n  border: 2px solid green;\n  opacity: 1;\n  cursor: auto;\n  color: lightgreen;\n}\n.-anki-add-hook:hover {\n  opacity: 1;\n}\n.-anki-add-hook-star {\n  display: block;\n  transform: rotate(-15deg);\n  position: absolute;\n}\n.-anki-add-hook-added .-anki-add-hook-star-small {\n  color: green;\n}\n.-anki-add-hook-star-big {\n  font-size: 40px;\n  color: white;\n  z-index: 1005;\n  left: -7px;\n  top: -1px;\n}\n.-anki-add-hook-star-small {\n  font-size: 25px;\n  color: #0099ff;\n  color: grdsdsdqwdfedwdsdwesdddsdwdn;\n  z-index: 1010;\n  left: 0px;\n  top: -1px;\n}\n\n.-anki-add-hook-text {\n\n}\n");
 
   __$styleInject(".banner {\n  height: 20px;\n  font-size: 14px;\n  color: deepskyblue;\n  text-align: left;\n}\n\n.banner-language {\n\n}\n\n\n.banner-hook-name {\n  float: right;\n}\n");
 
@@ -53,18 +53,17 @@
     }
   };
 
+  const ANKI_ADD_BUTTON_CLASS = '-anki-add-hook';
+  const ANKI_ADD_BUTTON_CLASS_SELECTOR = `.${ANKI_ADD_BUTTON_CLASS}`;
+
   const frontFieldSelector = 'textarea#source';
   const backFieldSelector = '.translation';
 
 
-  const extract = () => {
-    const frontText = document.querySelector(frontFieldSelector).value;
-    const backText = document.querySelector(backFieldSelector).innerText;
-    return {
-      frontText: `<div style="text-align:center;">${frontText}</div>`,
-      backText: `<div style="text-align:center;">${backText}</div>`,
-    };
-  };
+  const extract = () => ({
+    frontText: document.querySelector(frontFieldSelector).value,
+    backText: document.querySelector(backFieldSelector).innerText,
+  });
 
 
   const run = (createHook) => {
@@ -73,7 +72,7 @@
     if (!parentNode) {
       return; // Container not found
     }
-    const existingHook = parentNode.querySelector('.-anki-quick-adder-hook');
+    const existingHook = parentNode.querySelector(ANKI_ADD_BUTTON_CLASS_SELECTOR);
     if (existingHook) {
       return; // Hook already exists
     }
@@ -90,15 +89,15 @@
   const extract$1 = (parentTr) => {
     const [sourceTd, targetTd] = parentTr.querySelectorAll('td');
     return {
-      frontText: `<div style="text-align:center;">${sourceTd.innerText}</div>`,
-      backText: `<div style="text-align:center;">${targetTd.innerText}</div>`,
+      frontText: sourceTd.innerText,
+      backText: targetTd.innerText,
     };
   };
 
 
   const tryAddingToRow = (parentTr, createHook) => {
     const [, , actionTd] = parentTr.querySelectorAll('td');
-    const existingHook = actionTd.querySelector('.-anki-quick-adder-hook');
+    const existingHook = actionTd.querySelector(ANKI_ADD_BUTTON_CLASS_SELECTOR);
     if (existingHook) {
       return; // Hook already exists
     }
@@ -171,13 +170,13 @@
 
 
   const ankiRequestOnSuccess = (hookNode) => {
-    hookNode.classList.add('-anki-quick-adder-hook-added');
-    hookNode.querySelector('.-anki-quick-adder-hook-text').innerText = 'Added';
+    hookNode.classList.add('-anki-add-hook-added');
+    hookNode.querySelector('.-anki-add-hook-text').innerText = 'Added';
     hookNode.onclick = () => {};
   };
 
 
-  const buildCardFace = (text, language, hookName$$1) => {
+  const buildCardFace = (htmlContent, language, hookName$$1) => {
     const bannerContent = [
       '<style>.banner{height:20px;font-size:14px;color:deepskyblue;text-align:left;}.banner-language{}.banner-hook-name{float:right;}</style>', // Replaced at compilation by ./card_style.css
       `<div class="banner-hook-name">${hookName$$1}</div>`,
@@ -185,15 +184,20 @@
     if (language) {
       bannerContent.push(`<div class="banner-language">${language}</div>`);
     }
-    return `<div class="banner">${bannerContent.join('')}</div>${text}`;
+    return `<div class="banner">
+            ${bannerContent.join('')}
+          </div>
+          <div style="text-align:center;width:100%;">
+          ${htmlContent}
+          </div>
+        `;
   };
 
 
   const hookOnClick = async (
     hookNode, frontText, backText, frontLanguage, backLanguage, cardKind, hookName$$1
   ) => {
-    // console.log('frontText:', frontText)
-    // console.log('backText:', backText)
+    console.log('frontText:', frontText);
     // console.log('cardKind:', cardKind)
     // return
     const deckNameMapKey = getDeckNameMapKey(cardKind);
@@ -257,18 +261,20 @@
     }
     const starNodeBig = document.createElement('div');
     starNodeBig.innerText = '★';
-    starNodeBig.className = '-anki-quick-adder-hook-star -anki-quick-adder-hook-star-big';
+    starNodeBig.className = '-anki-add-hook-star -anki-add-hook-star-big';
     const starNodeSmall = document.createElement('div');
     starNodeSmall.innerText = '★';
-    starNodeSmall.className = '-anki-quick-adder-hook-star -anki-quick-adder-hook-star-small';
+    starNodeSmall.className = '-anki-add-hook-star -anki-add-hook-star-small';
     const textNode = document.createElement('span');
-    textNode.className = '-anki-quick-adder-hook-text';
+    textNode.className = '-anki-add-hook-text';
     textNode.innerText = 'Add';
     const hookNode = document.createElement('div');
     hookNode.setAttribute('name', hookName);
-    hookNode.className = '-anki-quick-adder-hook';
+    hookNode.className = ANKI_ADD_BUTTON_CLASS;
     hookNode.title = 'Create an Anki card from this translation';
     hookNode.onclick = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       const extractedFields = extract$2(userdata);
       if (typeof extractedFields !== 'object') {
         console.error('Found', extractedFields);
@@ -277,6 +283,8 @@
       const {
         frontText, backText, frontLanguage, backLanguage, cardKind
       } = extractedFields;
+      // console.log('frontText:', frontText)
+      // console.log('backText:', backText)
 
       if (typeof frontText !== 'string') {
         console.error('Found', frontText);
@@ -300,12 +308,12 @@
         throw Error('Provided extract().cardKind is empty');
       }
 
-
-
-
-      hookOnClick(hookNode, frontText, backText, frontLanguage, backLanguage, cardKind, hookName);
-      event.preventDefault();
-      event.stopPropagation();
+      hookOnClick(
+        hookNode, frontText, backText,
+        frontLanguage, backLanguage,
+        cardKind,
+        hookName
+      );
     };
     hookNode.appendChild(starNodeBig);
     hookNode.appendChild(starNodeSmall);

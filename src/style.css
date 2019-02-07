@@ -1,4 +1,4 @@
-.-anki-quick-adder-hook {
+.-anki-add-hook {
   -moz-user-select: none;
   -ms-user-select: none;
   -o-user-select: none;
@@ -31,31 +31,31 @@
   width: 35px;
   z-index: 1000;
 }
-.-anki-quick-adder-hook-added {
+.-anki-add-hook-added {
   border: 2px solid green;
   opacity: 1;
   cursor: auto;
   color: lightgreen;
 }
-.-anki-quick-adder-hook:hover {
+.-anki-add-hook:hover {
   opacity: 1;
 }
-.-anki-quick-adder-hook-star {
+.-anki-add-hook-star {
   display: block;
   transform: rotate(-15deg);
   position: absolute;
 }
-.-anki-quick-adder-hook-added .-anki-quick-adder-hook-star-small {
+.-anki-add-hook-added .-anki-add-hook-star-small {
   color: green;
 }
-.-anki-quick-adder-hook-star-big {
+.-anki-add-hook-star-big {
   font-size: 40px;
   color: white;
   z-index: 1005;
   left: -7px;
   top: -1px;
 }
-.-anki-quick-adder-hook-star-small {
+.-anki-add-hook-star-small {
   font-size: 25px;
   color: #0099ff;
   color: grdsdsdqwdfedwdsdwesdddsdwdn;
@@ -64,6 +64,6 @@
   top: -1px;
 }
 
-.-anki-quick-adder-hook-text {
+.-anki-add-hook-text {
 
 }

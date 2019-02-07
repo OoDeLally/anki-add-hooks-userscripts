@@ -23,5 +23,7 @@ module.exports = {
     'max-len': 'warn',
     'indent': 'warn',
     'object-shorthand': 'warn',
+    'no-else-return': 'off',
+    'comma-spacing': 'warn',
   }
 };

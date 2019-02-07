@@ -1,5 +1,5 @@
 const ankiDefaultStyles = {
-  bottom: 'auto',
+  bottom: ['auto', '0px'],
   boxShadow: 'none',
   boxSizing: 'border-box',
   clear: 'none',
@@ -10,7 +10,7 @@ const ankiDefaultStyles = {
   fontSize: '14px',
   fontStyle: 'normal',
   fontWeight: '400',
-  left: 'auto',
+  left: ['auto', '0px'],
   lineHeight: '18px',
   listStyle: 'disc outside none',
   margin: '0px',
@@ -23,7 +23,7 @@ const ankiDefaultStyles = {
   overflowY: 'visible',
   padding: '0px',
   position: 'static',
-  right: 'auto',
+  right: ['auto', '0px'],
   stroke: 'none',
   tableLayout: 'auto',
   textAlign: 'start',
@@ -32,13 +32,19 @@ const ankiDefaultStyles = {
   textOrientation: 'mixed',
   textOverflow: 'clip',
   textSizeAdjust: '100%',
-  top: 'auto',
+  top: ['auto', '0px'],
   wordBreak: 'normal',
   wordSpacing: '0px',
   wordWrap: 'normal',
   zIndex: 'auto',
   zoom: '1',
 };
+
+const getStyleDefaultValues = (key) => {
+  const value = ankiDefaultStyles[key];
+  return Array.isArray(value) ? value : [value];
+};
+
 
 const toKebabCase = text => text.replace(/([A-Z])/g, (str, letter) => `-${letter.toLowerCase()}`);
 
@@ -49,10 +55,10 @@ export default (node) => {
   // console.log('nodeStyle:', nodeStyle);
   const styleChunks = Object.keys(ankiDefaultStyles).reduce((elements, styleKey) => {
     const propertyValue = nodeStyle[styleKey];
-    const defaultValue = ankiDefaultStyles[styleKey];
+    const defaultValues = getStyleDefaultValues(styleKey);
     if (
       propertyValue
-      && propertyValue !== defaultValue
+      && !defaultValues.includes(propertyValue)
       && propertyValue !== window.getComputedStyle(node.parentNode)[styleKey]
     ) {
       elements.push(`${toKebabCase(styleKey)}:${propertyValue};`);
