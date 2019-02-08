@@ -27,8 +27,8 @@ export const extract = ({ type, data }) => {
   } else {
     throw Error(`Unknown type '${type}'`);
   }
-  const { reversedDirection, frontText, backText } = extractedData;
-  if (reversedDirection) {
+  const { reverseDirection, frontText, backText } = extractedData;
+  if (reverseDirection) {
     const tmp = targetLanguage;
     targetLanguage = sourceLanguage;
     sourceLanguage = tmp;
