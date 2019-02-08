@@ -1,4 +1,4 @@
-import ScrappingError from '../scrapping_error';
+import ScrapingError from '../scraping_error';
 
 let allIds = null;
 
@@ -17,7 +17,7 @@ export const getNodesWithIdMatchingRegExp = (pattern, { throwOnUnfound = true } 
     throw Error(`Unexpected pattern type: ${typeof pattern}`);
   }
   if (nodes.length === 0 && throwOnUnfound) {
-    throw ScrappingError(`No id matches the pattern ${pattern}`);
+    throw ScrapingError(`No id matches the pattern ${pattern}`);
   }
   return nodes;
 };
@@ -32,13 +32,13 @@ export const getNodeWithIdMatchingRegExp = (
     matchingNodes = getNodesWithIdMatchingRegExp(pattern, { throwOnUnfound });
   } catch (error) {
     if (error.name === 'SrappingError') {
-      throw ScrappingError(error.message); // Remove the extra stackframe
+      throw ScrapingError(error.message); // Remove the extra stackframe
     } else {
       throw error;
     }
   }
   if (matchingNodes.length > 1 && throwOnFoundSeveral) {
-    throw ScrappingError(`Several ids match the pattern ${pattern}`);
+    throw ScrapingError(`Several ids match the pattern ${pattern}`);
   }
   return matchingNodes[0];
 };

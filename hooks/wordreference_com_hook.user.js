@@ -456,12 +456,12 @@
   };
 
 
-  const handleScrappingError = (error) => {
+  const handleScrapingError = (error) => {
     const productionExtraMessage = `
     Please report the following infos at:
     https://github.com/OoDeLally/anki-add-hooks-userscripts/issues`;
     console.error(
-      `AnkiAddHooks: Error during web page scrapping. ${
+      `AnkiAddHooks: Error during web page scraping. ${
       productionExtraMessage
     }
 
@@ -629,8 +629,8 @@
       await ankiConnectAddRequest(fields);
       ankiRequestOnSuccess(hookNode);
     } catch (error) {
-      if (error.name === 'ScrappingError') {
-        handleScrappingError(error);
+      if (error.name === 'ScrapingError') {
+        handleScrapingError(error);
       } else if (error.name === 'AnkiCardAddingError') {
         ankiRequestOnFail(error.response, error.message, fields.cardKind);
       } else {
@@ -668,8 +668,8 @@
   try {
     run(createHook);
   } catch (error) {
-    if (error.name === 'ScrappingError') {
-      handleScrappingError(error);
+    if (error.name === 'ScrapingError') {
+      handleScrapingError(error);
     } else {
       throw error;
     }

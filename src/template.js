@@ -45,12 +45,12 @@ const buildCardFace = (htmlContent, language, hookName) => {
 };
 
 
-const handleScrappingError = (error) => {
+const handleScrapingError = (error) => {
   const productionExtraMessage = `
     Please report the following infos at:
     __PROJECT_GITHUB_ISSUES_URL__`;
   console.error(
-    `AnkiAddHooks: Error during web page scrapping. ${
+    `AnkiAddHooks: Error during web page scraping. ${
       __IS_PRODUCTION__ ? productionExtraMessage : ''
     }
 
@@ -218,8 +218,8 @@ const onHookClick = async (event, userdata, hookNode) => {
     await ankiConnectAddRequest(fields);
     ankiRequestOnSuccess(hookNode);
   } catch (error) {
-    if (error.name === 'ScrappingError') {
-      handleScrappingError(error);
+    if (error.name === 'ScrapingError') {
+      handleScrapingError(error);
     } else if (error.name === 'AnkiCardAddingError') {
       ankiRequestOnFail(error.response, error.message, fields.cardKind);
     } else {
@@ -260,8 +260,8 @@ const createHook = (userdata) => {
 try {
   siteSpecificFunctions.run(createHook);
 } catch (error) {
-  if (error.name === 'ScrappingError') {
-    handleScrappingError(error);
+  if (error.name === 'ScrapingError') {
+    handleScrapingError(error);
   } else {
     throw error;
   }

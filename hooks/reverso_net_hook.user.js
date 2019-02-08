@@ -364,9 +364,9 @@
     });
   };
 
-  var ScrappingError = (message) => {
+  var ScrapingError = (message) => {
     const error = Error(message);
-    error.name = 'ScrappingError';
+    error.name = 'ScrapingError';
     error.location = window.location;
     error.stack = error.stack.split(/[\n\r]/gm).slice(4).join('\n');
     return error;
@@ -389,7 +389,7 @@
       throw Error(`Unexpected pattern type: ${typeof pattern}`);
     }
     if (nodes.length === 0 && throwOnUnfound) {
-      throw ScrappingError(`No id matches the pattern ${pattern}`);
+      throw ScrapingError(`No id matches the pattern ${pattern}`);
     }
     return nodes;
   };
@@ -404,13 +404,13 @@
       matchingNodes = getNodesWithIdMatchingRegExp(pattern, { throwOnUnfound });
     } catch (error) {
       if (error.name === 'SrappingError') {
-        throw ScrappingError(error.message); // Remove the extra stackframe
+        throw ScrapingError(error.message); // Remove the extra stackframe
       } else {
         throw error;
       }
     }
     if (matchingNodes.length > 1 && throwOnFoundSeveral) {
-      throw ScrappingError(`Several ids match the pattern ${pattern}`);
+      throw ScrapingError(`Several ids match the pattern ${pattern}`);
     }
     return matchingNodes[0];
   };
@@ -604,12 +604,12 @@
   };
 
 
-  const handleScrappingError = (error) => {
+  const handleScrapingError = (error) => {
     const productionExtraMessage = `
     Please report the following infos at:
     https://github.com/OoDeLally/anki-add-hooks-userscripts/issues`;
     console.error(
-      `AnkiAddHooks: Error during web page scrapping. ${
+      `AnkiAddHooks: Error during web page scraping. ${
       productionExtraMessage
     }
 
@@ -777,8 +777,8 @@
       await ankiConnectAddRequest(fields);
       ankiRequestOnSuccess(hookNode);
     } catch (error) {
-      if (error.name === 'ScrappingError') {
-        handleScrappingError(error);
+      if (error.name === 'ScrapingError') {
+        handleScrapingError(error);
       } else if (error.name === 'AnkiCardAddingError') {
         ankiRequestOnFail(error.response, error.message, fields.cardKind);
       } else {
@@ -816,8 +816,8 @@
   try {
     run$4(createHook);
   } catch (error) {
-    if (error.name === 'ScrappingError') {
-      handleScrappingError(error);
+    if (error.name === 'ScrapingError') {
+      handleScrapingError(error);
     } else {
       throw error;
     }
