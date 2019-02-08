@@ -150,9 +150,6 @@
     }, 500);
   };
 
-  /* global GM */
-
-
   const getDeckNameMapKey = cardKind => `deckName_${cardKind.toLowerCase()}`;
   const getModelNameMapKey = cardKind => `modelName_${cardKind.toLowerCase()}`;
 
@@ -191,6 +188,41 @@
           ${htmlContent}
           </div>
         `;
+  };
+
+
+  const handleScrappingError = (error) => {
+    const productionExtraMessage = `
+    Please report the following infos at:
+    https://github.com/OoDeLally/anki-add-hooks-userscripts/issues`;
+    console.error(
+      `AnkiAddHooks: Error during web page scrapping. ${
+      productionExtraMessage
+    }
+
+     Message: ${error.message}.
+
+     Page: ${error.location}.
+
+     Hook Template Version: 1.0.0.
+
+     Hook Userscript Name: ${hookName}.
+
+     Hook UserScript Version: 0.1.
+
+     Stack: ${error.stack}
+    `
+    );
+    {
+      alert(`AnkiAddHooks Error
+          There was an error in reading the web page.
+          You can help us solve it:
+          1- Open the console (F12 key => tab "Console").
+          2- Copy the error message.
+          3- Paste the error message in a github issue at the url mentioned in the error message.
+          Thank you.
+    `);
+    }
   };
 
 
@@ -276,7 +308,17 @@
     hookNode.onclick = (event) => {
       event.preventDefault();
       event.stopPropagation();
-      const extractedFields = extract$2(userdata);
+      let extractedFields;
+      try {
+        extractedFields = extract$2(userdata);
+      } catch (error) {
+        if (error.name === 'ScrappingError') {
+          handleScrappingError(error);
+          return;
+        } else {
+          throw error;
+        }
+      }
       if (typeof extractedFields !== 'object') {
         console.error('Found', extractedFields);
         throw Error('Provided siteSpecificFunctions.extract() fonction did not return an object');
@@ -284,8 +326,9 @@
       const {
         frontText, backText, frontLanguage, backLanguage, cardKind
       } = extractedFields;
-      // console.log('frontText:', frontText)
-      // console.log('backText:', backText)
+      console.log('frontText:', frontText);
+      console.log('backText:', backText);
+      console.log('cardKind:', cardKind);
 
       if (typeof frontText !== 'string') {
         console.error('Found', frontText);
@@ -323,6 +366,14 @@
   };
 
 
-  run$2(createHook);
+  try {
+    run$2(createHook);
+  } catch (error) {
+    if (error.name === 'ScrappingError') {
+      handleScrappingError(error);
+    } else {
+      throw error;
+    }
+  }
 
 }());

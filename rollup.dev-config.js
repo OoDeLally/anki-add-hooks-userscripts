@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import replace from 'rollup-plugin-replace';
 import { getEntryPoints, getCommonPlugins } from './rollup.common-config';
 
 const makeConfig = (entryFile, entryName) => ({
@@ -13,6 +14,7 @@ const makeConfig = (entryFile, entryName) => ({
   },
   plugins: [
     ...getCommonPlugins(entryFile),
+    replace({ __IS_PRODUCTION__: 'false' }),
   ]
 });
 

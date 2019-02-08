@@ -1,29 +1,15 @@
 import highlightOnHookHover from '../../helpers/highlight_on_hook_hover';
 import stringifyNodeWithStyle from '../../helpers/stringify_node_with_style';
-import getNodesWithIdMatchingRegExp from '../../helpers/get_nodes_with_id_matching_reg_exp';
+import { getNodeWithIdMatchingRegExp } from '../../helpers/get_nodes_with_id_matching_reg_exp';
 
 
 const extractFrontText = () => {
-  const sourceWords = getNodesWithIdMatchingRegExp(/_lblEntry$/);
-  if (sourceWords.length > 2) {
-    throw Error(`Pattern matches ${sourceWords.length} nodes`);
-  }
-  const sourceWord = sourceWords[0];
-  if (!sourceWord) {
-    throw Error('Front text not found from selector');
-  }
+  const sourceWord = getNodeWithIdMatchingRegExp(/_lblEn1try$/);
   return stringifyNodeWithStyle(sourceWord);
 };
 
 const extractBackText = () => {
-  const targetWords = getNodesWithIdMatchingRegExp(/_lblTranslation$/);
-  if (targetWords.length > 2) {
-    throw Error(`Pattern matches ${targetWords.length} nodes`);
-  }
-  const targetWord = targetWords[0];
-  if (!targetWord) {
-    throw Error('Back text not found from selector');
-  }
+  const targetWord = getNodeWithIdMatchingRegExp(/_lblTranslation$/);
   return stringifyNodeWithStyle(targetWord);
 };
 

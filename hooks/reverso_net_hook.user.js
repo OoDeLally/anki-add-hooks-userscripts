@@ -158,6 +158,9 @@
 
   const ANKI_ADD_BUTTON_CLASS = '-anki-add-hook';
 
+  const allowedAttributes = ['style'];
+
+
   // Recursively clone node and assign explicit style to the clone.
   // Useful when you extract a node out of its class' scope.
   const cloneNodeWithExplicitStyle = (originalNode) => {
@@ -176,10 +179,13 @@
       return null; // Ignore the hidden elements
     }
     const cloneNode = originalNode.cloneNode();
-    cloneNode.removeAttribute('id');
-    cloneNode.removeAttribute('class');
-    cloneNode.removeAttribute('name');
-    cloneNode.removeAttribute('title');
+    if (cloneNode.getAttributeNames) {
+      cloneNode.getAttributeNames().forEach((attrName) => {
+        if (!allowedAttributes.includes(attrName)) {
+          cloneNode.removeAttribute(attrName);
+        }
+      });
+    }
     const styleText = exportNodeStyleToText(originalNode);
     cloneNode.style.cssText = styleText;
     if (originalNode.childNodes) {
@@ -347,7 +353,7 @@
     const wordNodes = translateBox.querySelectorAll('div b:first-child');
     wordNodes.forEach((wordNode, wordNodeIndex) => {
       const divGroup = getDivGroup(wordNode, wordNodes[wordNodeIndex + 1]);
-      const hook = createHook({ type: 'collins', data: divGroup });
+      const hook = createHook({ type: 'collinsDictionary', data: divGroup });
       hook.style.position = 'absolute';
       hook.style.right = '0px';
       hook.style.top = '10px';
@@ -357,22 +363,174 @@
     });
   };
 
+  var ScrappingError = (message) => {
+    const error = Error(message);
+    error.name = 'ScrappingError';
+    error.location = window.location;
+    error.stack = error.stack.split(/[\n\r]/gm).slice(4).join('\n');
+    return error;
+  };
+
+  let allIds = null;
+
+  // Return the list of nodes with an id matching the provided pattern
+  const getNodesWithIdMatchingRegExp = (pattern, { throwOnUnfound = true } = {}) => {
+    if (allIds == null) {
+      allIds = Array.from(document.querySelectorAll('*[id]'));
+    }
+    let nodes;
+    if (typeof pattern === 'string') {
+      nodes = allIds.filter(node => node.id.includes(pattern));
+    } else if (pattern instanceof RegExp) {
+      nodes = allIds.filter(node => pattern.test(node.id));
+    } else {
+      console.error('Pattern:', pattern);
+      throw Error(`Unexpected pattern type: ${typeof pattern}`);
+    }
+    if (nodes.length === 0 && throwOnUnfound) {
+      throw ScrappingError(`No id matches the pattern ${pattern}`);
+    }
+    return nodes;
+  };
+
+
+  // Return one node with an id matching the provided pattern
+  const getNodeWithIdMatchingRegExp = (
+    pattern, { throwOnUnfound = true, throwOnFoundSeveral = true } = {}
+  ) => {
+    let matchingNodes;
+    try {
+      matchingNodes = getNodesWithIdMatchingRegExp(pattern, { throwOnUnfound });
+    } catch (error) {
+      if (error.name === 'SrappingError') {
+        throw ScrappingError(error.message); // Remove the extra stackframe
+      } else {
+        throw error;
+      }
+    }
+    if (matchingNodes.length > 1 && throwOnFoundSeveral) {
+      throw ScrappingError(`Several ids match the pattern ${pattern}`);
+    }
+    return matchingNodes[0];
+  };
+
+  const extractFrontText$1 = () => {
+    const sourceWord = getNodeWithIdMatchingRegExp(/_lblEn1try$/);
+    return stringifyNodeWithStyle(sourceWord);
+  };
+
+  const extractBackText$1 = () => {
+    const targetWord = getNodeWithIdMatchingRegExp(/_lblTranslation$/);
+    return stringifyNodeWithStyle(targetWord);
+  };
+
+
+  const extract$1 = divGroup => ({
+    frontText: extractFrontText$1(divGroup),
+    backText: extractBackText$1(divGroup),
+  });
+
+
+  const run$1 = (createHook) => {
+    const resultBox = document.querySelector('.center_frameColl');
+    if (!resultBox) {
+      return;
+    }
+    const hook = createHook({ type: 'mainDictionary', data: resultBox });
+    hook.style.position = 'absolute';
+    hook.style.right = '100px';
+    hook.style.top = '5px';
+    highlightOnHookHover(hook, resultBox, 'lightblue');
+    resultBox.style.position = 'relative';
+    resultBox.append(hook);
+  };
+
+  const extractFrontText$2 = row =>
+    stringifyNodeWithStyle(row.querySelector('.CDResSource'));
+
+  const extractBackText$2 = row =>
+    stringifyNodeWithStyle(row.querySelector('.CDResTarget'));
+
+
+  const extract$2 = ({ row, reverseDirection }) => ({
+    frontText: extractFrontText$2(row),
+    backText: extractBackText$2(row),
+    reverseDirection,
+  });
+
+
+  const run$2 = (createHook) => {
+    const allRows = Array.from(document.querySelectorAll('.CDResTable tr'));
+    const reverseDirectionRows = Array.from(document.querySelectorAll('#ctl00_cC_ucResPM_opossiteEntries tr'))
+      .filter(tr => tr.getAttribute('valign') === 'top');
+    const normalRows = allRows.filter(tr => !reverseDirectionRows.includes(tr))
+      .filter(tr => tr.getAttribute('valign') === 'top');
+    [
+      { rows: normalRows, reverseDirection: false },
+      { rows: reverseDirectionRows, reverseDirection: true }
+    ]
+      .forEach(({ rows, reverseDirection }) => {
+        rows.forEach((row) => {
+          const hook = createHook({ type: 'collaborativeDictionary', data: { row, reverseDirection } });
+          hook.style.position = 'absolute';
+          hook.style.left = '105px';
+          highlightOnHookHover(hook, row, 'lightblue');
+          const parentNode = row.querySelector('.CDResAct');
+          parentNode.style.position = 'relative';
+          parentNode.append(hook);
+        });
+      });
+  };
+
+  const extractFrontText$3 = parentNode =>
+    stringifyNodeWithStyle(parentNode.querySelector('td.src'));
+
+  const extractBackText$3 = parentNode =>
+    stringifyNodeWithStyle(parentNode.querySelector('td.tgt'));
+
+
+  const extract$3 = divGroup => ({
+    frontText: extractFrontText$3(divGroup),
+    backText: extractBackText$3(divGroup),
+  });
+
+
+  const run$3 = (createHook) => {
+    document.querySelectorAll('#ctxBody tr')
+      .forEach((trNode) => {
+        const hook = createHook({ type: 'contextualDictionary', data: trNode });
+        hook.style.position = 'absolute';
+        hook.style.top = '3px';
+        hook.style.right = '-80px';
+        highlightOnHookHover(hook, trNode, 'lightblue');
+        const parentNode = trNode.querySelector('td:last-child');
+        parentNode.style.position = 'relative';
+        parentNode.append(hook);
+      });
+  };
+
   // @name         Anki Add Hooks for Reverso
 
 
   const hookName = 'reverso.net';
 
 
-  const extract$1 = ({ type, data }) => {
+  const extract$4 = ({ type, data }) => {
     let [, sourceLanguage, targetLanguage] = window.location.href.match(/reverso\.net\/([a-z]+)-([a-z]+)\//);
     let extractedData;
-    if (type === 'collins') {
+    if (type === 'collinsDictionary') {
       extractedData = extract(data);
+    } else if (type === 'mainDictionary') {
+      extractedData = extract$1(data);
+    } else if (type === 'collaborativeDictionary') {
+      extractedData = extract$2(data);
+    } else if (type === 'contextualDictionary') {
+      extractedData = extract$3(data);
     } else {
       throw Error(`Unknown type '${type}'`);
     }
-    const { reversedDirection, frontText, backText } = extractedData;
-    if (reversedDirection) {
+    const { reverseDirection, frontText, backText } = extractedData;
+    if (reverseDirection) {
       const tmp = targetLanguage;
       targetLanguage = sourceLanguage;
       sourceLanguage = tmp;
@@ -396,23 +554,13 @@
   };
 
 
-  const run$1 = (createHook) => {
+  const run$4 = (createHook) => {
     hideNbspSpans();
     run(createHook);
-
-    // const collaborativeDefinitionsRows = Array.from(document.querySelectorAll('.CDResTable tr')).filter(tr => tr.getAttribute('valign') === 'top');
-    // collaborativeDefinitionsRows.forEach((rowNode) => {
-    //   const hook = createHook({ type: 'collaborativeDictionary', parentNode: rowNode });
-    //   hook.style.position = 'absolute';
-    //   hook.style.left = '105px';
-    //   const parentNode = rowNode.querySelector('.CDResAct');
-    //   parentNode.style.position = 'relative';
-    //   parentNode.append(hook);
-    // });
+    run$1(createHook);
+    run$2(createHook);
+    run$3(createHook);
   };
-
-  /* global GM */
-
 
   const getDeckNameMapKey = cardKind => `deckName_${cardKind.toLowerCase()}`;
   const getModelNameMapKey = cardKind => `modelName_${cardKind.toLowerCase()}`;
@@ -452,6 +600,41 @@
           ${htmlContent}
           </div>
         `;
+  };
+
+
+  const handleScrappingError = (error) => {
+    const productionExtraMessage = `
+    Please report the following infos at:
+    https://github.com/OoDeLally/anki-add-hooks-userscripts/issues`;
+    console.error(
+      `AnkiAddHooks: Error during web page scrapping. ${
+      productionExtraMessage
+    }
+
+     Message: ${error.message}.
+
+     Page: ${error.location}.
+
+     Hook Template Version: 1.0.0.
+
+     Hook Userscript Name: ${hookName}.
+
+     Hook UserScript Version: 0.1.
+
+     Stack: ${error.stack}
+    `
+    );
+    {
+      alert(`AnkiAddHooks Error
+          There was an error in reading the web page.
+          You can help us solve it:
+          1- Open the console (F12 key => tab "Console").
+          2- Copy the error message.
+          3- Paste the error message in a github issue at the url mentioned in the error message.
+          Thank you.
+    `);
+    }
   };
 
 
@@ -518,7 +701,7 @@
 
 
   const createHook = (userdata) => {
-    if (!extract$1 || typeof extract$1 !== 'function') {
+    if (!extract$4 || typeof extract$4 !== 'function') {
       throw Error('Missing function extract()');
     }
     const starNodeBig = document.createElement('div');
@@ -537,7 +720,17 @@
     hookNode.onclick = (event) => {
       event.preventDefault();
       event.stopPropagation();
-      const extractedFields = extract$1(userdata);
+      let extractedFields;
+      try {
+        extractedFields = extract$4(userdata);
+      } catch (error) {
+        if (error.name === 'ScrappingError') {
+          handleScrappingError(error);
+          return;
+        } else {
+          throw error;
+        }
+      }
       if (typeof extractedFields !== 'object') {
         console.error('Found', extractedFields);
         throw Error('Provided siteSpecificFunctions.extract() fonction did not return an object');
@@ -545,8 +738,9 @@
       const {
         frontText, backText, frontLanguage, backLanguage, cardKind
       } = extractedFields;
-      // console.log('frontText:', frontText)
-      // console.log('backText:', backText)
+      console.log('frontText:', frontText);
+      console.log('backText:', backText);
+      console.log('cardKind:', cardKind);
 
       if (typeof frontText !== 'string') {
         console.error('Found', frontText);
@@ -584,6 +778,14 @@
   };
 
 
-  run$1(createHook);
+  try {
+    run$4(createHook);
+  } catch (error) {
+    if (error.name === 'ScrappingError') {
+      handleScrappingError(error);
+    } else {
+      throw error;
+    }
+  }
 
 }());

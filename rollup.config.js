@@ -1,13 +1,8 @@
 import fs from 'fs';
 import _ from 'lodash';
-import { getEntryPoints, getCommonPlugins } from './rollup.common-config';
+import replace from 'rollup-plugin-replace';
+import { getEntryPoints, getCommonPlugins, getMetatagLinesFromFile } from './rollup.common-config';
 
-
-const getMetatagLinesFromFile = (filePath) => {
-  const templateFileContent = fs.readFileSync(filePath, 'utf-8');
-  const templateLines = templateFileContent.split(/[\n\r]+/);
-  return templateLines.filter(text => /^\s*\/\/\s*@\w+\b/.test(text));
-};
 
 const createMetatags = (entryFile) => {
   let output = '// ==UserScript==\n';
@@ -27,6 +22,7 @@ const makeConfig = (entryFile, entryName) => ({
   },
   plugins: [
     ...getCommonPlugins(entryFile),
+    replace({ __IS_PRODUCTION__: 'true' }),
   ]
 });
 

@@ -136,6 +136,9 @@
 
   const ANKI_ADD_BUTTON_CLASS = '-anki-add-hook';
 
+  const allowedAttributes = ['style'];
+
+
   // Recursively clone node and assign explicit style to the clone.
   // Useful when you extract a node out of its class' scope.
   const cloneNodeWithExplicitStyle = (originalNode) => {
@@ -154,10 +157,13 @@
       return null; // Ignore the hidden elements
     }
     const cloneNode = originalNode.cloneNode();
-    cloneNode.removeAttribute('id');
-    cloneNode.removeAttribute('class');
-    cloneNode.removeAttribute('name');
-    cloneNode.removeAttribute('title');
+    if (cloneNode.getAttributeNames) {
+      cloneNode.getAttributeNames().forEach((attrName) => {
+        if (!allowedAttributes.includes(attrName)) {
+          cloneNode.removeAttribute(attrName);
+        }
+      });
+    }
     const styleText = exportNodeStyleToText(originalNode);
     cloneNode.style.cssText = styleText;
     if (originalNode.childNodes) {
@@ -408,9 +414,6 @@
     getTables().forEach(tableNode => addHooksInTable(tableNode, createHook));
   };
 
-  /* global GM */
-
-
   const getDeckNameMapKey = cardKind => `deckName_${cardKind.toLowerCase()}`;
   const getModelNameMapKey = cardKind => `modelName_${cardKind.toLowerCase()}`;
 
@@ -449,6 +452,41 @@
           ${htmlContent}
           </div>
         `;
+  };
+
+
+  const handleScrappingError = (error) => {
+    const productionExtraMessage = `
+    Please report the following infos at:
+    https://github.com/OoDeLally/anki-add-hooks-userscripts/issues`;
+    console.error(
+      `AnkiAddHooks: Error during web page scrapping. ${
+      productionExtraMessage
+    }
+
+     Message: ${error.message}.
+
+     Page: ${error.location}.
+
+     Hook Template Version: 1.0.0.
+
+     Hook Userscript Name: ${hookName}.
+
+     Hook UserScript Version: 0.1.
+
+     Stack: ${error.stack}
+    `
+    );
+    {
+      alert(`AnkiAddHooks Error
+          There was an error in reading the web page.
+          You can help us solve it:
+          1- Open the console (F12 key => tab "Console").
+          2- Copy the error message.
+          3- Paste the error message in a github issue at the url mentioned in the error message.
+          Thank you.
+    `);
+    }
   };
 
 
@@ -534,7 +572,17 @@
     hookNode.onclick = (event) => {
       event.preventDefault();
       event.stopPropagation();
-      const extractedFields = extract(userdata);
+      let extractedFields;
+      try {
+        extractedFields = extract(userdata);
+      } catch (error) {
+        if (error.name === 'ScrappingError') {
+          handleScrappingError(error);
+          return;
+        } else {
+          throw error;
+        }
+      }
       if (typeof extractedFields !== 'object') {
         console.error('Found', extractedFields);
         throw Error('Provided siteSpecificFunctions.extract() fonction did not return an object');
@@ -542,8 +590,9 @@
       const {
         frontText, backText, frontLanguage, backLanguage, cardKind
       } = extractedFields;
-      // console.log('frontText:', frontText)
-      // console.log('backText:', backText)
+      console.log('frontText:', frontText);
+      console.log('backText:', backText);
+      console.log('cardKind:', cardKind);
 
       if (typeof frontText !== 'string') {
         console.error('Found', frontText);
@@ -581,6 +630,14 @@
   };
 
 
-  run(createHook);
+  try {
+    run(createHook);
+  } catch (error) {
+    if (error.name === 'ScrappingError') {
+      handleScrappingError(error);
+    } else {
+      throw error;
+    }
+  }
 
 }());
