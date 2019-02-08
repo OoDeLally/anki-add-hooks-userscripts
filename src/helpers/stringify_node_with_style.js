@@ -3,7 +3,7 @@ import exportNodeStyleToText from './export_node_style_to_text';
 import { ANKI_ADD_BUTTON_CLASS } from '../constants';
 
 
-const allowedAttributes = ['style'];
+const allowedAttributes = ['style', 'colspan', 'rowspan'];
 
 
 // Recursively clone node and assign explicit style to the clone.

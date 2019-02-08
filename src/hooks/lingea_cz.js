@@ -53,7 +53,7 @@ const extractBackText = () => {
   const translationRows = Array.from(document.querySelectorAll('.entry tr'))
     .filter(tr => !tr.className || !tr.className.includes('head'));
   const definitionText = translationRows.map(tr => stringifyNodeWithStyle(tr, dropWTags)).join('');
-  return `<table>${definitionText}</table>`;
+  return `<table style="text-align:left;margin:auto;">${definitionText}</table>`;
 };
 
 const extractCardKind = () => {

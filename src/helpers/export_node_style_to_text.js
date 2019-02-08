@@ -33,6 +33,7 @@ const ankiDefaultStyles = {
   textOverflow: 'clip',
   textSizeAdjust: '100%',
   top: ['auto', '0px'],
+  verticalAlign: 'baseline',
   wordBreak: 'normal',
   wordSpacing: '0px',
   wordWrap: 'normal',
