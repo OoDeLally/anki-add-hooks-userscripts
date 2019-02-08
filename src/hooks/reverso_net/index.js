@@ -7,6 +7,7 @@
 import * as collinsDictionary from './collins_dictionary';
 import * as mainDictionary from './main_dictionary';
 import * as collaborativeDictionary from './collaborative_dictionary';
+import * as contextualDictionary from './contextual_dictionary';
 
 
 export const hookName = 'reverso.net';
@@ -21,6 +22,8 @@ export const extract = ({ type, data }) => {
     extractedData = mainDictionary.extract(data);
   } else if (type === 'collaborativeDictionary') {
     extractedData = collaborativeDictionary.extract(data);
+  } else if (type === 'contextualDictionary') {
+    extractedData = contextualDictionary.extract(data);
   } else {
     throw Error(`Unknown type '${type}'`);
   }
@@ -54,4 +57,5 @@ export const run = (createHook) => {
   collinsDictionary.run(createHook);
   mainDictionary.run(createHook);
   collaborativeDictionary.run(createHook);
+  contextualDictionary.run(createHook);
 };

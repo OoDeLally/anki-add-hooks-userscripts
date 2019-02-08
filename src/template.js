@@ -142,6 +142,7 @@ const createHook = (userdata) => {
     } = extractedFields;
     console.log('frontText:', frontText)
     console.log('backText:', backText)
+    console.log('cardKind:', cardKind)
 
     if (typeof frontText !== 'string') {
       console.error('Found', frontText);

@@ -3,6 +3,9 @@ import exportNodeStyleToText from './export_node_style_to_text';
 import { ANKI_ADD_BUTTON_CLASS } from '../constants';
 
 
+const allowedAttributes = ['style'];
+
+
 // Recursively clone node and assign explicit style to the clone.
 // Useful when you extract a node out of its class' scope.
 const cloneNodeWithExplicitStyle = (originalNode) => {
@@ -21,11 +24,13 @@ const cloneNodeWithExplicitStyle = (originalNode) => {
     return null; // Ignore the hidden elements
   }
   const cloneNode = originalNode.cloneNode();
-  cloneNode.removeAttribute('id');
-  cloneNode.removeAttribute('class');
-  cloneNode.removeAttribute('name');
-  cloneNode.removeAttribute('title');
-  cloneNode.removeAttribute('href');
+  if (cloneNode.getAttributeNames) {
+    cloneNode.getAttributeNames().forEach((attrName) => {
+      if (!allowedAttributes.includes(attrName)) {
+        cloneNode.removeAttribute(attrName);
+      }
+    });
+  }
   const styleText = exportNodeStyleToText(originalNode);
   cloneNode.style.cssText = styleText;
   if (originalNode.childNodes) {
