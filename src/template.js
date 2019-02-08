@@ -80,6 +80,42 @@ const handleScrappingError = (error) => {
 };
 
 
+const sendAddNoteRequest = async ({
+  deckName, modelName, hookName,
+  frontText, frontLanguage,
+  backText, backLanguage,
+  onabort, onerror, onload
+}) => {
+  // console.log('hookOnClick')
+  const dataStr = JSON.stringify({
+    action: 'addNote',
+    version: 6,
+    params: {
+      note: {
+        deckName,
+        modelName,
+        options: {
+          allowDuplicate: true,
+        },
+        fields: {
+          Front: buildCardFace(frontText, frontLanguage, hookName),
+          Back: buildCardFace(backText, backLanguage, hookName),
+        },
+        tags: [siteSpecificFunctions.hookName],
+      },
+    },
+  });
+  await GM.xmlHttpRequest({
+    method: 'POST',
+    url: 'http://localhost:8765',
+    data: dataStr,
+    onabort,
+    onerror,
+    onload,
+  });
+};
+
+
 const hookOnClick = async (
   hookNode, frontText, backText, frontLanguage, backLanguage, cardKind, hookName
 ) => {
@@ -105,29 +141,14 @@ const hookOnClick = async (
     }
     await GM.setValue(modelNameMapKey, modelName);
   }
-  // console.log('hookOnClick')
-  const dataStr = JSON.stringify({
-    action: 'addNote',
-    version: 6,
-    params: {
-      note: {
-        deckName,
-        modelName,
-        options: {
-          allowDuplicate: true,
-        },
-        fields: {
-          Front: buildCardFace(frontText, frontLanguage, hookName),
-          Back: buildCardFace(backText, backLanguage, hookName),
-        },
-        tags: [siteSpecificFunctions.hookName],
-      },
-    },
-  });
-  await GM.xmlHttpRequest({
-    method: 'POST',
-    url: 'http://localhost:8765',
-    data: dataStr,
+  await sendAddNoteRequest({
+    deckName,
+    modelName,
+    hookName,
+    frontText,
+    frontLanguage,
+    backText,
+    backLanguage,
     onabort: response => ankiRequestOnFail(response, 'Request was aborted', cardKind),
     onerror: response => ankiRequestOnFail(response, 'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.', cardKind),
     onload: (response) => {
@@ -140,6 +161,7 @@ const hookOnClick = async (
     },
   });
 };
+
 
 
 const createHook = (userdata) => {

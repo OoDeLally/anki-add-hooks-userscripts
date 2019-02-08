@@ -23,6 +23,7 @@ module.exports = {
     'no-trailing-spaces': 'warn',
     'no-unused-vars': 'warn',
     'object-curly-spacing': 'warn',
+    'object-property-newline': 'warn',
     'object-shorthand': 'warn',
     'padded-blocks': 'warn',
     'prefer-const': 'warn',

@@ -4,7 +4,7 @@ import { getNodeWithIdMatchingRegExp } from '../../helpers/get_nodes_with_id_mat
 
 
 const extractFrontText = () => {
-  const sourceWord = getNodeWithIdMatchingRegExp(/_lblEn1try$/);
+  const sourceWord = getNodeWithIdMatchingRegExp(/_lblEntry$/);
   return stringifyNodeWithStyle(sourceWord);
 };
 
