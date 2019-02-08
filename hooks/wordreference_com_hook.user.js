@@ -74,6 +74,7 @@
     textOverflow: 'clip',
     textSizeAdjust: '100%',
     top: ['auto', '0px'],
+    verticalAlign: 'baseline',
     wordBreak: 'normal',
     wordSpacing: '0px',
     wordWrap: 'normal',
@@ -136,7 +137,7 @@
 
   const ANKI_ADD_BUTTON_CLASS = '-anki-add-hook';
 
-  const allowedAttributes = ['style'];
+  const allowedAttributes = ['style', 'colspan', 'rowspan'];
 
 
   // Recursively clone node and assign explicit style to the clone.

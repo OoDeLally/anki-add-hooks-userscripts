@@ -74,6 +74,7 @@
     textOverflow: 'clip',
     textSizeAdjust: '100%',
     top: ['auto', '0px'],
+    verticalAlign: 'baseline',
     wordBreak: 'normal',
     wordSpacing: '0px',
     wordWrap: 'normal',
@@ -137,7 +138,7 @@
   const ANKI_ADD_BUTTON_CLASS = '-anki-add-hook';
   const ANKI_ADD_BUTTON_CLASS_SELECTOR = `.${ANKI_ADD_BUTTON_CLASS}`;
 
-  const allowedAttributes = ['style'];
+  const allowedAttributes = ['style', 'colspan', 'rowspan'];
 
 
   // Recursively clone node and assign explicit style to the clone.
@@ -264,7 +265,7 @@
     const translationRows = Array.from(document.querySelectorAll('.entry tr'))
       .filter(tr => !tr.className || !tr.className.includes('head'));
     const definitionText = translationRows.map(tr => stringifyNodeWithStyle(tr, dropWTags)).join('');
-    return `<table>${definitionText}</table>`;
+    return `<table style="text-align:left;margin:auto;">${definitionText}</table>`;
   };
 
   const extractCardKind = () => {
