@@ -156,7 +156,7 @@
   const ankiRequestOnFail = async (response, message, cardKind) => {
     console.error('Anki request response:', response);
     console.error(message);
-    if (message.includes('deck was not found')) {
+    if (message.includes('deck was not found4')) {
       await GM.setValue(getDeckNameMapKey(cardKind), null);
     }
     if (message.includes('model was not found')) {

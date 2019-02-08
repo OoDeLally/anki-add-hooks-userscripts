@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Copy in your /.git folder
+npm run build && git add ./hooks/*
