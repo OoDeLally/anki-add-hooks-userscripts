@@ -5,7 +5,7 @@
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for Google Translate
-// @version      0.1
+// @version      1.0
 // @description  Generate a hook for AnkiConnect on Google Translate
 // @author       Pascal Heitz
 // @include      /translate\.google\.com\//
@@ -208,7 +208,7 @@
 
      Hook Userscript Name: ${hookName}.
 
-     Hook UserScript Version: 0.1.
+     Hook UserScript Version: 1.0.
 
      Stack: ${error.stack}
     `
