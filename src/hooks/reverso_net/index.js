@@ -4,7 +4,8 @@
 // @author       Pascal Heitz
 // @include      /reverso\.net\/\w+-\w+/\w+/
 
-import * as collins from './collins';
+import * as collinsDictionary from './collins_dictionary';
+import * as mainDictionary from './main_dictionary';
 
 
 const extractMainTranslationFrontText = () => {
@@ -39,8 +40,10 @@ export const hookName = 'reverso.net';
 export const extract = ({ type, data }) => {
   let [, sourceLanguage, targetLanguage] = window.location.href.match(/reverso\.net\/([a-z]+)-([a-z]+)\//);
   let extractedData;
-  if (type === 'collins') {
-    extractedData = collins.extract(data);
+  if (type === 'collinsDictionary') {
+    extractedData = collinsDictionary.extract(data);
+  } else if (type === 'mainDictionary') {
+    extractedData = mainDictionary.extract(data);
   } else {
     throw Error(`Unknown type '${type}'`);
   }
@@ -71,7 +74,8 @@ const hideNbspSpans = () => {
 
 export const run = (createHook) => {
   hideNbspSpans();
-  collins.run(createHook);
+  collinsDictionary.run(createHook);
+  mainDictionary.run(createHook);
 
   // const collaborativeDefinitionsRows = Array.from(document.querySelectorAll('.CDResTable tr')).filter(tr => tr.getAttribute('valign') === 'top');
   // collaborativeDefinitionsRows.forEach((rowNode) => {

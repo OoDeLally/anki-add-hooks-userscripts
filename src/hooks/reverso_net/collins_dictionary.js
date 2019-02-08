@@ -118,7 +118,7 @@ export const run = (createHook) => {
   const wordNodes = translateBox.querySelectorAll('div b:first-child');
   wordNodes.forEach((wordNode, wordNodeIndex) => {
     const divGroup = getDivGroup(wordNode, wordNodes[wordNodeIndex + 1]);
-    const hook = createHook({ type: 'collins', data: divGroup });
+    const hook = createHook({ type: 'collinsDictionary', data: divGroup });
     hook.style.position = 'absolute';
     hook.style.right = '0px';
     hook.style.top = '10px';
