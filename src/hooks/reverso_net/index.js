@@ -6,32 +6,7 @@
 
 import * as collinsDictionary from './collins_dictionary';
 import * as mainDictionary from './main_dictionary';
-
-
-const extractMainTranslationFrontText = () => {
-  const word = document.querySelector('h2').innerText;
-  if (!word) {
-    throw Error('Could not find source word');
-  }
-  return word;
-};
-
-const extractMainTranslationBackText = () => {
-  const blocks = Array.from(document.querySelectorAll('#TableHTMLResult div'))
-    .filter(div => div.getAttribute('border') === '1');
-  blocks.shift(); // The first block is the source word.
-  return blocks.map(block => block.innerText).join('\n');
-};
-
-const extractCollaborativeTranslationFrontText = (parentNode) => {
-  const word = parentNode.querySelector('.CDResSource').innerText;
-  return word;
-};
-
-const extractCollaborativeTranslationBackText = (parentNode) => {
-  const word = parentNode.querySelector('.CDResTarget').innerText;
-  return word;
-};
+import * as collaborativeDictionary from './collaborative_dictionary';
 
 
 export const hookName = 'reverso.net';
@@ -44,6 +19,8 @@ export const extract = ({ type, data }) => {
     extractedData = collinsDictionary.extract(data);
   } else if (type === 'mainDictionary') {
     extractedData = mainDictionary.extract(data);
+  } else if (type === 'collaborativeDictionary') {
+    extractedData = collaborativeDictionary.extract(data);
   } else {
     throw Error(`Unknown type '${type}'`);
   }
@@ -76,14 +53,5 @@ export const run = (createHook) => {
   hideNbspSpans();
   collinsDictionary.run(createHook);
   mainDictionary.run(createHook);
-
-  // const collaborativeDefinitionsRows = Array.from(document.querySelectorAll('.CDResTable tr')).filter(tr => tr.getAttribute('valign') === 'top');
-  // collaborativeDefinitionsRows.forEach((rowNode) => {
-  //   const hook = createHook({ type: 'collaborativeDictionary', parentNode: rowNode });
-  //   hook.style.position = 'absolute';
-  //   hook.style.left = '105px';
-  //   const parentNode = rowNode.querySelector('.CDResAct');
-  //   parentNode.style.position = 'relative';
-  //   parentNode.append(hook);
-  // });
+  collaborativeDictionary.run(createHook);
 };

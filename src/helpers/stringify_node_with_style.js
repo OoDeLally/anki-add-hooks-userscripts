@@ -25,6 +25,7 @@ const cloneNodeWithExplicitStyle = (originalNode) => {
   cloneNode.removeAttribute('class');
   cloneNode.removeAttribute('name');
   cloneNode.removeAttribute('title');
+  cloneNode.removeAttribute('href');
   const styleText = exportNodeStyleToText(originalNode);
   cloneNode.style.cssText = styleText;
   if (originalNode.childNodes) {
