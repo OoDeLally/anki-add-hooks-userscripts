@@ -29,6 +29,7 @@ module.exports = {
     'prefer-const': 'warn',
     'quotes': 'warn',
     'semi': 'warn',
+    'space-in-parens': 'warn',
   },
   globals: {
     __ANKI_ADD_HOOKS_VERSION__: true,

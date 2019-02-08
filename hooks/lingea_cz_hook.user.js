@@ -378,65 +378,152 @@
   };
 
 
-  const hookOnClick = async (
-    hookNode, frontText, backText, frontLanguage, backLanguage, cardKind, hookName$$1
-  ) => {
+  // Extract the data from the web page
+  const extractPageFields = (userdata) => {
+    const extractedFields = extract(userdata);
+    if (typeof extractedFields !== 'object') {
+      console.error('Found', extractedFields);
+      throw Error('Provided siteSpecificFunctions.extract() fonction did not return an object');
+    }
+    const {
+      frontText, backText, cardKind
+    } = extractedFields;
     // console.log('frontText:', frontText)
     // console.log('backText:', backText)
     // console.log('cardKind:', cardKind)
-    // return
+
+    if (typeof frontText !== 'string') {
+      console.error('Found', frontText);
+      throw Error('Provided extract().frontText is not a string');
+    }
+    if (!frontText) {
+      throw Error('Provided extract().frontText is empty');
+    }
+    if (typeof backText !== 'string') {
+      console.error('Found', backText);
+      throw Error('Provided extract().backText is not a string');
+    }
+    if (!backText) {
+      throw Error('Provided extract().backText is empty');
+    }
+    if (typeof cardKind !== 'string') {
+      console.error('Found', cardKind);
+      throw Error('Provided extract().cardKind is not a string');
+    }
+    if (!cardKind) {
+      throw Error('Provided extract().cardKind is empty');
+    }
+    return extractedFields;
+  };
+
+
+  // Associate a deck to the kind of card
+  const getDeckName = async (cardKind) => {
     const deckNameMapKey = getDeckNameMapKey(cardKind);
     let deckName = await GM.getValue(deckNameMapKey);
     if (!deckName) {
       deckName = prompt(`Enter the name of the deck you want to add '${cardKind}' cards from this website`, 'Default');
       if (!deckName) {
-        return; // Cancel
+        throw Error('Adding was cancelled');
       }
       GM.setValue(deckNameMapKey, deckName);
     }
+    return deckName;
+  };
+
+  // Associate a card model to the kind of card
+  const getModelName = async (cardKind) => {
     const modelNameMapKey = getModelNameMapKey(cardKind);
     let modelName = await GM.getValue(modelNameMapKey);
     if (!modelName) {
       modelName = prompt(`Enter the name of the card model you want to create for '${cardKind}'`, 'Basic (and reversed card)');
       if (!modelName) {
-        return; // Cancel
+        throw Error('Adding was cancelled');
       }
       await GM.setValue(modelNameMapKey, modelName);
     }
-    // console.log('hookOnClick')
-    const dataStr = JSON.stringify({
-      action: 'addNote',
-      version: 6,
-      params: {
-        note: {
-          deckName,
-          modelName,
-          options: {
-            allowDuplicate: true,
+    return modelName;
+  };
+
+
+  const AnkiCardAddingError = (message, response) => {
+    const error = Error(message);
+    error.name = 'AnkiCardAddingError';
+    error.response = response;
+    return error;
+  };
+
+
+  const ankiConnectRequest = (action, params) =>
+    new Promise(
+      async (resolve, reject) =>
+        GM.xmlHttpRequest({
+          method: 'POST',
+          url: 'http://localhost:8765',
+          data: JSON.stringify({ action, version: 6, params }),
+          onabort: (response) => {
+            reject(AnkiCardAddingError('Request was aborted', response));
           },
-          fields: {
-            Front: buildCardFace(frontText, frontLanguage, hookName$$1),
-            Back: buildCardFace(backText, backLanguage, hookName$$1),
+          onerror: (response) => {
+            reject(AnkiCardAddingError(
+              'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.',
+              response
+            ));
           },
-          tags: [hookName],
+          onload: (response) => {
+            const result = JSON.parse(response.responseText);
+            if (result.error) {
+              reject(AnkiCardAddingError(result.error, response));
+              return;
+            }
+            resolve(response.responseText);
+          },
+        })
+    );
+
+
+  const ankiConnectAddRequest = async fields =>
+    ankiConnectRequest('addNote', {
+      note: {
+        deckName: await getDeckName(fields.cardKind),
+        modelName: await getModelName(fields.cardKind),
+        options: {
+          allowDuplicate: true,
         },
+        fields: {
+          Front: buildCardFace(
+            fields.frontText,
+            fields.frontLanguage,
+            hookName
+          ),
+          Back: buildCardFace(
+            fields.backText,
+            fields.backLanguage,
+            hookName
+          ),
+        },
+        tags: [hookName],
       },
     });
-    await GM.xmlHttpRequest({
-      method: 'POST',
-      url: 'http://localhost:8765',
-      data: dataStr,
-      onabort: response => ankiRequestOnFail(response, 'Request was aborted', cardKind),
-      onerror: response => ankiRequestOnFail(response, 'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.', cardKind),
-      onload: (response) => {
-        const result = JSON.parse(response.responseText);
-        if (result.error) {
-          ankiRequestOnFail(response, result.error, cardKind);
-          return;
-        }
-        ankiRequestOnSuccess(hookNode);
-      },
-    });
+
+
+  const onHookClick = async (event, userdata, hookNode) => {
+    event.preventDefault();
+    event.stopPropagation();
+    let fields;
+    try {
+      fields = extractPageFields(userdata);
+      await ankiConnectAddRequest(fields);
+      ankiRequestOnSuccess(hookNode);
+    } catch (error) {
+      if (error.name === 'ScrappingError') {
+        handleScrappingError(error);
+      } else if (error.name === 'AnkiCardAddingError') {
+        ankiRequestOnFail(error.response, error.message, fields.cardKind);
+      } else {
+        throw error;
+      }
+    }
   };
 
 
@@ -457,63 +544,10 @@
     hookNode.setAttribute('name', hookName);
     hookNode.className = ANKI_ADD_BUTTON_CLASS;
     hookNode.title = 'Create an Anki card from this translation';
-    hookNode.onclick = (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      let extractedFields;
-      try {
-        extractedFields = extract(userdata);
-      } catch (error) {
-        if (error.name === 'ScrappingError') {
-          handleScrappingError(error);
-          return;
-        } else {
-          throw error;
-        }
-      }
-      if (typeof extractedFields !== 'object') {
-        console.error('Found', extractedFields);
-        throw Error('Provided siteSpecificFunctions.extract() fonction did not return an object');
-      }
-      const {
-        frontText, backText, frontLanguage, backLanguage, cardKind
-      } = extractedFields;
-      console.log('frontText:', frontText);
-      console.log('backText:', backText);
-      console.log('cardKind:', cardKind);
-
-      if (typeof frontText !== 'string') {
-        console.error('Found', frontText);
-        throw Error('Provided extract().frontText is not a string');
-      }
-      if (!frontText) {
-        throw Error('Provided extract().frontText is empty');
-      }
-      if (typeof backText !== 'string') {
-        console.error('Found', backText);
-        throw Error('Provided extract().backText is not a string');
-      }
-      if (!backText) {
-        throw Error('Provided extract().backText is empty');
-      }
-      if (typeof cardKind !== 'string') {
-        console.error('Found', cardKind);
-        throw Error('Provided extract().cardKind is not a string');
-      }
-      if (!cardKind) {
-        throw Error('Provided extract().cardKind is empty');
-      }
-
-      hookOnClick(
-        hookNode, frontText, backText,
-        frontLanguage, backLanguage,
-        cardKind,
-        hookName
-      );
-    };
     hookNode.appendChild(starNodeBig);
     hookNode.appendChild(starNodeSmall);
     hookNode.appendChild(textNode);
+    hookNode.onclick = event => onHookClick(event, userdata, hookNode);
     return hookNode;
   };
 
