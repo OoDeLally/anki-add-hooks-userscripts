@@ -1,30 +1,17 @@
 import './style.css';
 import './card_style.css';
 import * as siteSpecificFunctions from '__SITE_SPECIFIC_FUNCTIONS__'; // eslint-disable-line import/no-unresolved
-import { ANKI_ADD_BUTTON_CLASS } from './constants';
+import {
+  ANKI_ADD_BUTTON_CLASS,
+  ANKI_HOOK_BUTTON_LOADING_CLASS,
+  ANKI_HOOK_BUTTON_ERROR_CLASS,
+  ANKI_HOOK_BUTTON_ADDED_CLASS,
+  ANKI_HOOK_BUTTON_TEXT_CLASS_SELECTOR,
+} from './constants';
 
 
 const getDeckNameMapKey = cardKind => `deckName_${cardKind.toLowerCase()}`;
 const getModelNameMapKey = cardKind => `modelName_${cardKind.toLowerCase()}`;
-
-const ankiRequestOnFail = async (response, message, cardKind) => {
-  console.error('Anki request response:', response);
-  console.error(message);
-  if (message.includes('deck was not found4')) {
-    await GM.setValue(getDeckNameMapKey(cardKind), null);
-  }
-  if (message.includes('model was not found')) {
-    await GM.setValue(getModelNameMapKey(cardKind), null);
-  }
-  alert(`AnkiConnect returned an error:\n${message}`);
-};
-
-
-const ankiRequestOnSuccess = (hookNode) => {
-  hookNode.classList.add('-anki-add-hook-added');
-  hookNode.querySelector('.-anki-add-hook-text').innerText = 'Added';
-  hookNode.onclick = () => {};
-};
 
 
 const buildCardFace = (htmlContent, language, hookName) => {
@@ -156,6 +143,23 @@ const AnkiCardAddingError = (message, response) => {
 };
 
 
+const ankiRequestOnFail = async (message, cardKind) => {
+  console.error(message);
+  if (message.includes('deck was not found')) {
+    await GM.setValue(getDeckNameMapKey(cardKind), null);
+  }
+  if (message.includes('model was not found')) {
+    await GM.setValue(getModelNameMapKey(cardKind), null);
+  }
+  alert(message);
+};
+
+
+const ankiRequestOnSuccess = (hookNode) => {
+  hookNode.onclick = () => {};
+};
+
+
 const ankiConnectRequest = (action, params) =>
   new Promise(
     async (resolve, reject) =>
@@ -164,18 +168,22 @@ const ankiConnectRequest = (action, params) =>
         url: 'http://localhost:8765',
         data: JSON.stringify({ action, version: 6, params }),
         onabort: (response) => {
-          reject(AnkiCardAddingError('Request was aborted', response));
+          console.error(response);
+          reject(AnkiCardAddingError('Request was aborted'));
         },
         onerror: (response) => {
+          console.error(response);
           reject(AnkiCardAddingError(
-            'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.',
-            response
+            `Could not connect to Anki Desktop. Please make sure that:
+    - Anki Desktop is running.
+    - AnkiConnect add-on is installed on Anki Desktop.
+    - Anki Desktop was restarted after installing AnkiConnect add-on.`
           ));
         },
         onload: (response) => {
           const result = JSON.parse(response.responseText);
           if (result.error) {
-            reject(AnkiCardAddingError(result.error, response));
+            reject(AnkiCardAddingError(result.error));
             return;
           }
           resolve(response.responseText);
@@ -208,6 +216,35 @@ const ankiConnectAddRequest = async fields =>
     },
   });
 
+const updateButtonState = (hook, state) => {
+  if (state === 'available') {
+    hook.classList.remove(ANKI_HOOK_BUTTON_ADDED_CLASS);
+    hook.classList.remove(ANKI_HOOK_BUTTON_LOADING_CLASS);
+    hook.classList.remove(ANKI_HOOK_BUTTON_ERROR_CLASS);
+    hook.querySelector(ANKI_HOOK_BUTTON_TEXT_CLASS_SELECTOR).innerText = 'Add';
+  } else if (state === 'loading') {
+    hook.classList.remove(ANKI_HOOK_BUTTON_ADDED_CLASS);
+    hook.classList.add(ANKI_HOOK_BUTTON_LOADING_CLASS);
+    hook.classList.remove(ANKI_HOOK_BUTTON_ERROR_CLASS);
+    hook.querySelector(ANKI_HOOK_BUTTON_TEXT_CLASS_SELECTOR).innerText = 'Add';
+  } else if (state === 'added') {
+    hook.classList.add(ANKI_HOOK_BUTTON_ADDED_CLASS);
+    hook.classList.remove(ANKI_HOOK_BUTTON_LOADING_CLASS);
+    hook.classList.remove(ANKI_HOOK_BUTTON_ERROR_CLASS);
+    hook.querySelector(ANKI_HOOK_BUTTON_TEXT_CLASS_SELECTOR).innerText = 'Added';
+  } else if (state === 'error') {
+    hook.classList.remove(ANKI_HOOK_BUTTON_ADDED_CLASS);
+    hook.classList.add(ANKI_HOOK_BUTTON_ERROR_CLASS);
+    hook.classList.remove(ANKI_HOOK_BUTTON_LOADING_CLASS);
+    hook.querySelector(ANKI_HOOK_BUTTON_TEXT_CLASS_SELECTOR).innerText = 'Error';
+  } else {
+    throw Error(`Unknwown state ${state}`);
+  }
+};
+
+
+const wait = async ms => new Promise(resolve => setTimeout(resolve, ms));
+
 
 const onHookClick = async (event, userdata, hookNode) => {
   event.preventDefault();
@@ -215,13 +252,17 @@ const onHookClick = async (event, userdata, hookNode) => {
   let fields;
   try {
     fields = extractPageFields(userdata);
+    updateButtonState(hookNode, 'loading');
     await ankiConnectAddRequest(fields);
+    updateButtonState(hookNode, 'added');
     ankiRequestOnSuccess(hookNode);
   } catch (error) {
+    updateButtonState(hookNode, 'error');
+    await wait(100); // Leave time for the button style to be updated
     if (error.name === 'ScrapingError') {
       handleScrapingError(error);
     } else if (error.name === 'AnkiCardAddingError') {
-      ankiRequestOnFail(error.response, error.message, fields.cardKind);
+      ankiRequestOnFail(error.message, fields.cardKind);
     } else {
       throw error;
     }

@@ -27,7 +27,7 @@
       return css;
   }
 
-  __$styleInject(".-anki-add-hook {\n  -moz-user-select: none;\n  -ms-user-select: none;\n  -o-user-select: none;\n  -webkit-touch-callout: none;\n  -webkit-user-select: none;\n  background-color: #aaaaaa;\n  border-radius: 5px;\n  border: 2px solid #222222;\n  box-sizing: content-box;\n  color: white;\n  cursor: pointer;\n  display: inline-block;\n  font-family: 'Roboto', sans-serif;\n  font-size: 12px;\n  font-weight: bold;\n  height: 15px;\n  line-height: 17px;\n  opacity: 0.6;\n  overflow-wrap: normal;\n  overflow: hidden;\n  padding-left: 30px;\n  padding-right: 5px;\n  position: relative;\n  right: 0px;\n  text-align: left;\n  text-indent: 0;\n  top: 0px;\n  user-select: none;\n  vertical-align: middle;\n  width: 35px;\n  z-index: 1000;\n}\n.-anki-add-hook-added {\n  border: 2px solid green;\n  opacity: 1;\n  cursor: auto;\n  color: lightgreen;\n}\n.-anki-add-hook:hover {\n  opacity: 1;\n}\n.-anki-add-hook-star {\n  display: block;\n  transform: rotate(-15deg);\n  position: absolute;\n}\n.-anki-add-hook-added .-anki-add-hook-star-small {\n  color: green;\n}\n.-anki-add-hook-star-big {\n  font-size: 40px;\n  color: white;\n  z-index: 1005;\n  left: -7px;\n  top: -1px;\n}\n.-anki-add-hook-star-small {\n  font-size: 25px;\n  color: #0099ff;\n  color: grdsdsdqwdfedwdsdwesdddsdwdn;\n  z-index: 1010;\n  left: 0px;\n  top: -1px;\n}\n\n.-anki-add-hook-text {\n\n}\n");
+  __$styleInject(".-anki-add-hook {\n  -moz-user-select: none;\n  -ms-user-select: none;\n  -o-user-select: none;\n  -webkit-touch-callout: none;\n  -webkit-user-select: none;\n  background-color: #aaaaaa;\n  border-radius: 5px;\n  border: 2px solid #222222;\n  box-sizing: content-box;\n  color: white;\n  cursor: pointer;\n  display: inline-block;\n  font-family: 'Roboto', sans-serif;\n  font-size: 12px;\n  font-weight: bold;\n  height: 15px;\n  line-height: 17px;\n  opacity: 0.8;\n  overflow-wrap: normal;\n  overflow: hidden;\n  padding-left: 30px;\n  padding-right: 5px;\n  position: relative;\n  right: 0px;\n  text-align: left;\n  text-indent: 0;\n  top: 0px;\n  user-select: none;\n  vertical-align: middle;\n  width: 35px;\n  z-index: 1000;\n}\n.-anki-add-hook-added {\n  border: 2px solid green;\n  opacity: 1;\n  cursor: auto;\n  color: green;\n  background-color: #cccccc;\n}\n.-anki-add-hook:hover {\n  opacity: 1;\n}\n.-anki-add-hook-star {\n  display: block;\n  transform: rotate(-15deg);\n  position: absolute;\n}\n.-anki-add-hook-added .-anki-add-hook-star-small {\n  color: green;\n}\n.-anki-add-hook-star-big {\n  font-size: 40px;\n  color: white;\n  z-index: 1005;\n  left: -7px;\n  top: -1px;\n}\n.-anki-add-hook-star-small {\n  font-size: 25px;\n  color: #0099ff;\n  color: grdsdsdqwdfedwdsdwesdddsdwdn;\n  z-index: 1010;\n  left: 0px;\n  top: -1px;\n}\n\n.-anki-add-hook-text {\n\n}\n\n\n.-anki-add-hook-loading .-anki-add-hook-star {\n  animation-name: spin;\n  animation-duration: 2000ms;\n  animation-iteration-count: infinite;\n  animation-timing-function: linear;\n}\n\n@keyframes spin {\n    from {\n        transform:rotate(0deg);\n    }\n    to {\n        transform:rotate(360deg);\n    }\n}\n\n.-anki-add-hook-error {\n  border: 2px solid red;\n  opacity: 1;\n  color: red;\n  background-color: #cccccc;\n}\n.-anki-add-hook-error .-anki-add-hook-star-small {\n  color: red;\n}\n");
 
   __$styleInject(".banner {\n  height: 20px;\n  font-size: 14px;\n  color: deepskyblue;\n  text-align: left;\n}\n\n.banner-language {\n\n}\n\n\n.banner-hook-name {\n  float: right;\n}\n");
 
@@ -55,6 +55,11 @@
 
   const ANKI_ADD_BUTTON_CLASS = '-anki-add-hook';
   const ANKI_ADD_BUTTON_CLASS_SELECTOR = `.${ANKI_ADD_BUTTON_CLASS}`;
+  const ANKI_HOOK_BUTTON_LOADING_CLASS = '-anki-add-hook-loading';
+  const ANKI_HOOK_BUTTON_ERROR_CLASS = '-anki-add-hook-error';
+  const ANKI_HOOK_BUTTON_ADDED_CLASS = '-anki-add-hook-added';
+  const ANKI_HOOK_BUTTON_TEXT_CLASS = '-anki-add-hook-text';
+  const ANKI_HOOK_BUTTON_TEXT_CLASS_SELECTOR = `.${ANKI_HOOK_BUTTON_TEXT_CLASS}`;
 
   const frontFieldSelector = 'textarea#source';
   const backFieldSelector = '.translation';
@@ -152,25 +157,6 @@
 
   const getDeckNameMapKey = cardKind => `deckName_${cardKind.toLowerCase()}`;
   const getModelNameMapKey = cardKind => `modelName_${cardKind.toLowerCase()}`;
-
-  const ankiRequestOnFail = async (response, message, cardKind) => {
-    console.error('Anki request response:', response);
-    console.error(message);
-    if (message.includes('deck was not found4')) {
-      await GM.setValue(getDeckNameMapKey(cardKind), null);
-    }
-    if (message.includes('model was not found')) {
-      await GM.setValue(getModelNameMapKey(cardKind), null);
-    }
-    alert(`AnkiConnect returned an error:\n${message}`);
-  };
-
-
-  const ankiRequestOnSuccess = (hookNode) => {
-    hookNode.classList.add('-anki-add-hook-added');
-    hookNode.querySelector('.-anki-add-hook-text').innerText = 'Added';
-    hookNode.onclick = () => {};
-  };
 
 
   const buildCardFace = (htmlContent, language, hookName$$1) => {
@@ -302,6 +288,23 @@
   };
 
 
+  const ankiRequestOnFail = async (message, cardKind) => {
+    console.error(message);
+    if (message.includes('deck was not found')) {
+      await GM.setValue(getDeckNameMapKey(cardKind), null);
+    }
+    if (message.includes('model was not found')) {
+      await GM.setValue(getModelNameMapKey(cardKind), null);
+    }
+    alert(message);
+  };
+
+
+  const ankiRequestOnSuccess = (hookNode) => {
+    hookNode.onclick = () => {};
+  };
+
+
   const ankiConnectRequest = (action, params) =>
     new Promise(
       async (resolve, reject) =>
@@ -310,18 +313,22 @@
           url: 'http://localhost:8765',
           data: JSON.stringify({ action, version: 6, params }),
           onabort: (response) => {
-            reject(AnkiCardAddingError('Request was aborted', response));
+            console.error(response);
+            reject(AnkiCardAddingError('Request was aborted'));
           },
           onerror: (response) => {
+            console.error(response);
             reject(AnkiCardAddingError(
-              'Failed to connect to Anki Desktop. Make sure it is running and the AnkiConnect add-on is installed.',
-              response
+              `Could not connect to Anki Desktop. Please make sure that:
+    - Anki Desktop is running.
+    - AnkiConnect add-on is installed on Anki Desktop.
+    - Anki Desktop was restarted after installing AnkiConnect add-on.`
             ));
           },
           onload: (response) => {
             const result = JSON.parse(response.responseText);
             if (result.error) {
-              reject(AnkiCardAddingError(result.error, response));
+              reject(AnkiCardAddingError(result.error));
               return;
             }
             resolve(response.responseText);
@@ -354,6 +361,35 @@
       },
     });
 
+  const updateButtonState = (hook, state) => {
+    if (state === 'available') {
+      hook.classList.remove(ANKI_HOOK_BUTTON_ADDED_CLASS);
+      hook.classList.remove(ANKI_HOOK_BUTTON_LOADING_CLASS);
+      hook.classList.remove(ANKI_HOOK_BUTTON_ERROR_CLASS);
+      hook.querySelector(ANKI_HOOK_BUTTON_TEXT_CLASS_SELECTOR).innerText = 'Add';
+    } else if (state === 'loading') {
+      hook.classList.remove(ANKI_HOOK_BUTTON_ADDED_CLASS);
+      hook.classList.add(ANKI_HOOK_BUTTON_LOADING_CLASS);
+      hook.classList.remove(ANKI_HOOK_BUTTON_ERROR_CLASS);
+      hook.querySelector(ANKI_HOOK_BUTTON_TEXT_CLASS_SELECTOR).innerText = 'Add';
+    } else if (state === 'added') {
+      hook.classList.add(ANKI_HOOK_BUTTON_ADDED_CLASS);
+      hook.classList.remove(ANKI_HOOK_BUTTON_LOADING_CLASS);
+      hook.classList.remove(ANKI_HOOK_BUTTON_ERROR_CLASS);
+      hook.querySelector(ANKI_HOOK_BUTTON_TEXT_CLASS_SELECTOR).innerText = 'Added';
+    } else if (state === 'error') {
+      hook.classList.remove(ANKI_HOOK_BUTTON_ADDED_CLASS);
+      hook.classList.add(ANKI_HOOK_BUTTON_ERROR_CLASS);
+      hook.classList.remove(ANKI_HOOK_BUTTON_LOADING_CLASS);
+      hook.querySelector(ANKI_HOOK_BUTTON_TEXT_CLASS_SELECTOR).innerText = 'Error';
+    } else {
+      throw Error(`Unknwown state ${state}`);
+    }
+  };
+
+
+  const wait = async ms => new Promise(resolve => setTimeout(resolve, ms));
+
 
   const onHookClick = async (event, userdata, hookNode) => {
     event.preventDefault();
@@ -361,13 +397,17 @@
     let fields;
     try {
       fields = extractPageFields(userdata);
+      updateButtonState(hookNode, 'loading');
       await ankiConnectAddRequest(fields);
+      updateButtonState(hookNode, 'added');
       ankiRequestOnSuccess(hookNode);
     } catch (error) {
+      updateButtonState(hookNode, 'error');
+      await wait(100); // Leave time for the button style to be updated
       if (error.name === 'ScrapingError') {
         handleScrapingError(error);
       } else if (error.name === 'AnkiCardAddingError') {
-        ankiRequestOnFail(error.response, error.message, fields.cardKind);
+        ankiRequestOnFail(error.message, fields.cardKind);
       } else {
         throw error;
       }
