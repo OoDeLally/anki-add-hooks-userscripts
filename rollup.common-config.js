@@ -49,7 +49,11 @@ const isJsFile = file => /.m?js$/.test(file);
 
 export const getEntryPoints = () =>
   glob.sync('./src/hooks/*')
-    .filter(file => isDirectory(file) || isJsFile(file))
+    .filter(
+      file =>
+        (isDirectory(file) || isJsFile(file)) // Module as direct js file or a module folder
+        && !/\bmy_website_com.js$/.test(file) // Not the new hook template
+    )
     .reduce((obj, file) => {
       obj[path.basename(file, '.js')] = resolve.sync(file);
       return obj;

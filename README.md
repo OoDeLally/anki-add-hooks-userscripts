@@ -44,7 +44,7 @@ Add a button on translation websites to create an Anki card from a translation.
 
 The most convenient way to develop a new tampermonkey script is to install a userscript (that never changes) which `@require`s a local file on your computer. That local file will be recompiled everytime your source file is modified. Thus you don't need to manually recompile and reinstall your userscript everytime you change a thing. The following steps describe how to set up that environment.
 
-1- Create your own `src/hooks/my_website_com.js` from the provided template [src/new_hook_template.js](https://github.com/OoDeLally/anki-add-hooks-userscripts/blob/master/src/new_hook_template.js) and fix inside all the metatags and the exported members.
+1- Rename `src/hooks/my_website_com.js` and fix inside all the metatags and the exported members.
 
 2- Run `npm run dev-build` to create two files:
 * `dev-hooks/my_website_com_dev_hook.user.js`

@@ -1,5 +1,5 @@
 // Template to start creating a new hook.
-// Rename this file to src/hooks/my_website_com.js.
+// Rename this file to start your own hook.
 
 
 // These following metatags will be appended to the compiled userscript.
