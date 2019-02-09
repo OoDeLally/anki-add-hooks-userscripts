@@ -6,7 +6,7 @@
 
 import stringifyNodeWithStyle from '../helpers/stringify_node_with_style';
 import isTextNode from '../helpers/is_text_node';
-import { ANKI_ADD_BUTTON_CLASS_SELECTOR } from '../constants';
+import { querySelector, querySelectorAll, doesAnkiHookExistIn } from '../helpers/scraping';
 
 
 export const hookName = 'lingea.cz';
@@ -45,12 +45,12 @@ const dropFrontTextJunk = (node) => {
 
 
 const extractFrontText = () => {
-  const node = document.querySelector('table.entry  .head .lex_ful_entr');
+  const node = querySelector(document, 'table.entry  .head .lex_ful_entr');
   return stringifyNodeWithStyle(node, dropFrontTextJunk);
 };
 
 const extractBackText = () => {
-  const translationRows = Array.from(document.querySelectorAll('.entry tr'))
+  const translationRows = querySelectorAll(document, '.entry tr')
     .filter(tr => !tr.className || !tr.className.includes('head'));
   const definitionText = translationRows.map(tr => stringifyNodeWithStyle(tr, dropWTags)).join('');
   return `<table style="text-align:left;margin:auto;">${definitionText}</table>`;
@@ -76,13 +76,12 @@ export const extract = () => ({
 
 export const run = (createHook) => {
   setInterval(() => {
-    const parentNode = document.querySelector('.entry  tr.head td');
+    const parentNode = querySelector(document, '.entry  tr.head td');
     if (!parentNode) {
       return; // Container not found
     }
-    const existingHook = parentNode.querySelector(ANKI_ADD_BUTTON_CLASS_SELECTOR);
-    if (existingHook) {
-      return; // Hook already exists
+    if (doesAnkiHookExistIn(parentNode)) {
+      return;
     }
     const hook = createHook();
     hook.style.position = 'absolute';

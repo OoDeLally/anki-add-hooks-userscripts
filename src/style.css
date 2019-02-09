@@ -41,6 +41,7 @@
 .-anki-add-hook:hover {
   opacity: 1;
 }
+
 .-anki-add-hook-star {
   display: block;
   transform: rotate(-15deg);
@@ -66,7 +67,8 @@
 }
 
 .-anki-add-hook-text {
-
+  text-decoration: none !important;
+  font-size: 12px !important;
 }
 
 

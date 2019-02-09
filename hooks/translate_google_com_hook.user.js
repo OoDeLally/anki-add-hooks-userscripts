@@ -27,7 +27,7 @@
       return css;
   }
 
-  __$styleInject(".-anki-add-hook {\n  -moz-user-select: none;\n  -ms-user-select: none;\n  -o-user-select: none;\n  -webkit-touch-callout: none;\n  -webkit-user-select: none;\n  background-color: #aaaaaa;\n  border-radius: 5px;\n  border: 2px solid #222222;\n  box-sizing: content-box;\n  color: white;\n  cursor: pointer;\n  display: inline-block;\n  font-family: 'Roboto', sans-serif;\n  font-size: 12px;\n  font-weight: bold;\n  height: 15px;\n  line-height: 17px;\n  opacity: 0.8;\n  overflow-wrap: normal;\n  overflow: hidden;\n  padding-left: 30px;\n  padding-right: 5px;\n  position: relative;\n  right: 0px;\n  text-align: left;\n  text-indent: 0;\n  top: 0px;\n  user-select: none;\n  vertical-align: middle;\n  width: 35px;\n  z-index: 1000;\n}\n.-anki-add-hook-added {\n  border: 2px solid green;\n  opacity: 1;\n  cursor: auto;\n  color: green;\n  background-color: #cccccc;\n}\n.-anki-add-hook:hover {\n  opacity: 1;\n}\n.-anki-add-hook-star {\n  display: block;\n  transform: rotate(-15deg);\n  position: absolute;\n}\n.-anki-add-hook-added .-anki-add-hook-star-small {\n  color: green;\n}\n.-anki-add-hook-star-big {\n  font-size: 40px;\n  color: white;\n  z-index: 1005;\n  left: -7px;\n  top: -1px;\n}\n.-anki-add-hook-star-small {\n  font-size: 25px;\n  color: #0099ff;\n  color: grdsdsdqwdfedwdsdwesdddsdwdn;\n  z-index: 1010;\n  left: 0px;\n  top: -1px;\n}\n\n.-anki-add-hook-text {\n\n}\n\n\n.-anki-add-hook-loading .-anki-add-hook-star {\n  animation-name: spin;\n  animation-duration: 2000ms;\n  animation-iteration-count: infinite;\n  animation-timing-function: linear;\n}\n\n@keyframes spin {\n    from {\n        transform:rotate(0deg);\n    }\n    to {\n        transform:rotate(360deg);\n    }\n}\n\n.-anki-add-hook-error {\n  border: 2px solid red;\n  opacity: 1;\n  color: red;\n  background-color: #cccccc;\n}\n.-anki-add-hook-error .-anki-add-hook-star-small {\n  color: red;\n}\n");
+  __$styleInject(".-anki-add-hook {\n  -moz-user-select: none;\n  -ms-user-select: none;\n  -o-user-select: none;\n  -webkit-touch-callout: none;\n  -webkit-user-select: none;\n  background-color: #aaaaaa;\n  border-radius: 5px;\n  border: 2px solid #222222;\n  box-sizing: content-box;\n  color: white;\n  cursor: pointer;\n  display: inline-block;\n  font-family: 'Roboto', sans-serif;\n  font-size: 12px;\n  font-weight: bold;\n  height: 15px;\n  line-height: 17px;\n  opacity: 0.8;\n  overflow-wrap: normal;\n  overflow: hidden;\n  padding-left: 30px;\n  padding-right: 5px;\n  position: relative;\n  right: 0px;\n  text-align: left;\n  text-indent: 0;\n  top: 0px;\n  user-select: none;\n  vertical-align: middle;\n  width: 35px;\n  z-index: 1000;\n}\n.-anki-add-hook-added {\n  border: 2px solid green;\n  opacity: 1;\n  cursor: auto;\n  color: green;\n  background-color: #cccccc;\n}\n.-anki-add-hook:hover {\n  opacity: 1;\n}\n\n.-anki-add-hook-star {\n  display: block;\n  transform: rotate(-15deg);\n  position: absolute;\n}\n.-anki-add-hook-added .-anki-add-hook-star-small {\n  color: green;\n}\n.-anki-add-hook-star-big {\n  font-size: 40px;\n  color: white;\n  z-index: 1005;\n  left: -7px;\n  top: -1px;\n}\n.-anki-add-hook-star-small {\n  font-size: 25px;\n  color: #0099ff;\n  color: grdsdsdqwdfedwdsdwesdddsdwdn;\n  z-index: 1010;\n  left: 0px;\n  top: -1px;\n}\n\n.-anki-add-hook-text {\n  text-decoration: none !important;\n  font-size: 12px !important;\n}\n\n\n.-anki-add-hook-loading .-anki-add-hook-star {\n  animation-name: spin;\n  animation-duration: 2000ms;\n  animation-iteration-count: infinite;\n  animation-timing-function: linear;\n}\n\n@keyframes spin {\n    from {\n        transform:rotate(0deg);\n    }\n    to {\n        transform:rotate(360deg);\n    }\n}\n\n.-anki-add-hook-error {\n  border: 2px solid red;\n  opacity: 1;\n  color: red;\n  background-color: #cccccc;\n}\n.-anki-add-hook-error .-anki-add-hook-star-small {\n  color: red;\n}\n");
 
   __$styleInject(".banner {\n  height: 20px;\n  font-size: 14px;\n  color: deepskyblue;\n  text-align: left;\n}\n\n.banner-language {\n\n}\n\n\n.banner-hook-name {\n  float: right;\n}\n");
 
@@ -53,6 +53,14 @@
     }
   };
 
+  var ScrapingError = (message) => {
+    const error = Error(message);
+    error.name = 'ScrapingError';
+    error.location = window.location;
+    error.stack = error.stack.split(/[\n\r]/gm).slice(4).join('\n');
+    return error;
+  };
+
   const ANKI_ADD_BUTTON_CLASS = '-anki-add-hook';
   const ANKI_ADD_BUTTON_CLASS_SELECTOR = `.${ANKI_ADD_BUTTON_CLASS}`;
   const ANKI_HOOK_BUTTON_LOADING_CLASS = '-anki-add-hook-loading';
@@ -61,25 +69,68 @@
   const ANKI_HOOK_BUTTON_TEXT_CLASS = '-anki-add-hook-text';
   const ANKI_HOOK_BUTTON_TEXT_CLASS_SELECTOR = `.${ANKI_HOOK_BUTTON_TEXT_CLASS}`;
 
+  // Just like parentNode.querySelectorAll, but throws if not found
+  const querySelectorAll = (parentNode, selector, { throwOnUnfound = true } = {}) => {
+    if (!parentNode || !parentNode.querySelectorAll) {
+      throw Error(`parentNode does not seem to be a DOM node: ${parentNode}`);
+    }
+    if (typeof selector !== 'string') {
+      throw Error('selector must be a string');
+    }
+    const foundNodes = Array.from(parentNode.querySelectorAll(selector));
+    if (foundNodes.length === 0 && throwOnUnfound) {
+      throw ScrapingError(`No node matches the selector '${selector}'`);
+    }
+    return foundNodes;
+  };
+
+
+  // Just like parentNode.querySelector, but throws if not found, or several found
+  const querySelector = (
+    parentNode, selector, { throwOnUnfound = true, throwOnFoundSeveral = true } = {}
+  ) => {
+    let matchingNodes;
+    try {
+      matchingNodes = querySelectorAll(parentNode, selector, { throwOnUnfound });
+    } catch (error) {
+      if (error.name === 'ScrapingError') {
+        throw ScrapingError(error.message); // Remove the extra stackframe
+      } else {
+        throw error;
+      }
+    }
+    if (matchingNodes.length > 1 && throwOnFoundSeveral) {
+      throw ScrapingError(`Several nodes match the selector '${selector}'`);
+    }
+    return matchingNodes[0];
+  };
+
+
+  const doesAnkiHookExistIn = parentNode =>
+    querySelector(
+      parentNode,
+      ANKI_ADD_BUTTON_CLASS_SELECTOR,
+      { throwOnUnfound: false }
+    );
+
   const frontFieldSelector = 'textarea#source';
   const backFieldSelector = '.translation';
 
 
   const extract = () => ({
-    frontText: document.querySelector(frontFieldSelector).value,
-    backText: document.querySelector(backFieldSelector).innerText,
+    frontText: querySelector(document, frontFieldSelector).value,
+    backText: querySelector(document, backFieldSelector).innerText,
   });
 
 
   const run = (createHook) => {
-    const containerBlock = document.querySelector('.source-target-row');
-    const parentNode = containerBlock.querySelector('.result-footer');
+    const containerBlock = querySelector(document, '.source-target-row');
+    const parentNode = querySelector(containerBlock, '.result-footer', { throwOnUnfound: false });
     if (!parentNode) {
-      return; // Container not found
+      return;
     }
-    const existingHook = parentNode.querySelector(ANKI_ADD_BUTTON_CLASS_SELECTOR);
-    if (existingHook) {
-      return; // Hook already exists
+    if (doesAnkiHookExistIn(parentNode)) {
+      return;
     }
     const children = Array.from(parentNode.childNodes);
     const firstFloatLeftNode = children.find(node => node.style.float === 'left');
@@ -87,12 +138,13 @@
     hook.style.float = 'right';
     hook.style.top = '15px';
     hook.style.right = '10px';
-    highlightOnHookHover(hook, containerBlock.querySelectorAll(`${frontFieldSelector},${backFieldSelector}`), '#d2e3fc');
+    const frontAndBackFields = querySelectorAll(containerBlock, `${frontFieldSelector},${backFieldSelector}`);
+    highlightOnHookHover(hook, frontAndBackFields, '#d2e3fc');
     parentNode.insertBefore(hook, firstFloatLeftNode);
   };
 
   const extract$1 = (parentTr) => {
-    const [sourceTd, targetTd] = parentTr.querySelectorAll('td');
+    const [sourceTd, targetTd] = querySelectorAll(parentTr, 'td');
     return {
       frontText: sourceTd.innerText,
       backText: targetTd.innerText,
@@ -101,21 +153,20 @@
 
 
   const tryAddingToRow = (parentTr, createHook) => {
-    const [, , actionTd] = parentTr.querySelectorAll('td');
-    const existingHook = actionTd.querySelector(ANKI_ADD_BUTTON_CLASS_SELECTOR);
-    if (existingHook) {
-      return; // Hook already exists
+    const [, , actionTd] = querySelectorAll(parentTr, 'td');
+    if (doesAnkiHookExistIn(actionTd)) {
+      return;
     }
     const hook = createHook({ type: 'secondaryPanel', parentNode: parentTr });
     hook.style.display = 'inline-block';
     hook.style.marginLeft = '5px';
     highlightOnHookHover(hook, parentTr, '#d2e3fc');
-    actionTd.querySelector('.gt-baf-cell').append(hook);
+    querySelector(actionTd, '.gt-baf-cell').append(hook);
   };
 
 
   const run$1 = (createHook) => {
-    document.querySelectorAll('.gt-baf-table tr.gt-baf-entry')
+    querySelectorAll(document, '.gt-baf-table tr.gt-baf-entry')
       .forEach(tr => tryAddingToRow(tr, createHook));
   };
 
@@ -126,8 +177,8 @@
 
 
   const extract$2 = ({ type, parentNode }) => {
-    const sourceLanguage = document.querySelector('.sl-sugg .jfk-button-checked').innerText.split(/ *- */)[0];
-    const targetLanguage = document.querySelector('.tl-sugg .jfk-button-checked').innerText;
+    const sourceLanguage = querySelector(document, '.sl-sugg .jfk-button-checked').innerText.split(/ *- */)[0];
+    const targetLanguage = querySelector(document, '.tl-sugg .jfk-button-checked').innerText;
     if (type === 'mainPanel') {
       return {
         ...extract(),

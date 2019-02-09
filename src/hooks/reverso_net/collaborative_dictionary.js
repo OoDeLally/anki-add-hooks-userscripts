@@ -1,12 +1,13 @@
 import highlightOnHookHover from '../../helpers/highlight_on_hook_hover';
 import stringifyNodeWithStyle from '../../helpers/stringify_node_with_style';
+import { querySelector, querySelectorAll } from '../../helpers/scraping';
 
 
 const extractFrontText = row =>
-  stringifyNodeWithStyle(row.querySelector('.CDResSource'));
+  stringifyNodeWithStyle(querySelector(row, '.CDResSource'));
 
 const extractBackText = row =>
-  stringifyNodeWithStyle(row.querySelector('.CDResTarget'));
+  stringifyNodeWithStyle(querySelector(row, '.CDResTarget'));
 
 
 export const extract = ({ row, reverseDirection }) => ({
@@ -17,8 +18,12 @@ export const extract = ({ row, reverseDirection }) => ({
 
 
 export const run = (createHook) => {
-  const allRows = Array.from(document.querySelectorAll('.CDResTable tr'));
-  const reverseDirectionRows = Array.from(document.querySelectorAll('#ctl00_cC_ucResPM_opossiteEntries tr'))
+  const allRows = querySelectorAll(document, '.CDResTable tr', { throwOnUnfound: false });
+  const reverseDirectionRows = querySelectorAll(
+    document,
+    '#ctl00_cC_ucResPM_opossiteEntries tr',
+    { throwOnUnfound: false }
+  )
     .filter(tr => tr.getAttribute('valign') === 'top');
   const normalRows = allRows.filter(tr => !reverseDirectionRows.includes(tr))
     .filter(tr => tr.getAttribute('valign') === 'top');
@@ -32,7 +37,7 @@ export const run = (createHook) => {
         hook.style.position = 'absolute';
         hook.style.left = '105px';
         highlightOnHookHover(hook, row, 'lightblue');
-        const parentNode = row.querySelector('.CDResAct');
+        const parentNode = querySelector(row, '.CDResAct');
         parentNode.style.position = 'relative';
         parentNode.append(hook);
       });

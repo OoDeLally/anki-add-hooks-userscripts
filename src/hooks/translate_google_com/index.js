@@ -6,14 +6,15 @@
 
 import * as mainPanel from './main_panel';
 import * as secondaryPanel from './secondary_panel';
+import { querySelector } from '../../helpers/scraping';
 
 
 export const hookName = 'translate.google.com';
 
 
 export const extract = ({ type, parentNode }) => {
-  const sourceLanguage = document.querySelector('.sl-sugg .jfk-button-checked').innerText.split(/ *- */)[0];
-  const targetLanguage = document.querySelector('.tl-sugg .jfk-button-checked').innerText;
+  const sourceLanguage = querySelector(document, '.sl-sugg .jfk-button-checked').innerText.split(/ *- */)[0];
+  const targetLanguage = querySelector(document, '.tl-sugg .jfk-button-checked').innerText;
   if (type === 'mainPanel') {
     return {
       ...mainPanel.extract(),

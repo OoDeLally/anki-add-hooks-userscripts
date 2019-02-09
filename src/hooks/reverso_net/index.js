@@ -8,6 +8,7 @@ import * as collinsDictionary from './collins_dictionary';
 import * as mainDictionary from './main_dictionary';
 import * as collaborativeDictionary from './collaborative_dictionary';
 import * as contextualDictionary from './contextual_dictionary';
+import { querySelectorAll } from '../../helpers/scraping';
 
 
 export const hookName = 'reverso.net';
@@ -46,7 +47,7 @@ export const extract = ({ type, data }) => {
 // There are weird "&nbsp;" spans with a white border-bottom, that make it
 // ugly when we put a background. So we set them to transparent instead.
 const hideNbspSpans = () => {
-  document.querySelectorAll('.nbsp1').forEach((span) => {
+  querySelectorAll(document, '.nbsp1', { throwOnUnfound: false }).forEach((span) => {
     span.style.setProperty('border-color', 'transparent', 'important');
   });
 };

@@ -1,6 +1,6 @@
 import highlightOnHookHover from '../../helpers/highlight_on_hook_hover';
 import stringifyNodeWithStyle from '../../helpers/stringify_node_with_style';
-import { getNodeWithIdMatchingRegExp } from '../../helpers/get_nodes_with_id_matching_reg_exp';
+import { getNodeWithIdMatchingRegExp, querySelector } from '../../helpers/scraping';
 
 
 const extractFrontText = () => {
@@ -21,7 +21,7 @@ export const extract = divGroup => ({
 
 
 export const run = (createHook) => {
-  const resultBox = document.querySelector('.center_frameColl');
+  const resultBox = querySelector(document, '.center_frameColl', { throwOnUnfound: false });
   if (!resultBox) {
     return;
   }

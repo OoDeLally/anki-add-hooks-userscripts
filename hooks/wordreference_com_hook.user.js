@@ -27,7 +27,7 @@
       return css;
   }
 
-  __$styleInject(".-anki-add-hook {\n  -moz-user-select: none;\n  -ms-user-select: none;\n  -o-user-select: none;\n  -webkit-touch-callout: none;\n  -webkit-user-select: none;\n  background-color: #aaaaaa;\n  border-radius: 5px;\n  border: 2px solid #222222;\n  box-sizing: content-box;\n  color: white;\n  cursor: pointer;\n  display: inline-block;\n  font-family: 'Roboto', sans-serif;\n  font-size: 12px;\n  font-weight: bold;\n  height: 15px;\n  line-height: 17px;\n  opacity: 0.8;\n  overflow-wrap: normal;\n  overflow: hidden;\n  padding-left: 30px;\n  padding-right: 5px;\n  position: relative;\n  right: 0px;\n  text-align: left;\n  text-indent: 0;\n  top: 0px;\n  user-select: none;\n  vertical-align: middle;\n  width: 35px;\n  z-index: 1000;\n}\n.-anki-add-hook-added {\n  border: 2px solid green;\n  opacity: 1;\n  cursor: auto;\n  color: green;\n  background-color: #cccccc;\n}\n.-anki-add-hook:hover {\n  opacity: 1;\n}\n.-anki-add-hook-star {\n  display: block;\n  transform: rotate(-15deg);\n  position: absolute;\n}\n.-anki-add-hook-added .-anki-add-hook-star-small {\n  color: green;\n}\n.-anki-add-hook-star-big {\n  font-size: 40px;\n  color: white;\n  z-index: 1005;\n  left: -7px;\n  top: -1px;\n}\n.-anki-add-hook-star-small {\n  font-size: 25px;\n  color: #0099ff;\n  color: grdsdsdqwdfedwdsdwesdddsdwdn;\n  z-index: 1010;\n  left: 0px;\n  top: -1px;\n}\n\n.-anki-add-hook-text {\n\n}\n\n\n.-anki-add-hook-loading .-anki-add-hook-star {\n  animation-name: spin;\n  animation-duration: 2000ms;\n  animation-iteration-count: infinite;\n  animation-timing-function: linear;\n}\n\n@keyframes spin {\n    from {\n        transform:rotate(0deg);\n    }\n    to {\n        transform:rotate(360deg);\n    }\n}\n\n.-anki-add-hook-error {\n  border: 2px solid red;\n  opacity: 1;\n  color: red;\n  background-color: #cccccc;\n}\n.-anki-add-hook-error .-anki-add-hook-star-small {\n  color: red;\n}\n");
+  __$styleInject(".-anki-add-hook {\n  -moz-user-select: none;\n  -ms-user-select: none;\n  -o-user-select: none;\n  -webkit-touch-callout: none;\n  -webkit-user-select: none;\n  background-color: #aaaaaa;\n  border-radius: 5px;\n  border: 2px solid #222222;\n  box-sizing: content-box;\n  color: white;\n  cursor: pointer;\n  display: inline-block;\n  font-family: 'Roboto', sans-serif;\n  font-size: 12px;\n  font-weight: bold;\n  height: 15px;\n  line-height: 17px;\n  opacity: 0.8;\n  overflow-wrap: normal;\n  overflow: hidden;\n  padding-left: 30px;\n  padding-right: 5px;\n  position: relative;\n  right: 0px;\n  text-align: left;\n  text-indent: 0;\n  top: 0px;\n  user-select: none;\n  vertical-align: middle;\n  width: 35px;\n  z-index: 1000;\n}\n.-anki-add-hook-added {\n  border: 2px solid green;\n  opacity: 1;\n  cursor: auto;\n  color: green;\n  background-color: #cccccc;\n}\n.-anki-add-hook:hover {\n  opacity: 1;\n}\n\n.-anki-add-hook-star {\n  display: block;\n  transform: rotate(-15deg);\n  position: absolute;\n}\n.-anki-add-hook-added .-anki-add-hook-star-small {\n  color: green;\n}\n.-anki-add-hook-star-big {\n  font-size: 40px;\n  color: white;\n  z-index: 1005;\n  left: -7px;\n  top: -1px;\n}\n.-anki-add-hook-star-small {\n  font-size: 25px;\n  color: #0099ff;\n  color: grdsdsdqwdfedwdsdwesdddsdwdn;\n  z-index: 1010;\n  left: 0px;\n  top: -1px;\n}\n\n.-anki-add-hook-text {\n  text-decoration: none !important;\n  font-size: 12px !important;\n}\n\n\n.-anki-add-hook-loading .-anki-add-hook-star {\n  animation-name: spin;\n  animation-duration: 2000ms;\n  animation-iteration-count: infinite;\n  animation-timing-function: linear;\n}\n\n@keyframes spin {\n    from {\n        transform:rotate(0deg);\n    }\n    to {\n        transform:rotate(360deg);\n    }\n}\n\n.-anki-add-hook-error {\n  border: 2px solid red;\n  opacity: 1;\n  color: red;\n  background-color: #cccccc;\n}\n.-anki-add-hook-error .-anki-add-hook-star-small {\n  color: red;\n}\n");
 
   __$styleInject(".banner {\n  height: 20px;\n  font-size: 14px;\n  color: deepskyblue;\n  text-align: left;\n}\n\n.banner-language {\n\n}\n\n\n.banner-hook-name {\n  float: right;\n}\n");
 
@@ -244,6 +244,50 @@
     }
   };
 
+  var ScrapingError = (message) => {
+    const error = Error(message);
+    error.name = 'ScrapingError';
+    error.location = window.location;
+    error.stack = error.stack.split(/[\n\r]/gm).slice(4).join('\n');
+    return error;
+  };
+
+  // Just like parentNode.querySelectorAll, but throws if not found
+  const querySelectorAll = (parentNode, selector, { throwOnUnfound = true } = {}) => {
+    if (!parentNode || !parentNode.querySelectorAll) {
+      throw Error(`parentNode does not seem to be a DOM node: ${parentNode}`);
+    }
+    if (typeof selector !== 'string') {
+      throw Error('selector must be a string');
+    }
+    const foundNodes = Array.from(parentNode.querySelectorAll(selector));
+    if (foundNodes.length === 0 && throwOnUnfound) {
+      throw ScrapingError(`No node matches the selector '${selector}'`);
+    }
+    return foundNodes;
+  };
+
+
+  // Just like parentNode.querySelector, but throws if not found, or several found
+  const querySelector = (
+    parentNode, selector, { throwOnUnfound = true, throwOnFoundSeveral = true } = {}
+  ) => {
+    let matchingNodes;
+    try {
+      matchingNodes = querySelectorAll(parentNode, selector, { throwOnUnfound });
+    } catch (error) {
+      if (error.name === 'ScrapingError') {
+        throw ScrapingError(error.message); // Remove the extra stackframe
+      } else {
+        throw error;
+      }
+    }
+    if (matchingNodes.length > 1 && throwOnFoundSeveral) {
+      throw ScrapingError(`Several nodes match the selector '${selector}'`);
+    }
+    return matchingNodes[0];
+  };
+
   // @name         Anki Add Hooks for WordReference.com
 
 
@@ -289,8 +333,7 @@
     const trGroups = [];
     let currentTrGroup = [];
     let currentTrClass = 'even';
-    // console.log('tableNode.querySelectorAll():', tableNode.querySelectorAll('.even, .odd'))
-    Array.from(tableNode.querySelectorAll('.even, .odd'))
+    querySelectorAll(tableNode, '.even, .odd', { throwOnUnfound: false })
       .sort((a, b) => a.rowIndex - b.rowIndex)
       .forEach((trNode) => {
         if (trNode.className.includes(currentTrClass)) {
@@ -308,17 +351,13 @@
 
   const getExamplesTdFromTrGroup = (trGroup, exampleClassName) =>
     Array.from(trGroup)
-      .map(trNode => trNode.querySelectorAll('td')[1])
-      // .map((td) => {
-      //   console.log('td:', td)
-      //   return td
-      // })
+      .map(trNode => querySelectorAll(trNode, 'td')[1])
       .filter(td => td && td.className && td.className.includes(exampleClassName))
       .map(td => `<div style="color:#808080;">${td.innerText}</div>`);
 
   const getAdditionalInfosFromTrGroup = trGroup =>
     trGroup
-      .map(tr => tr.querySelectorAll('td')[1])
+      .map(trNode => querySelectorAll(trNode, 'td')[1])
       .filter(td => td && !td.className.includes('FrEx') && !td.className.includes('ToEx'))
       .map(td => Array.from(td.childNodes))
       .map(
@@ -332,7 +371,7 @@
 
 
   const extractFrontText = (trGroup) => {
-    const wordNode = trGroup[0].querySelectorAll('td')[0];
+    const wordNode = querySelector(trGroup[0], 'td', { throwOnFoundSeveral: false });
     const additionalInfos = getAdditionalInfosFromTrGroup(trGroup);
     const examples = getExamplesTdFromTrGroup(trGroup, 'FrEx');
     return [
@@ -348,11 +387,11 @@
   const extractBackText = (trGroup) => {
     const extractedRows = trGroup
       .map((trNode) => {
-        const [, secondCell, thirdCell] = Array.from(trNode.querySelectorAll('td'));
+        const [, secondCell, thirdCell] = querySelectorAll(trNode, 'td');
         if (!thirdCell) {
           return null;
         }
-        const additionalInfo = secondCell.querySelector('.dsense');
+        const additionalInfo = querySelectorAll(secondCell, '.dsense', { throwOnUnfound: false });
         return `<tr>
                 <td>
                   ${additionalInfo ? stringifyNodeWithStyle(additionalInfo) : ''}
@@ -371,7 +410,7 @@
 
 
   const addHooksInTrGroup = (trGroup, createHook) => {
-    const parent = trGroup[0].querySelector('td:last-child');
+    const parent = querySelector(trGroup[0], 'td:last-child');
     parent.style.position = 'relative';
     const hook = createHook(trGroup);
     hook.style.position = 'absolute';
@@ -386,7 +425,7 @@
   };
 
 
-  const getTables = () => document.querySelectorAll('.WRD');
+  const getTables = () => querySelectorAll(document, '.WRD');
 
 
   const getLanguages = () => {

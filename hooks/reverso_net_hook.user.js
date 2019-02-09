@@ -27,7 +27,7 @@
       return css;
   }
 
-  __$styleInject(".-anki-add-hook {\n  -moz-user-select: none;\n  -ms-user-select: none;\n  -o-user-select: none;\n  -webkit-touch-callout: none;\n  -webkit-user-select: none;\n  background-color: #aaaaaa;\n  border-radius: 5px;\n  border: 2px solid #222222;\n  box-sizing: content-box;\n  color: white;\n  cursor: pointer;\n  display: inline-block;\n  font-family: 'Roboto', sans-serif;\n  font-size: 12px;\n  font-weight: bold;\n  height: 15px;\n  line-height: 17px;\n  opacity: 0.8;\n  overflow-wrap: normal;\n  overflow: hidden;\n  padding-left: 30px;\n  padding-right: 5px;\n  position: relative;\n  right: 0px;\n  text-align: left;\n  text-indent: 0;\n  top: 0px;\n  user-select: none;\n  vertical-align: middle;\n  width: 35px;\n  z-index: 1000;\n}\n.-anki-add-hook-added {\n  border: 2px solid green;\n  opacity: 1;\n  cursor: auto;\n  color: green;\n  background-color: #cccccc;\n}\n.-anki-add-hook:hover {\n  opacity: 1;\n}\n.-anki-add-hook-star {\n  display: block;\n  transform: rotate(-15deg);\n  position: absolute;\n}\n.-anki-add-hook-added .-anki-add-hook-star-small {\n  color: green;\n}\n.-anki-add-hook-star-big {\n  font-size: 40px;\n  color: white;\n  z-index: 1005;\n  left: -7px;\n  top: -1px;\n}\n.-anki-add-hook-star-small {\n  font-size: 25px;\n  color: #0099ff;\n  color: grdsdsdqwdfedwdsdwesdddsdwdn;\n  z-index: 1010;\n  left: 0px;\n  top: -1px;\n}\n\n.-anki-add-hook-text {\n\n}\n\n\n.-anki-add-hook-loading .-anki-add-hook-star {\n  animation-name: spin;\n  animation-duration: 2000ms;\n  animation-iteration-count: infinite;\n  animation-timing-function: linear;\n}\n\n@keyframes spin {\n    from {\n        transform:rotate(0deg);\n    }\n    to {\n        transform:rotate(360deg);\n    }\n}\n\n.-anki-add-hook-error {\n  border: 2px solid red;\n  opacity: 1;\n  color: red;\n  background-color: #cccccc;\n}\n.-anki-add-hook-error .-anki-add-hook-star-small {\n  color: red;\n}\n");
+  __$styleInject(".-anki-add-hook {\n  -moz-user-select: none;\n  -ms-user-select: none;\n  -o-user-select: none;\n  -webkit-touch-callout: none;\n  -webkit-user-select: none;\n  background-color: #aaaaaa;\n  border-radius: 5px;\n  border: 2px solid #222222;\n  box-sizing: content-box;\n  color: white;\n  cursor: pointer;\n  display: inline-block;\n  font-family: 'Roboto', sans-serif;\n  font-size: 12px;\n  font-weight: bold;\n  height: 15px;\n  line-height: 17px;\n  opacity: 0.8;\n  overflow-wrap: normal;\n  overflow: hidden;\n  padding-left: 30px;\n  padding-right: 5px;\n  position: relative;\n  right: 0px;\n  text-align: left;\n  text-indent: 0;\n  top: 0px;\n  user-select: none;\n  vertical-align: middle;\n  width: 35px;\n  z-index: 1000;\n}\n.-anki-add-hook-added {\n  border: 2px solid green;\n  opacity: 1;\n  cursor: auto;\n  color: green;\n  background-color: #cccccc;\n}\n.-anki-add-hook:hover {\n  opacity: 1;\n}\n\n.-anki-add-hook-star {\n  display: block;\n  transform: rotate(-15deg);\n  position: absolute;\n}\n.-anki-add-hook-added .-anki-add-hook-star-small {\n  color: green;\n}\n.-anki-add-hook-star-big {\n  font-size: 40px;\n  color: white;\n  z-index: 1005;\n  left: -7px;\n  top: -1px;\n}\n.-anki-add-hook-star-small {\n  font-size: 25px;\n  color: #0099ff;\n  color: grdsdsdqwdfedwdsdwesdddsdwdn;\n  z-index: 1010;\n  left: 0px;\n  top: -1px;\n}\n\n.-anki-add-hook-text {\n  text-decoration: none !important;\n  font-size: 12px !important;\n}\n\n\n.-anki-add-hook-loading .-anki-add-hook-star {\n  animation-name: spin;\n  animation-duration: 2000ms;\n  animation-iteration-count: infinite;\n  animation-timing-function: linear;\n}\n\n@keyframes spin {\n    from {\n        transform:rotate(0deg);\n    }\n    to {\n        transform:rotate(360deg);\n    }\n}\n\n.-anki-add-hook-error {\n  border: 2px solid red;\n  opacity: 1;\n  color: red;\n  background-color: #cccccc;\n}\n.-anki-add-hook-error .-anki-add-hook-star-small {\n  color: red;\n}\n");
 
   __$styleInject(".banner {\n  height: 20px;\n  font-size: 14px;\n  color: deepskyblue;\n  text-align: left;\n}\n\n.banner-language {\n\n}\n\n\n.banner-hook-name {\n  float: right;\n}\n");
 
@@ -244,6 +244,134 @@
     }
   };
 
+  var ScrapingError = (message) => {
+    const error = Error(message);
+    error.name = 'ScrapingError';
+    error.location = window.location;
+    error.stack = error.stack.split(/[\n\r]/gm).slice(4).join('\n');
+    return error;
+  };
+
+  let allIds = null;
+
+
+
+
+  // Return the list of nodes with an id matching the provided pattern
+  const getNodesWithIdMatchingRegExp = (pattern, { throwOnUnfound = true } = {}) => {
+    if (allIds == null) {
+      allIds = Array.from(document.querySelectorAll('*[id]'));
+    }
+    let nodes;
+    if (typeof pattern === 'string') {
+      nodes = allIds.filter(node => node.id.includes(pattern));
+    } else if (pattern instanceof RegExp) {
+      nodes = allIds.filter(node => pattern.test(node.id));
+    } else {
+      console.error('Pattern:', pattern);
+      throw Error(`Unexpected pattern type: ${typeof pattern}`);
+    }
+    if (nodes.length === 0 && throwOnUnfound) {
+      throw ScrapingError(`No id matches the pattern ${pattern}`);
+    }
+    return nodes;
+  };
+
+
+  // Return one node with an id matching the provided pattern
+  const getNodeWithIdMatchingRegExp = (
+    pattern, { throwOnUnfound = true, throwOnFoundSeveral = true } = {}
+  ) => {
+    let matchingNodes;
+    try {
+      matchingNodes = getNodesWithIdMatchingRegExp(pattern, { throwOnUnfound });
+    } catch (error) {
+      if (error.name === 'ScrapingError') {
+        throw ScrapingError(error.message); // Remove the extra stackframe
+      } else {
+        throw error;
+      }
+    }
+    if (matchingNodes.length > 1 && throwOnFoundSeveral) {
+      throw ScrapingError(`Several ids match the pattern ${pattern}`);
+    }
+    return matchingNodes[0];
+  };
+
+
+  // Just like parentNode.querySelectorAll, but throws if not found
+  const querySelectorAll = (parentNode, selector, { throwOnUnfound = true } = {}) => {
+    if (!parentNode || !parentNode.querySelectorAll) {
+      throw Error(`parentNode does not seem to be a DOM node: ${parentNode}`);
+    }
+    if (typeof selector !== 'string') {
+      throw Error('selector must be a string');
+    }
+    const foundNodes = Array.from(parentNode.querySelectorAll(selector));
+    if (foundNodes.length === 0 && throwOnUnfound) {
+      throw ScrapingError(`No node matches the selector '${selector}'`);
+    }
+    return foundNodes;
+  };
+
+
+  // Just like parentNode.querySelector, but throws if not found, or several found
+  const querySelector = (
+    parentNode, selector, { throwOnUnfound = true, throwOnFoundSeveral = true } = {}
+  ) => {
+    let matchingNodes;
+    try {
+      matchingNodes = querySelectorAll(parentNode, selector, { throwOnUnfound });
+    } catch (error) {
+      if (error.name === 'ScrapingError') {
+        throw ScrapingError(error.message); // Remove the extra stackframe
+      } else {
+        throw error;
+      }
+    }
+    if (matchingNodes.length > 1 && throwOnFoundSeveral) {
+      throw ScrapingError(`Several nodes match the selector '${selector}'`);
+    }
+    return matchingNodes[0];
+  };
+
+
+  // Just like parentNode.getElementsByName, but throws if not found
+  const getElementsByName = (parentNode, name, { throwOnUnfound = true } = {}) => {
+    if (!parentNode || !parentNode.getElementsByName) {
+      throw Error(`parentNode does not seem to be a DOM node: ${parentNode}`);
+    }
+    if (typeof name !== 'string') {
+      throw Error('name must be a string');
+    }
+    const foundNodes = Array.from(parentNode.getElementsByName(name));
+    if (foundNodes.length === 0 && throwOnUnfound) {
+      throw ScrapingError(`No node matches the name '${name}'`);
+    }
+    return foundNodes;
+  };
+
+
+  // Just like parentNode.getElementByName (hypothetically), but throws if not found, or several found
+  const getElementByName = (
+    parentNode, name, { throwOnUnfound = true, throwOnFoundSeveral = true } = {}
+  ) => {
+    let matchingNodes;
+    try {
+      matchingNodes = getElementsByName(parentNode, name, { throwOnUnfound });
+    } catch (error) {
+      if (error.name === 'ScrapingError') {
+        throw ScrapingError(error.message); // Remove the extra stackframe
+      } else {
+        throw error;
+      }
+    }
+    if (matchingNodes.length > 1 && throwOnFoundSeveral) {
+      throw ScrapingError(`Several nodes match the name '${name}'`);
+    }
+    return matchingNodes[0];
+  };
+
   const cleanTreeRec = (node) => {
     if (
       (node.nodeName === 'SPAN' && !node.textContent.replace(/[ \t]/gm, ''))
@@ -352,11 +480,11 @@
   });
 
   const run = (createHook) => {
-    const translateBox = document.getElementsByName('translate_box')[0];
+    const translateBox = getElementByName(document, 'translate_box', { throwOnUnfound: false });
     if (!translateBox) {
       return;
     }
-    const wordNodes = translateBox.querySelectorAll('div b:first-child');
+    const wordNodes = querySelectorAll(translateBox, 'div b:first-child', { throwOnUnfound: false });
     wordNodes.forEach((wordNode, wordNodeIndex) => {
       const divGroup = getDivGroup(wordNode, wordNodes[wordNodeIndex + 1]);
       const hook = createHook({ type: 'collinsDictionary', data: divGroup });
@@ -367,57 +495,6 @@
       wordNode.parentNode.style.position = 'relative';
       wordNode.parentNode.append(hook);
     });
-  };
-
-  var ScrapingError = (message) => {
-    const error = Error(message);
-    error.name = 'ScrapingError';
-    error.location = window.location;
-    error.stack = error.stack.split(/[\n\r]/gm).slice(4).join('\n');
-    return error;
-  };
-
-  let allIds = null;
-
-  // Return the list of nodes with an id matching the provided pattern
-  const getNodesWithIdMatchingRegExp = (pattern, { throwOnUnfound = true } = {}) => {
-    if (allIds == null) {
-      allIds = Array.from(document.querySelectorAll('*[id]'));
-    }
-    let nodes;
-    if (typeof pattern === 'string') {
-      nodes = allIds.filter(node => node.id.includes(pattern));
-    } else if (pattern instanceof RegExp) {
-      nodes = allIds.filter(node => pattern.test(node.id));
-    } else {
-      console.error('Pattern:', pattern);
-      throw Error(`Unexpected pattern type: ${typeof pattern}`);
-    }
-    if (nodes.length === 0 && throwOnUnfound) {
-      throw ScrapingError(`No id matches the pattern ${pattern}`);
-    }
-    return nodes;
-  };
-
-
-  // Return one node with an id matching the provided pattern
-  const getNodeWithIdMatchingRegExp = (
-    pattern, { throwOnUnfound = true, throwOnFoundSeveral = true } = {}
-  ) => {
-    let matchingNodes;
-    try {
-      matchingNodes = getNodesWithIdMatchingRegExp(pattern, { throwOnUnfound });
-    } catch (error) {
-      if (error.name === 'SrappingError') {
-        throw ScrapingError(error.message); // Remove the extra stackframe
-      } else {
-        throw error;
-      }
-    }
-    if (matchingNodes.length > 1 && throwOnFoundSeveral) {
-      throw ScrapingError(`Several ids match the pattern ${pattern}`);
-    }
-    return matchingNodes[0];
   };
 
   const extractFrontText$1 = () => {
@@ -438,7 +515,7 @@
 
 
   const run$1 = (createHook) => {
-    const resultBox = document.querySelector('.center_frameColl');
+    const resultBox = querySelector(document, '.center_frameColl', { throwOnUnfound: false });
     if (!resultBox) {
       return;
     }
@@ -452,10 +529,10 @@
   };
 
   const extractFrontText$2 = row =>
-    stringifyNodeWithStyle(row.querySelector('.CDResSource'));
+    stringifyNodeWithStyle(querySelector(row, '.CDResSource'));
 
   const extractBackText$2 = row =>
-    stringifyNodeWithStyle(row.querySelector('.CDResTarget'));
+    stringifyNodeWithStyle(querySelector(row, '.CDResTarget'));
 
 
   const extract$2 = ({ row, reverseDirection }) => ({
@@ -466,8 +543,12 @@
 
 
   const run$2 = (createHook) => {
-    const allRows = Array.from(document.querySelectorAll('.CDResTable tr'));
-    const reverseDirectionRows = Array.from(document.querySelectorAll('#ctl00_cC_ucResPM_opossiteEntries tr'))
+    const allRows = querySelectorAll(document, '.CDResTable tr', { throwOnUnfound: false });
+    const reverseDirectionRows = querySelectorAll(
+      document,
+      '#ctl00_cC_ucResPM_opossiteEntries tr',
+      { throwOnUnfound: false }
+    )
       .filter(tr => tr.getAttribute('valign') === 'top');
     const normalRows = allRows.filter(tr => !reverseDirectionRows.includes(tr))
       .filter(tr => tr.getAttribute('valign') === 'top');
@@ -481,7 +562,7 @@
           hook.style.position = 'absolute';
           hook.style.left = '105px';
           highlightOnHookHover(hook, row, 'lightblue');
-          const parentNode = row.querySelector('.CDResAct');
+          const parentNode = querySelector(row, '.CDResAct');
           parentNode.style.position = 'relative';
           parentNode.append(hook);
         });
@@ -489,10 +570,10 @@
   };
 
   const extractFrontText$3 = parentNode =>
-    stringifyNodeWithStyle(parentNode.querySelector('td.src'));
+    stringifyNodeWithStyle(querySelector(parentNode, 'td.src'));
 
   const extractBackText$3 = parentNode =>
-    stringifyNodeWithStyle(parentNode.querySelector('td.tgt'));
+    stringifyNodeWithStyle(querySelector(parentNode, 'td.tgt'));
 
 
   const extract$3 = divGroup => ({
@@ -502,14 +583,20 @@
 
 
   const run$3 = (createHook) => {
-    document.querySelectorAll('#ctxBody tr')
+    querySelectorAll(document, '#ctxBody tr', { throwOnUnfound: false })
+
+      .filter(
+        trNode =>
+          // The first row is often empty, we take only those with a td.src inside
+          querySelector(trNode, 'td.src', { throwOnUnfound: false })
+      )
       .forEach((trNode) => {
         const hook = createHook({ type: 'contextualDictionary', data: trNode });
         hook.style.position = 'absolute';
         hook.style.top = '3px';
         hook.style.right = '-80px';
         highlightOnHookHover(hook, trNode, 'lightblue');
-        const parentNode = trNode.querySelector('td:last-child');
+        const parentNode = querySelector(trNode, 'td:last-child');
         parentNode.style.position = 'relative';
         parentNode.append(hook);
       });
@@ -554,7 +641,7 @@
   // There are weird "&nbsp;" spans with a white border-bottom, that make it
   // ugly when we put a background. So we set them to transparent instead.
   const hideNbspSpans = () => {
-    document.querySelectorAll('.nbsp1').forEach((span) => {
+    querySelectorAll(document, '.nbsp1', { throwOnUnfound: false }).forEach((span) => {
       span.style.setProperty('border-color', 'transparent', 'important');
     });
   };

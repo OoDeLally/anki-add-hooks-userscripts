@@ -6,6 +6,7 @@
 
 import stringifyNodeWithStyle from '../helpers/stringify_node_with_style';
 import highlightOnHookHover from '../helpers/highlight_on_hook_hover';
+import { querySelector, querySelectorAll } from '../helpers/scraping';
 
 
 // Wordreference entries are laid as following:
@@ -50,8 +51,7 @@ const getTrGroups = (tableNode) => {
   const trGroups = [];
   let currentTrGroup = [];
   let currentTrClass = 'even';
-  // console.log('tableNode.querySelectorAll():', tableNode.querySelectorAll('.even, .odd'))
-  Array.from(tableNode.querySelectorAll('.even, .odd'))
+  querySelectorAll(tableNode, '.even, .odd', { throwOnUnfound: false })
     .sort((a, b) => a.rowIndex - b.rowIndex)
     .forEach((trNode) => {
       if (trNode.className.includes(currentTrClass)) {
@@ -69,17 +69,13 @@ const getTrGroups = (tableNode) => {
 
 const getExamplesTdFromTrGroup = (trGroup, exampleClassName) =>
   Array.from(trGroup)
-    .map(trNode => trNode.querySelectorAll('td')[1])
-    // .map((td) => {
-    //   console.log('td:', td)
-    //   return td
-    // })
+    .map(trNode => querySelectorAll(trNode, 'td')[1])
     .filter(td => td && td.className && td.className.includes(exampleClassName))
     .map(td => `<div style="color:#808080;">${td.innerText}</div>`);
 
 const getAdditionalInfosFromTrGroup = trGroup =>
   trGroup
-    .map(tr => tr.querySelectorAll('td')[1])
+    .map(trNode => querySelectorAll(trNode, 'td')[1])
     .filter(td => td && !td.className.includes('FrEx') && !td.className.includes('ToEx'))
     .map(td => Array.from(td.childNodes))
     .map(
@@ -93,7 +89,7 @@ const getAdditionalInfosFromTrGroup = trGroup =>
 
 
 const extractFrontText = (trGroup) => {
-  const wordNode = trGroup[0].querySelectorAll('td')[0];
+  const wordNode = querySelector(trGroup[0], 'td', { throwOnFoundSeveral: false });
   const additionalInfos = getAdditionalInfosFromTrGroup(trGroup);
   const examples = getExamplesTdFromTrGroup(trGroup, 'FrEx');
   return [
@@ -109,11 +105,11 @@ const extractFrontText = (trGroup) => {
 const extractBackText = (trGroup) => {
   const extractedRows = trGroup
     .map((trNode) => {
-      const [, secondCell, thirdCell] = Array.from(trNode.querySelectorAll('td'));
+      const [, secondCell, thirdCell] = querySelectorAll(trNode, 'td');
       if (!thirdCell) {
         return null;
       }
-      const additionalInfo = secondCell.querySelector('.dsense');
+      const additionalInfo = querySelectorAll(secondCell, '.dsense', { throwOnUnfound: false });
       return `<tr>
                 <td>
                   ${additionalInfo ? stringifyNodeWithStyle(additionalInfo) : ''}
@@ -132,7 +128,7 @@ const extractBackText = (trGroup) => {
 
 
 const addHooksInTrGroup = (trGroup, createHook) => {
-  const parent = trGroup[0].querySelector('td:last-child');
+  const parent = querySelector(trGroup[0], 'td:last-child');
   parent.style.position = 'relative';
   const hook = createHook(trGroup);
   hook.style.position = 'absolute';
@@ -147,7 +143,7 @@ const addHooksInTable = (tableNode, createHook) => {
 };
 
 
-const getTables = () => document.querySelectorAll('.WRD');
+const getTables = () => querySelectorAll(document, '.WRD');
 
 
 const getLanguages = () => {

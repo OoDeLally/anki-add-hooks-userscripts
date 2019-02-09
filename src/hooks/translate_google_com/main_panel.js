@@ -1,5 +1,5 @@
 import highlightOnHookHover from '../../helpers/highlight_on_hook_hover';
-import { ANKI_ADD_BUTTON_CLASS_SELECTOR } from '../../constants';
+import { querySelector, querySelectorAll, doesAnkiHookExistIn } from '../../helpers/scraping';
 
 
 const frontFieldSelector = 'textarea#source';
@@ -7,20 +7,19 @@ const backFieldSelector = '.translation';
 
 
 export const extract = () => ({
-  frontText: document.querySelector(frontFieldSelector).value,
-  backText: document.querySelector(backFieldSelector).innerText,
+  frontText: querySelector(document, frontFieldSelector).value,
+  backText: querySelector(document, backFieldSelector).innerText,
 });
 
 
 export const run = (createHook) => {
-  const containerBlock = document.querySelector('.source-target-row');
-  const parentNode = containerBlock.querySelector('.result-footer');
+  const containerBlock = querySelector(document, '.source-target-row');
+  const parentNode = querySelector(containerBlock, '.result-footer', { throwOnUnfound: false });
   if (!parentNode) {
-    return; // Container not found
+    return;
   }
-  const existingHook = parentNode.querySelector(ANKI_ADD_BUTTON_CLASS_SELECTOR);
-  if (existingHook) {
-    return; // Hook already exists
+  if (doesAnkiHookExistIn(parentNode)) {
+    return;
   }
   const children = Array.from(parentNode.childNodes);
   const firstFloatLeftNode = children.find(node => node.style.float === 'left');
@@ -28,6 +27,7 @@ export const run = (createHook) => {
   hook.style.float = 'right';
   hook.style.top = '15px';
   hook.style.right = '10px';
-  highlightOnHookHover(hook, containerBlock.querySelectorAll(`${frontFieldSelector},${backFieldSelector}`), '#d2e3fc');
+  const frontAndBackFields = querySelectorAll(containerBlock, `${frontFieldSelector},${backFieldSelector}`);
+  highlightOnHookHover(hook, frontAndBackFields, '#d2e3fc');
   parentNode.insertBefore(hook, firstFloatLeftNode);
 };

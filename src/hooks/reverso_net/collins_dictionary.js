@@ -1,6 +1,7 @@
 import highlightOnHookHover from '../../helpers/highlight_on_hook_hover';
 import isTextNode from '../../helpers/is_text_node';
 import stringifyNodeWithStyle from '../../helpers/stringify_node_with_style';
+import { getElementByName, querySelectorAll } from '../../helpers/scraping';
 
 
 const cleanTreeRec = (node) => {
@@ -111,11 +112,11 @@ export const extract = divGroup => ({
 });
 
 export const run = (createHook) => {
-  const translateBox = document.getElementsByName('translate_box')[0];
+  const translateBox = getElementByName(document, 'translate_box', { throwOnUnfound: false });
   if (!translateBox) {
     return;
   }
-  const wordNodes = translateBox.querySelectorAll('div b:first-child');
+  const wordNodes = querySelectorAll(translateBox, 'div b:first-child', { throwOnUnfound: false });
   wordNodes.forEach((wordNode, wordNodeIndex) => {
     const divGroup = getDivGroup(wordNode, wordNodes[wordNodeIndex + 1]);
     const hook = createHook({ type: 'collinsDictionary', data: divGroup });
