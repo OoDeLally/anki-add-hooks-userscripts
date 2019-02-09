@@ -655,6 +655,20 @@
     run$3(createHook);
   };
 
+  const AnkiCardAddingError = (message, response) => {
+    const error = Error(message);
+    error.name = 'AnkiCardAddingError';
+    error.response = response;
+    return error;
+  };
+
+  const CancelledError = (message = null) => {
+    const error = Error(message);
+    error.name = 'CancelledError';
+    return error;
+  };
+
+
   const getDeckNameMapKey = cardKind => `deckName_${cardKind.toLowerCase()}`;
   const getModelNameMapKey = cardKind => `modelName_${cardKind.toLowerCase()}`;
 
@@ -690,7 +704,7 @@
 
      Page: ${error.location}.
 
-     Hook Template Version: 1.0.0.
+     Hook Template Version: 1.0.1.
 
      Hook Userscript Name: ${hookName}.
 
@@ -758,7 +772,7 @@
     if (!deckName) {
       deckName = prompt(`Enter the name of the deck you want to add '${cardKind}' cards from this website`, 'Default');
       if (!deckName) {
-        throw Error('Adding was cancelled');
+        throw CancelledError();
       }
       GM.setValue(deckNameMapKey, deckName);
     }
@@ -772,19 +786,11 @@
     if (!modelName) {
       modelName = prompt(`Enter the name of the card model you want to create for '${cardKind}'`, 'Basic (and reversed card)');
       if (!modelName) {
-        throw Error('Adding was cancelled');
+        throw CancelledError();
       }
       await GM.setValue(modelNameMapKey, modelName);
     }
     return modelName;
-  };
-
-
-  const AnkiCardAddingError = (message, response) => {
-    const error = Error(message);
-    error.name = 'AnkiCardAddingError';
-    error.response = response;
-    return error;
   };
 
 
@@ -861,7 +867,10 @@
       },
     });
 
-  const updateButtonState = (hook, state) => {
+
+  const wait = async ms => new Promise(resolve => setTimeout(resolve, ms));
+
+  const updateButtonState = async (hook, state) => {
     if (state === 'available') {
       hook.classList.remove(ANKI_HOOK_BUTTON_ADDED_CLASS);
       hook.classList.remove(ANKI_HOOK_BUTTON_LOADING_CLASS);
@@ -885,10 +894,8 @@
     } else {
       throw Error(`Unknwown state ${state}`);
     }
+    await wait(100); // Leave time for the button style to be updated
   };
-
-
-  const wait = async ms => new Promise(resolve => setTimeout(resolve, ms));
 
 
   const onHookClick = async (event, userdata, hookNode) => {
@@ -897,18 +904,22 @@
     let fields;
     try {
       fields = extractPageFields(userdata);
-      updateButtonState(hookNode, 'loading');
+      await updateButtonState(hookNode, 'loading');
       await ankiConnectAddRequest(fields);
-      updateButtonState(hookNode, 'added');
+      await updateButtonState(hookNode, 'added');
       ankiRequestOnSuccess(hookNode);
     } catch (error) {
-      updateButtonState(hookNode, 'error');
-      await wait(100); // Leave time for the button style to be updated
       if (error.name === 'ScrapingError') {
+        await updateButtonState(hookNode, 'error');
         handleScrapingError(error);
       } else if (error.name === 'AnkiCardAddingError') {
+        await updateButtonState(hookNode, 'error');
         ankiRequestOnFail(error.message, fields.cardKind);
+      } else if (error.name === 'CancelledError') {
+        await updateButtonState(hookNode, 'available');
+        return; // Cancelled by user.
       } else {
+        await updateButtonState(hookNode, 'error');
         throw error;
       }
     }

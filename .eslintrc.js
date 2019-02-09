@@ -30,6 +30,7 @@ module.exports = {
     'quotes': 'warn',
     'semi': 'warn',
     'space-in-parens': 'warn',
+    'no-useless-return': 'off',
   },
   globals: {
     __ANKI_ADD_HOOKS_VERSION__: true,
