@@ -116,7 +116,7 @@ export const run = (createHook) => {
   if (!translateBox) {
     return;
   }
-  const wordNodes = querySelectorAll(translateBox, 'div b:first-child', { throwOnUnfound: false });
+  const wordNodes = querySelectorAll(translateBox, 'div > b:first-child', { throwOnUnfound: false });
   wordNodes.forEach((wordNode, wordNodeIndex) => {
     const divGroup = getDivGroup(wordNode, wordNodes[wordNodeIndex + 1]);
     const hook = createHook({ type: 'collinsDictionary', data: divGroup });
