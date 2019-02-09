@@ -22,6 +22,9 @@ const createUserScriptPlugin = (entryFile, entryName) => ({
     const requiredFile = path.resolve(__dirname, `dev-hooks/${getRequiredScriptFileName(entryName)}`);
     content += `// @require      file://${requiredFile}\n`;
     content += '// ==/UserScript==\n';
+    if (!fs.existsSync('./dev-hooks/')) {
+      fs.mkdirSync('./dev-hooks/');
+    }
     fs.writeFileSync(
       `./dev-hooks/${entryName}_dev_hook.user.js`,
       content
