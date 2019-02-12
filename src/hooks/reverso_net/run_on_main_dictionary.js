@@ -1,6 +1,7 @@
 import highlightOnHookHover from '../../helpers/highlight_on_hook_hover';
 import stringifyNodeWithStyle from '../../helpers/stringify_node_with_style';
 import { getNodeWithIdMatchingRegExp, querySelector } from '../../helpers/scraping';
+import getLanguages from './get_languages';
 
 
 const extractFrontText = () => {
@@ -14,18 +15,21 @@ const extractBackText = () => {
 };
 
 
-export const extract = divGroup => ({
-  frontText: extractFrontText(divGroup),
-  backText: extractBackText(divGroup),
-});
-
-
-export const run = (createHook) => {
+export default (createHook) => {
   const resultBox = querySelector(document, '.center_frameColl', { throwOnUnfound: false });
   if (!resultBox) {
     return;
   }
-  const hook = createHook({ type: 'mainDictionary', data: resultBox });
+  const hook = createHook(() => {
+    const [sourceLanguage, targetLanguage] = getLanguages();
+    return {
+      frontText: extractFrontText(),
+      backText: extractBackText(),
+      frontLanguage: sourceLanguage,
+      backLanguage: targetLanguage,
+      cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+    };
+  });
   hook.style.position = 'absolute';
   hook.style.right = '100px';
   hook.style.top = '5px';

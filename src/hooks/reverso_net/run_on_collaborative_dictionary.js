@@ -1,6 +1,7 @@
 import highlightOnHookHover from '../../helpers/highlight_on_hook_hover';
 import stringifyNodeWithStyle from '../../helpers/stringify_node_with_style';
 import { querySelector, querySelectorAll } from '../../helpers/scraping';
+import getLanguages from './get_languages';
 
 
 const extractFrontText = row =>
@@ -10,14 +11,25 @@ const extractBackText = row =>
   stringifyNodeWithStyle(querySelector(row, '.CDResTarget'));
 
 
-export const extract = ({ row, reverseDirection }) => ({
-  frontText: extractFrontText(row),
-  backText: extractBackText(row),
-  reverseDirection,
-});
+const extractCallBack = (row, reverseDirection) => {
+  let sourceLanguage;
+  let targetLanguage;
+  if (reverseDirection) {
+    [targetLanguage, sourceLanguage] = getLanguages();
+  } else {
+    [sourceLanguage, targetLanguage] = getLanguages();
+  }
+  return {
+    frontText: extractFrontText(row),
+    backText: extractBackText(row),
+    frontLanguage: sourceLanguage,
+    backLanguage: targetLanguage,
+    cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+  };
+};
 
 
-export const run = (createHook) => {
+export default (createHook) => {
   const allRows = querySelectorAll(document, '.CDResTable tr', { throwOnUnfound: false });
   const reverseDirectionRows = querySelectorAll(
     document,
@@ -33,7 +45,7 @@ export const run = (createHook) => {
   ]
     .forEach(({ rows, reverseDirection }) => {
       rows.forEach((row) => {
-        const hook = createHook({ type: 'collaborativeDictionary', data: { row, reverseDirection } });
+        const hook = createHook(() => extractCallBack(row, reverseDirection));
         hook.style.position = 'absolute';
         hook.style.left = '105px';
         highlightOnHookHover(hook, row, 'lightblue');

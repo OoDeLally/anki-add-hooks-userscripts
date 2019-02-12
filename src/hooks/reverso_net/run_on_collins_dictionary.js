@@ -2,6 +2,7 @@ import highlightOnHookHover from '../../helpers/highlight_on_hook_hover';
 import isTextNode from '../../helpers/is_text_node';
 import stringifyNodeWithStyle from '../../helpers/stringify_node_with_style';
 import { getElementByName, querySelectorAll } from '../../helpers/scraping';
+import getLanguages from './get_languages';
 
 
 const cleanTreeRec = (node) => {
@@ -106,12 +107,7 @@ const getDivGroup = (wordNode, nextWordNode) => {
 };
 
 
-export const extract = divGroup => ({
-  frontText: extractFrontText(divGroup),
-  backText: extractBackText(divGroup),
-});
-
-export const run = (createHook) => {
+export default (createHook) => {
   const translateBox = getElementByName(document, 'translate_box', { throwOnUnfound: false });
   if (!translateBox) {
     return;
@@ -119,7 +115,16 @@ export const run = (createHook) => {
   const wordNodes = querySelectorAll(translateBox, 'div > b:first-child', { throwOnUnfound: false });
   wordNodes.forEach((wordNode, wordNodeIndex) => {
     const divGroup = getDivGroup(wordNode, wordNodes[wordNodeIndex + 1]);
-    const hook = createHook({ type: 'collinsDictionary', data: divGroup });
+    const hook = createHook(() => {
+      const [sourceLanguage, targetLanguage] = getLanguages();
+      return {
+        frontText: extractFrontText(divGroup),
+        backText: extractBackText(divGroup),
+        frontLanguage: sourceLanguage,
+        backLanguage: targetLanguage,
+        cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+      };
+    });
     hook.style.position = 'absolute';
     hook.style.right = '0px';
     hook.style.top = '10px';

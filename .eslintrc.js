@@ -31,6 +31,7 @@ module.exports = {
     'semi': 'warn',
     'space-in-parens': 'warn',
     'no-useless-return': 'off',
+    'no-multi-spaces': 'warn',
   },
   globals: {
     __ANKI_ADD_HOOKS_VERSION__: true,

@@ -1,13 +1,14 @@
 import highlightOnHookHover from '../../helpers/highlight_on_hook_hover';
 import stringifyNodeWithStyle from '../../helpers/stringify_node_with_style';
 import { querySelector, querySelectorAll } from '../../helpers/scraping';
+import getLanguages from './get_languages';
 
 
-const extractFrontText = parentNode =>
-  stringifyNodeWithStyle(querySelector(parentNode, 'td.src'));
+const extractFrontText = trNode =>
+  stringifyNodeWithStyle(querySelector(trNode, 'td.src'));
 
-const extractBackText = parentNode =>
-  stringifyNodeWithStyle(querySelector(parentNode, 'td.tgt'));
+const extractBackText = trNode =>
+  stringifyNodeWithStyle(querySelector(trNode, 'td.tgt'));
 
 
 export const extract = divGroup => ({
@@ -16,7 +17,7 @@ export const extract = divGroup => ({
 });
 
 
-export const run = (createHook) => {
+export default (createHook) => {
   querySelectorAll(document, '#ctxBody tr', { throwOnUnfound: false })
 
     .filter(
@@ -25,7 +26,16 @@ export const run = (createHook) => {
         querySelector(trNode, 'td.src', { throwOnUnfound: false })
     )
     .forEach((trNode) => {
-      const hook = createHook({ type: 'contextualDictionary', data: trNode });
+      const hook = createHook(() => {
+        const [sourceLanguage, targetLanguage] = getLanguages();
+        return {
+          frontText: extractFrontText(trNode),
+          backText: extractBackText(trNode),
+          frontLanguage: sourceLanguage,
+          backLanguage: targetLanguage,
+          cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+        };
+      });
       hook.style.position = 'absolute';
       hook.style.top = '3px';
       hook.style.right = '-80px';

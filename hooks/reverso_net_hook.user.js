@@ -5,7 +5,7 @@
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for Reverso
-// @version      1.0
+// @version      2.0
 // @description  Generate a hook for AnkiConnect on Reverso
 // @author       Pascal Heitz
 // @include      /reverso\.net\/\w+-\w+/\w+/
@@ -254,9 +254,6 @@
 
   let allIds = null;
 
-
-
-
   // Return the list of nodes with an id matching the provided pattern
   const getNodesWithIdMatchingRegExp = (pattern, { throwOnUnfound = true } = {}) => {
     if (allIds == null) {
@@ -372,6 +369,18 @@
     return matchingNodes[0];
   };
 
+  var getLanguages = () => {
+    const match = window.location.href.match(/reverso\.net\/([a-z]+)-([a-z]+)\//);
+    if (!match) {
+      throw ScrapingError('Could not extract languages from url');
+    }
+    const [, sourceLanguage, targetLanguage] = match;
+    if (!sourceLanguage || !targetLanguage) {
+      throw ScrapingError('Could not extract languages from url');
+    }
+    return [sourceLanguage, targetLanguage];
+  };
+
   const cleanTreeRec = (node) => {
     if (
       (node.nodeName === 'SPAN' && !node.textContent.replace(/[ \t]/gm, ''))
@@ -474,12 +483,7 @@
   };
 
 
-  const extract = divGroup => ({
-    frontText: extractFrontText(divGroup),
-    backText: extractBackText(divGroup),
-  });
-
-  const run = (createHook) => {
+  var runOnCollinsDictionary = (createHook) => {
     const translateBox = getElementByName(document, 'translate_box', { throwOnUnfound: false });
     if (!translateBox) {
       return;
@@ -487,7 +491,16 @@
     const wordNodes = querySelectorAll(translateBox, 'div > b:first-child', { throwOnUnfound: false });
     wordNodes.forEach((wordNode, wordNodeIndex) => {
       const divGroup = getDivGroup(wordNode, wordNodes[wordNodeIndex + 1]);
-      const hook = createHook({ type: 'collinsDictionary', data: divGroup });
+      const hook = createHook(() => {
+        const [sourceLanguage, targetLanguage] = getLanguages();
+        return {
+          frontText: extractFrontText(divGroup),
+          backText: extractBackText(divGroup),
+          frontLanguage: sourceLanguage,
+          backLanguage: targetLanguage,
+          cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+        };
+      });
       hook.style.position = 'absolute';
       hook.style.right = '0px';
       hook.style.top = '10px';
@@ -508,18 +521,21 @@
   };
 
 
-  const extract$1 = divGroup => ({
-    frontText: extractFrontText$1(divGroup),
-    backText: extractBackText$1(divGroup),
-  });
-
-
-  const run$1 = (createHook) => {
+  var runOnMainDictionary = (createHook) => {
     const resultBox = querySelector(document, '.center_frameColl', { throwOnUnfound: false });
     if (!resultBox) {
       return;
     }
-    const hook = createHook({ type: 'mainDictionary', data: resultBox });
+    const hook = createHook(() => {
+      const [sourceLanguage, targetLanguage] = getLanguages();
+      return {
+        frontText: extractFrontText$1(),
+        backText: extractBackText$1(),
+        frontLanguage: sourceLanguage,
+        backLanguage: targetLanguage,
+        cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+      };
+    });
     hook.style.position = 'absolute';
     hook.style.right = '100px';
     hook.style.top = '5px';
@@ -535,14 +551,25 @@
     stringifyNodeWithStyle(querySelector(row, '.CDResTarget'));
 
 
-  const extract$2 = ({ row, reverseDirection }) => ({
-    frontText: extractFrontText$2(row),
-    backText: extractBackText$2(row),
-    reverseDirection,
-  });
+  const extractCallBack = (row, reverseDirection) => {
+    let sourceLanguage;
+    let targetLanguage;
+    if (reverseDirection) {
+      [targetLanguage, sourceLanguage] = getLanguages();
+    } else {
+      [sourceLanguage, targetLanguage] = getLanguages();
+    }
+    return {
+      frontText: extractFrontText$2(row),
+      backText: extractBackText$2(row),
+      frontLanguage: sourceLanguage,
+      backLanguage: targetLanguage,
+      cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+    };
+  };
 
 
-  const run$2 = (createHook) => {
+  var runOnCollaborativeDictionary = (createHook) => {
     const allRows = querySelectorAll(document, '.CDResTable tr', { throwOnUnfound: false });
     const reverseDirectionRows = querySelectorAll(
       document,
@@ -558,7 +585,7 @@
     ]
       .forEach(({ rows, reverseDirection }) => {
         rows.forEach((row) => {
-          const hook = createHook({ type: 'collaborativeDictionary', data: { row, reverseDirection } });
+          const hook = createHook(() => extractCallBack(row, reverseDirection));
           hook.style.position = 'absolute';
           hook.style.left = '105px';
           highlightOnHookHover(hook, row, 'lightblue');
@@ -569,20 +596,14 @@
       });
   };
 
-  const extractFrontText$3 = parentNode =>
-    stringifyNodeWithStyle(querySelector(parentNode, 'td.src'));
+  const extractFrontText$3 = trNode =>
+    stringifyNodeWithStyle(querySelector(trNode, 'td.src'));
 
-  const extractBackText$3 = parentNode =>
-    stringifyNodeWithStyle(querySelector(parentNode, 'td.tgt'));
-
-
-  const extract$3 = divGroup => ({
-    frontText: extractFrontText$3(divGroup),
-    backText: extractBackText$3(divGroup),
-  });
+  const extractBackText$3 = trNode =>
+    stringifyNodeWithStyle(querySelector(trNode, 'td.tgt'));
 
 
-  const run$3 = (createHook) => {
+  var runOnContextualDictionary = (createHook) => {
     querySelectorAll(document, '#ctxBody tr', { throwOnUnfound: false })
 
       .filter(
@@ -591,7 +612,16 @@
           querySelector(trNode, 'td.src', { throwOnUnfound: false })
       )
       .forEach((trNode) => {
-        const hook = createHook({ type: 'contextualDictionary', data: trNode });
+        const hook = createHook(() => {
+          const [sourceLanguage, targetLanguage] = getLanguages();
+          return {
+            frontText: extractFrontText$3(trNode),
+            backText: extractBackText$3(trNode),
+            frontLanguage: sourceLanguage,
+            backLanguage: targetLanguage,
+            cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+          };
+        });
         hook.style.position = 'absolute';
         hook.style.top = '3px';
         hook.style.right = '-80px';
@@ -608,36 +638,6 @@
   const hookName = 'reverso.net';
 
 
-  const extract$4 = ({ type, data }) => {
-    let [, sourceLanguage, targetLanguage] = window.location.href.match(/reverso\.net\/([a-z]+)-([a-z]+)\//);
-    let extractedData;
-    if (type === 'collinsDictionary') {
-      extractedData = extract(data);
-    } else if (type === 'mainDictionary') {
-      extractedData = extract$1(data);
-    } else if (type === 'collaborativeDictionary') {
-      extractedData = extract$2(data);
-    } else if (type === 'contextualDictionary') {
-      extractedData = extract$3(data);
-    } else {
-      throw Error(`Unknown type '${type}'`);
-    }
-    const { reverseDirection, frontText, backText } = extractedData;
-    if (reverseDirection) {
-      const tmp = targetLanguage;
-      targetLanguage = sourceLanguage;
-      sourceLanguage = tmp;
-    }
-    return {
-      frontText,
-      backText,
-      frontLanguage: sourceLanguage,
-      backLanguage: targetLanguage,
-      cardKind: `${sourceLanguage} -> ${targetLanguage}`,
-    };
-  };
-
-
   // There are weird "&nbsp;" spans with a white border-bottom, that make it
   // ugly when we put a background. So we set them to transparent instead.
   const hideNbspSpans = () => {
@@ -647,12 +647,12 @@
   };
 
 
-  const run$4 = (createHook) => {
+  const run = (createHook) => {
     hideNbspSpans();
-    run(createHook);
-    run$1(createHook);
-    run$2(createHook);
-    run$3(createHook);
+    runOnCollinsDictionary(createHook);
+    runOnMainDictionary(createHook);
+    runOnCollaborativeDictionary(createHook);
+    runOnContextualDictionary(createHook);
   };
 
   const AnkiCardAddingError = (message, response) => {
@@ -704,11 +704,11 @@
 
      Page: ${error.location}.
 
-     Hook Template Version: 1.0.1.
+     Hook Template Version: 2.0.0.
 
      Hook Userscript Name: ${hookName}.
 
-     Hook UserScript Version: 1.0.
+     Hook UserScript Version: 2.0.
 
      Stack: ${error.stack}
     `
@@ -723,45 +723,6 @@
           Thank you.
     `);
     }
-  };
-
-
-  // Extract the data from the web page
-  const extractPageFields = (userdata) => {
-    const extractedFields = extract$4(userdata);
-    if (typeof extractedFields !== 'object') {
-      console.error('Found', extractedFields);
-      throw Error('Provided siteSpecificFunctions.extract() fonction did not return an object');
-    }
-    const {
-      frontText, backText, cardKind
-    } = extractedFields;
-    // console.log('frontText:', frontText)
-    // console.log('backText:', backText)
-    // console.log('cardKind:', cardKind)
-
-    if (typeof frontText !== 'string') {
-      console.error('Found', frontText);
-      throw Error('Provided extract().frontText is not a string');
-    }
-    if (!frontText) {
-      throw Error('Provided extract().frontText is empty');
-    }
-    if (typeof backText !== 'string') {
-      console.error('Found', backText);
-      throw Error('Provided extract().backText is not a string');
-    }
-    if (!backText) {
-      throw Error('Provided extract().backText is empty');
-    }
-    if (typeof cardKind !== 'string') {
-      console.error('Found', cardKind);
-      throw Error('Provided extract().cardKind is not a string');
-    }
-    if (!cardKind) {
-      throw Error('Provided extract().cardKind is empty');
-    }
-    return extractedFields;
   };
 
 
@@ -898,12 +859,49 @@
   };
 
 
-  const onHookClick = async (event, userdata, hookNode) => {
+  const verifyExtractedFields = (extractedFields) => {
+    if (typeof extractedFields !== 'object') {
+      console.error('Found', extractedFields);
+      throw Error('extractCallback() should have returned an object');
+    }
+    const {
+      frontText, backText, cardKind
+    } = extractedFields;
+    // console.log('frontText:', frontText);
+    // console.log('backText:', backText);
+    // console.log('cardKind:', cardKind);
+
+    if (typeof frontText !== 'string') {
+      console.error('Found', frontText);
+      throw Error('Provided extract().frontText is not a string');
+    }
+    if (!frontText) {
+      throw Error('Provided extract().frontText is empty');
+    }
+    if (typeof backText !== 'string') {
+      console.error('Found', backText);
+      throw Error('Provided extract().backText is not a string');
+    }
+    if (!backText) {
+      throw Error('Provided extract().backText is empty');
+    }
+    if (typeof cardKind !== 'string') {
+      console.error('Found', cardKind);
+      throw Error('Provided extract().cardKind is not a string');
+    }
+    if (!cardKind) {
+      throw Error('Provided extract().cardKind is empty');
+    }
+    return extractedFields;
+  };
+
+
+  const onHookClick = async (event, extractFieldsCallback, hookNode) => {
     event.preventDefault();
     event.stopPropagation();
     let fields;
     try {
-      fields = extractPageFields(userdata);
+      fields = verifyExtractedFields(extractFieldsCallback());
       await updateButtonState(hookNode, 'loading');
       await ankiConnectAddRequest(fields);
       await updateButtonState(hookNode, 'added');
@@ -926,9 +924,9 @@
   };
 
 
-  const createHook = (userdata) => {
-    if (!extract$4 || typeof extract$4 !== 'function') {
-      throw Error('Missing function extract()');
+  const createHook = (extractFieldsCallback) => {
+    if (!extractFieldsCallback || typeof extractFieldsCallback !== 'function') {
+      throw Error('createHook() must be provided a extraction function');
     }
     const starNodeBig = document.createElement('div');
     starNodeBig.innerText = '★';
@@ -937,7 +935,7 @@
     starNodeSmall.innerText = '★';
     starNodeSmall.className = '-anki-add-hook-star -anki-add-hook-star-small';
     const textNode = document.createElement('span');
-    textNode.className = '-anki-add-hook-text';
+    textNode.className = ANKI_HOOK_BUTTON_TEXT_CLASS;
     textNode.innerText = 'Add';
     const hookNode = document.createElement('div');
     hookNode.setAttribute('name', hookName);
@@ -946,13 +944,13 @@
     hookNode.appendChild(starNodeBig);
     hookNode.appendChild(starNodeSmall);
     hookNode.appendChild(textNode);
-    hookNode.onclick = event => onHookClick(event, userdata, hookNode);
+    hookNode.onclick = event => onHookClick(event, extractFieldsCallback, hookNode);
     return hookNode;
   };
 
 
   try {
-    run$4(createHook);
+    run(createHook);
   } catch (error) {
     if (error.name === 'ScrapingError') {
       handleScrapingError(error);

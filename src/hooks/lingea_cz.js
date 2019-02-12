@@ -1,5 +1,5 @@
 // @name         Anki Add Hooks for lingea.cz
-// @version      1.0
+// @version      2.0
 // @description  Generate a hook for AnkiConnect on Lingea.cz
 // @author       Pascal Heitz
 // @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
@@ -65,7 +65,7 @@ const extractCardKind = () => {
 };
 
 
-export const extract = () => ({
+const extractCallback = () => ({
   frontText: extractFrontText(),
   backText: extractBackText(),
   frontLanguage: null,
@@ -83,7 +83,7 @@ export const run = (createHook) => {
     if (doesAnkiHookExistIn(parentNode)) {
       return;
     }
-    const hook = createHook();
+    const hook = createHook(extractCallback);
     hook.style.position = 'absolute';
     hook.style.right = '10px';
     parentNode.appendChild(hook);

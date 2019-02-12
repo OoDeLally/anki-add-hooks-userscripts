@@ -1,5 +1,5 @@
 // @name         Anki Add Hooks for WordReference.com
-// @version      1.0
+// @version      2.0
 // @description  Generate a hook for AnkiConnect on WordReference.com
 // @author       Pascal Heitz
 // @include      /http://www\.wordreference\.com\/[a-z]{4}\/.+/
@@ -127,10 +127,35 @@ const extractBackText = (trGroup) => {
 };
 
 
+const getLanguages = () => {
+  const urlMatch = window.location.href.match(/wordreference\.com\/([a-z]{2})([a-z]{2})(\/(reverse))?\//);
+  if (urlMatch[4] === 'reverse') {
+    // e.g. http://www.wordreference.com/czen/reverse/foobar means en -> cz
+    return [urlMatch[2], urlMatch[1]];
+  } else {
+    // e.g. http://www.wordreference.com/czen/foobar means cz -> en
+    return [urlMatch[1], urlMatch[2]];
+  }
+};
+
+
+const extractCallback = (trGroup) => {
+  const [sourceLanguage, targetLanguage] = getLanguages();
+  // console.log('extractFrontText(trGroup):', extractFrontText(trGroup))
+  return {
+    frontText: extractFrontText(trGroup),
+    backText: extractBackText(trGroup),
+    frontLanguage: sourceLanguage,
+    backLanguage: targetLanguage,
+    cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+  };
+};
+
+
 const addHooksInTrGroup = (trGroup, createHook) => {
   const parent = querySelector(trGroup[0], 'td:last-child');
   parent.style.position = 'relative';
-  const hook = createHook(trGroup);
+  const hook = createHook(() => extractCallback(trGroup));
   hook.style.position = 'absolute';
   hook.style.right = '-80px';
   highlightOnHookHover(hook, trGroup, 'gold');
@@ -146,32 +171,7 @@ const addHooksInTable = (tableNode, createHook) => {
 const getTables = () => querySelectorAll(document, '.WRD');
 
 
-const getLanguages = () => {
-  const urlMatch = window.location.href.match(/wordreference\.com\/([a-z]{2})([a-z]{2})(\/(reverse))?\//);
-  if (urlMatch[4] === 'reverse') {
-    // e.g. http://www.wordreference.com/czen/reverse/foobar means en -> cz
-    return [urlMatch[2], urlMatch[1]];
-  } else {
-    // e.g. http://www.wordreference.com/czen/foobar means cz -> en
-    return [urlMatch[1], urlMatch[2]];
-  }
-};
-
-
 export const hookName = 'wordreference.com';
-
-export const extract = (trGroup) => {
-  const [sourceLanguage, targetLanguage] = getLanguages();
-  // console.log('extractFrontText(trGroup):', extractFrontText(trGroup))
-  return {
-    frontText: extractFrontText(trGroup),
-    backText: extractBackText(trGroup),
-    frontLanguage: sourceLanguage,
-    backLanguage: targetLanguage,
-    cardKind: `${sourceLanguage} -> ${targetLanguage}`,
-  };
-};
-
 
 export const run = (createHook) => {
   getTables().forEach(tableNode => addHooksInTable(tableNode, createHook));

@@ -3,9 +3,6 @@ import { ANKI_ADD_BUTTON_CLASS_SELECTOR } from '../constants';
 
 let allIds = null;
 
-
-
-
 // Return the list of nodes with an id matching the provided pattern
 export const getNodesWithIdMatchingRegExp = (pattern, { throwOnUnfound = true } = {}) => {
   if (allIds == null) {

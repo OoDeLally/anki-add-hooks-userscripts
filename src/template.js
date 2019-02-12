@@ -6,6 +6,7 @@ import {
   ANKI_HOOK_BUTTON_LOADING_CLASS,
   ANKI_HOOK_BUTTON_ERROR_CLASS,
   ANKI_HOOK_BUTTON_ADDED_CLASS,
+  ANKI_HOOK_BUTTON_TEXT_CLASS,
   ANKI_HOOK_BUTTON_TEXT_CLASS_SELECTOR,
 } from './constants';
 
@@ -78,45 +79,6 @@ const handleScrapingError = (error) => {
           Thank you.
     `);
   }
-};
-
-
-// Extract the data from the web page
-const extractPageFields = (userdata) => {
-  const extractedFields = siteSpecificFunctions.extract(userdata);
-  if (typeof extractedFields !== 'object') {
-    console.error('Found', extractedFields);
-    throw Error('Provided siteSpecificFunctions.extract() fonction did not return an object');
-  }
-  const {
-    frontText, backText, cardKind
-  } = extractedFields;
-  // console.log('frontText:', frontText)
-  // console.log('backText:', backText)
-  // console.log('cardKind:', cardKind)
-
-  if (typeof frontText !== 'string') {
-    console.error('Found', frontText);
-    throw Error('Provided extract().frontText is not a string');
-  }
-  if (!frontText) {
-    throw Error('Provided extract().frontText is empty');
-  }
-  if (typeof backText !== 'string') {
-    console.error('Found', backText);
-    throw Error('Provided extract().backText is not a string');
-  }
-  if (!backText) {
-    throw Error('Provided extract().backText is empty');
-  }
-  if (typeof cardKind !== 'string') {
-    console.error('Found', cardKind);
-    throw Error('Provided extract().cardKind is not a string');
-  }
-  if (!cardKind) {
-    throw Error('Provided extract().cardKind is empty');
-  }
-  return extractedFields;
 };
 
 
@@ -253,12 +215,49 @@ const updateButtonState = async (hook, state) => {
 };
 
 
-const onHookClick = async (event, userdata, hookNode) => {
+const verifyExtractedFields = (extractedFields) => {
+  if (typeof extractedFields !== 'object') {
+    console.error('Found', extractedFields);
+    throw Error('extractCallback() should have returned an object');
+  }
+  const {
+    frontText, backText, cardKind
+  } = extractedFields;
+  // console.log('frontText:', frontText);
+  // console.log('backText:', backText);
+  // console.log('cardKind:', cardKind);
+
+  if (typeof frontText !== 'string') {
+    console.error('Found', frontText);
+    throw Error('Provided extract().frontText is not a string');
+  }
+  if (!frontText) {
+    throw Error('Provided extract().frontText is empty');
+  }
+  if (typeof backText !== 'string') {
+    console.error('Found', backText);
+    throw Error('Provided extract().backText is not a string');
+  }
+  if (!backText) {
+    throw Error('Provided extract().backText is empty');
+  }
+  if (typeof cardKind !== 'string') {
+    console.error('Found', cardKind);
+    throw Error('Provided extract().cardKind is not a string');
+  }
+  if (!cardKind) {
+    throw Error('Provided extract().cardKind is empty');
+  }
+  return extractedFields;
+};
+
+
+const onHookClick = async (event, extractFieldsCallback, hookNode) => {
   event.preventDefault();
   event.stopPropagation();
   let fields;
   try {
-    fields = extractPageFields(userdata);
+    fields = verifyExtractedFields(extractFieldsCallback());
     await updateButtonState(hookNode, 'loading');
     await ankiConnectAddRequest(fields);
     await updateButtonState(hookNode, 'added');
@@ -281,9 +280,9 @@ const onHookClick = async (event, userdata, hookNode) => {
 };
 
 
-const createHook = (userdata) => {
-  if (!siteSpecificFunctions.extract || typeof siteSpecificFunctions.extract !== 'function') {
-    throw Error('Missing function extract()');
+const createHook = (extractFieldsCallback) => {
+  if (!extractFieldsCallback || typeof extractFieldsCallback !== 'function') {
+    throw Error('createHook() must be provided a extraction function');
   }
   if (!siteSpecificFunctions.hookName || typeof siteSpecificFunctions.hookName !== 'string') {
     throw Error('Missing string property `hookName`');
@@ -295,7 +294,7 @@ const createHook = (userdata) => {
   starNodeSmall.innerText = '★';
   starNodeSmall.className = '-anki-add-hook-star -anki-add-hook-star-small';
   const textNode = document.createElement('span');
-  textNode.className = '-anki-add-hook-text';
+  textNode.className = ANKI_HOOK_BUTTON_TEXT_CLASS;
   textNode.innerText = 'Add';
   const hookNode = document.createElement('div');
   hookNode.setAttribute('name', siteSpecificFunctions.hookName);
@@ -304,7 +303,7 @@ const createHook = (userdata) => {
   hookNode.appendChild(starNodeBig);
   hookNode.appendChild(starNodeSmall);
   hookNode.appendChild(textNode);
-  hookNode.onclick = event => onHookClick(event, userdata, hookNode);
+  hookNode.onclick = event => onHookClick(event, extractFieldsCallback, hookNode);
   return hookNode;
 };
 

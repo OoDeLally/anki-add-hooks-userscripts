@@ -5,7 +5,7 @@
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for Google Translate
-// @version      1.0
+// @version      2.0
 // @description  Generate a hook for AnkiConnect on Google Translate
 // @author       Pascal Heitz
 // @include      /translate\.google\.com\//
@@ -113,17 +113,17 @@
       { throwOnUnfound: false }
     );
 
+  const getSourceLanguage = () =>
+    querySelector(document, '.sl-sugg .jfk-button-checked').innerText.split(/ *- */)[0];
+
+  const getTargetLanguage = () =>
+    querySelector(document, '.tl-sugg .jfk-button-checked').innerText;
+
   const frontFieldSelector = 'textarea#source';
   const backFieldSelector = '.translation';
 
 
-  const extract = () => ({
-    frontText: querySelector(document, frontFieldSelector).value,
-    backText: querySelector(document, backFieldSelector).innerText,
-  });
-
-
-  const run = (createHook) => {
+  var runOnMainPanel = (createHook) => {
     const containerBlock = querySelector(document, '.source-target-row');
     const parentNode = querySelector(containerBlock, '.result-footer', { throwOnUnfound: false });
     if (!parentNode) {
@@ -134,7 +134,17 @@
     }
     const children = Array.from(parentNode.childNodes);
     const firstFloatLeftNode = children.find(node => node.style.float === 'left');
-    const hook = createHook({ type: 'mainPanel' });
+    const hook = createHook(() => {
+      const sourceLanguage = getSourceLanguage();
+      const targetLanguage = getTargetLanguage();
+      return {
+        frontText: querySelector(document, frontFieldSelector).value,
+        backText: querySelector(document, backFieldSelector).innerText,
+        frontLanguage: sourceLanguage,
+        backLanguage: targetLanguage,
+        cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+      };
+    });
     hook.style.float = 'right';
     hook.style.top = '15px';
     hook.style.right = '10px';
@@ -143,21 +153,24 @@
     parentNode.insertBefore(hook, firstFloatLeftNode);
   };
 
-  const extract$1 = (parentTr) => {
-    const [sourceTd, targetTd] = querySelectorAll(parentTr, 'td');
-    return {
-      frontText: sourceTd.innerText,
-      backText: targetTd.innerText,
-    };
-  };
-
-
   const tryAddingToRow = (parentTr, createHook) => {
     const [, , actionTd] = querySelectorAll(parentTr, 'td');
     if (doesAnkiHookExistIn(actionTd)) {
       return;
     }
-    const hook = createHook({ type: 'secondaryPanel', parentNode: parentTr });
+    const hook = createHook(() => {
+      // The secondary panel proposes reverse translations
+      const targetLanguage = getSourceLanguage();
+      const sourceLanguage = getTargetLanguage();
+      const [sourceTd, targetTd] = querySelectorAll(parentTr, 'td');
+      return {
+        frontText: sourceTd.innerText,
+        backText: targetTd.innerText,
+        frontLanguage: sourceLanguage,
+        backLanguage: targetLanguage,
+        cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+      };
+    });
     hook.style.display = 'inline-block';
     hook.style.marginLeft = '5px';
     highlightOnHookHover(hook, parentTr, '#d2e3fc');
@@ -165,9 +178,9 @@
   };
 
 
-  const run$1 = (createHook) => {
-    querySelectorAll(document, '.gt-baf-table tr.gt-baf-entry')
-      .forEach(tr => tryAddingToRow(tr, createHook));
+  var runOnSecondaryPanel = (createHook) => {
+    querySelectorAll(document, '.gt-baf-table tr.gt-baf-entry', { throwOnUnfound: false })
+      .forEach(tr => tryAddingToRow(tr, createHook, getSourceLanguage, getTargetLanguage));
   };
 
   // @name         Anki Add Hooks for Google Translate
@@ -176,33 +189,10 @@
   const hookName = 'translate.google.com';
 
 
-  const extract$2 = ({ type, parentNode }) => {
-    const sourceLanguage = querySelector(document, '.sl-sugg .jfk-button-checked').innerText.split(/ *- */)[0];
-    const targetLanguage = querySelector(document, '.tl-sugg .jfk-button-checked').innerText;
-    if (type === 'mainPanel') {
-      return {
-        ...extract(),
-        frontLanguage: sourceLanguage,
-        backLanguage: targetLanguage,
-        cardKind: `${sourceLanguage} -> ${targetLanguage}`,
-      };
-    }
-    if (type === 'secondaryPanel') {
-      return {
-        ...extract$1(parentNode),
-        frontLanguage: targetLanguage,
-        backLanguage: sourceLanguage,
-        cardKind: `${targetLanguage} -> ${sourceLanguage}`,
-      };
-    }
-    throw Error(`Unknown type ${type}`);
-  };
-
-
-  const run$2 = (createHook) => {
+  const run = (createHook) => {
     setInterval(() => {
-      run(createHook);
-      run$1(createHook);
+      runOnMainPanel(createHook);
+      runOnSecondaryPanel(createHook);
     }, 500);
   };
 
@@ -255,11 +245,11 @@
 
      Page: ${error.location}.
 
-     Hook Template Version: 1.0.1.
+     Hook Template Version: 2.0.0.
 
      Hook Userscript Name: ${hookName}.
 
-     Hook UserScript Version: 1.0.
+     Hook UserScript Version: 2.0.
 
      Stack: ${error.stack}
     `
@@ -274,45 +264,6 @@
           Thank you.
     `);
     }
-  };
-
-
-  // Extract the data from the web page
-  const extractPageFields = (userdata) => {
-    const extractedFields = extract$2(userdata);
-    if (typeof extractedFields !== 'object') {
-      console.error('Found', extractedFields);
-      throw Error('Provided siteSpecificFunctions.extract() fonction did not return an object');
-    }
-    const {
-      frontText, backText, cardKind
-    } = extractedFields;
-    // console.log('frontText:', frontText)
-    // console.log('backText:', backText)
-    // console.log('cardKind:', cardKind)
-
-    if (typeof frontText !== 'string') {
-      console.error('Found', frontText);
-      throw Error('Provided extract().frontText is not a string');
-    }
-    if (!frontText) {
-      throw Error('Provided extract().frontText is empty');
-    }
-    if (typeof backText !== 'string') {
-      console.error('Found', backText);
-      throw Error('Provided extract().backText is not a string');
-    }
-    if (!backText) {
-      throw Error('Provided extract().backText is empty');
-    }
-    if (typeof cardKind !== 'string') {
-      console.error('Found', cardKind);
-      throw Error('Provided extract().cardKind is not a string');
-    }
-    if (!cardKind) {
-      throw Error('Provided extract().cardKind is empty');
-    }
-    return extractedFields;
   };
 
 
@@ -449,12 +400,49 @@
   };
 
 
-  const onHookClick = async (event, userdata, hookNode) => {
+  const verifyExtractedFields = (extractedFields) => {
+    if (typeof extractedFields !== 'object') {
+      console.error('Found', extractedFields);
+      throw Error('extractCallback() should have returned an object');
+    }
+    const {
+      frontText, backText, cardKind
+    } = extractedFields;
+    // console.log('frontText:', frontText);
+    // console.log('backText:', backText);
+    // console.log('cardKind:', cardKind);
+
+    if (typeof frontText !== 'string') {
+      console.error('Found', frontText);
+      throw Error('Provided extract().frontText is not a string');
+    }
+    if (!frontText) {
+      throw Error('Provided extract().frontText is empty');
+    }
+    if (typeof backText !== 'string') {
+      console.error('Found', backText);
+      throw Error('Provided extract().backText is not a string');
+    }
+    if (!backText) {
+      throw Error('Provided extract().backText is empty');
+    }
+    if (typeof cardKind !== 'string') {
+      console.error('Found', cardKind);
+      throw Error('Provided extract().cardKind is not a string');
+    }
+    if (!cardKind) {
+      throw Error('Provided extract().cardKind is empty');
+    }
+    return extractedFields;
+  };
+
+
+  const onHookClick = async (event, extractFieldsCallback, hookNode) => {
     event.preventDefault();
     event.stopPropagation();
     let fields;
     try {
-      fields = extractPageFields(userdata);
+      fields = verifyExtractedFields(extractFieldsCallback());
       await updateButtonState(hookNode, 'loading');
       await ankiConnectAddRequest(fields);
       await updateButtonState(hookNode, 'added');
@@ -477,9 +465,9 @@
   };
 
 
-  const createHook = (userdata) => {
-    if (!extract$2 || typeof extract$2 !== 'function') {
-      throw Error('Missing function extract()');
+  const createHook = (extractFieldsCallback) => {
+    if (!extractFieldsCallback || typeof extractFieldsCallback !== 'function') {
+      throw Error('createHook() must be provided a extraction function');
     }
     const starNodeBig = document.createElement('div');
     starNodeBig.innerText = '★';
@@ -488,7 +476,7 @@
     starNodeSmall.innerText = '★';
     starNodeSmall.className = '-anki-add-hook-star -anki-add-hook-star-small';
     const textNode = document.createElement('span');
-    textNode.className = '-anki-add-hook-text';
+    textNode.className = ANKI_HOOK_BUTTON_TEXT_CLASS;
     textNode.innerText = 'Add';
     const hookNode = document.createElement('div');
     hookNode.setAttribute('name', hookName);
@@ -497,13 +485,13 @@
     hookNode.appendChild(starNodeBig);
     hookNode.appendChild(starNodeSmall);
     hookNode.appendChild(textNode);
-    hookNode.onclick = event => onHookClick(event, userdata, hookNode);
+    hookNode.onclick = event => onHookClick(event, extractFieldsCallback, hookNode);
     return hookNode;
   };
 
 
   try {
-    run$2(createHook);
+    run(createHook);
   } catch (error) {
     if (error.name === 'ScrapingError') {
       handleScrapingError(error);
