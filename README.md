@@ -23,9 +23,19 @@ Add a button on translation websites to create an Anki card from a translation.
 
 ## Super Quick Setup
 
-1- Install [Tampermonkey for Chrome](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). This extension allows Chrome to run the AnkiAddHooks userscripts.
+1- Install a userscript add-on for your favorite browser:
+* **Chrome**: install [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). 
+* **Firefox**: install [Tampermonkey](https://addons.mozilla.org/firefox/addon/tampermonkey/) or [Greasemonkey](https://addons.mozilla.org/firefox/addon/greasemonkey/). 
+* **Safari**: install [Tampermonkey](https://tampermonkey.net/?browser=safari). 
+* **Other browsers**: Check [Tampermonkey Website](https://tampermonkey.net).
 
-2- Click on some of the links above to install the Hook User Scripts on the websites of your choice.
+This extension allows the browser to run the AnkiAddHooks userscripts.
+
+2- Click on some of the links to install the Hook User Scripts on the websites of your choice:
+* [Install Anki Add Hooks on translate.google.com](https://github.com/OoDeLally/tampermonkey-anki-add-hooks/raw/master/hooks/translate_google_com_hook.user.js)
+* [Install Anki Add Hooks on wordreference.com](https://github.com/OoDeLally/tampermonkey-anki-add-hooks/raw/master/hooks/wordreference_com_hook.user.js)
+* [Install Anki Add Hooks on reverso.net](https://github.com/OoDeLally/tampermonkey-anki-add-hooks/raw/master/hooks/reverso_net_hook.user.js)
+* [Install Anki Add Hooks on lingea.cz](https://github.com/OoDeLally/tampermonkey-anki-add-hooks/raw/master/hooks/lingea_cz_hook.user.js)
 
 3- Install [Anki Desktop](https://apps.ankiweb.net/#download) and synchronize your Anki account.
 
