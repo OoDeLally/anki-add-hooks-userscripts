@@ -10,12 +10,7 @@
 // @include      /mywebsite.com/ // FIXME
 
 
-// Added cards will be tagged with that name.
-export const hookName = 'my_website.com';
-
-
-export const extract = (data) => {
-  // First argument `data` is exactly what you gave to createHook().
+const extract = (parentNode) => {
   return {
     frontText: 'card front text', // FIXME
     backText: 'card back text', // FIXME
@@ -26,14 +21,14 @@ export const extract = (data) => {
 };
 
 
+// Added cards will be tagged with that name.
+export const hookName = 'my_website.com';
+
+
 // Called after the page is loaded.
 export const run = (createHook) => {
   // FIXME
   const parentNode = locateParentNode();
-
-  // `data` can be anything and will be passed as it is to `extractFrontText` and `extractBackText`.
-  const data = { parentNode, foo: 'additional info you want to pass' };
-
-  const hook = createHook(data);
+  const hook = createHook(() => extract(parentNode));
   parentNode.append(hook);
 };
