@@ -2,7 +2,7 @@
 // @version      2.0
 // @description  Generate a hook for AnkiConnect on Lingea.cz
 // @author       Pascal Heitz
-// @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
+// @include      /slovniky\.lingea\.cz\/\w+-\w+/.+/
 
 import stringifyNodeWithStyle from '../helpers/stringify_node_with_style';
 import isTextNode from '../helpers/is_text_node';

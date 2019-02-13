@@ -8,7 +8,7 @@
 // @version      2.0
 // @description  Generate a hook for AnkiConnect on Reverso
 // @author       Pascal Heitz
-// @include      /reverso\.net\/\w+-\w+/\w+/
+// @include      /reverso\.net\/\w+-\w+/.+/
 // ==/UserScript==
 
 (function () {

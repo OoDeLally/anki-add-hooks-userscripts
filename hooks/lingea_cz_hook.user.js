@@ -8,7 +8,7 @@
 // @version      2.0
 // @description  Generate a hook for AnkiConnect on Lingea.cz
 // @author       Pascal Heitz
-// @include      /slovniky\.lingea\.cz\/\w+-\w+/\w+/
+// @include      /slovniky\.lingea\.cz\/\w+-\w+/.+/
 // ==/UserScript==
 
 (function () {

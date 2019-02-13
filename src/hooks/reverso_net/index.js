@@ -2,7 +2,7 @@
 // @version      2.0
 // @description  Generate a hook for AnkiConnect on Reverso
 // @author       Pascal Heitz
-// @include      /reverso\.net\/\w+-\w+/\w+/
+// @include      /reverso\.net\/\w+-\w+/.+/
 
 import runOnCollinsDictionary from './run_on_collins_dictionary';
 import runOnMainDictionary from './run_on_main_dictionary';
