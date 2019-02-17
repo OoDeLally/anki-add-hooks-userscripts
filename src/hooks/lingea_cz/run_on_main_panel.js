@@ -3,6 +3,7 @@ import { querySelector, querySelectorAll, doesAnkiHookExistIn } from '../../help
 import extractCardKind from './extract_card_kind';
 import dropWTags from './drop_w_tags';
 import highlightOnHookHover from '../../helpers/highlight_on_hook_hover';
+import showHookOnZoneHover from '../../helpers/show_hook_on_zone_hover';
 import ScrapingError from '../../scraping_error';
 
 
@@ -59,6 +60,7 @@ export default (createHook) => {
   const hook = createHook(extractCallback);
   hook.style.position = 'absolute';
   hook.style.right = '10px';
-  highlightOnHookHover(hook, querySelector(document, '.entry'), 'lightblue');
+  const mainPanel = querySelector(document, '.entry');
+  highlightOnHookHover(hook, mainPanel, 'lightblue');
   parentNode.appendChild(hook);
 };

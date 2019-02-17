@@ -5,6 +5,7 @@ import dropWTags from './drop_w_tags';
 import replaceCommaByLinebreak from './replace_comma_by_linebreak';
 import ScrapingError from '../../scraping_error';
 import highlightOnHookHover from '../../helpers/highlight_on_hook_hover';
+import showHookOnZoneHover from '../../helpers/show_hook_on_zone_hover';
 import composeFunctions from '../../helpers/compose_functions';
 
 
@@ -71,6 +72,7 @@ const runOnTd = (titleSpanNode, createHook) => {
   hook.style.position = 'absolute';
   hook.style.right = '-5px';
   highlightOnHookHover(hook, parentTdNode, 'lightblue');
+  showHookOnZoneHover(hook, parentTdNode);
   parentTdNode.style.position = 'relative';
   parentTdNode.prepend(hook);
 };

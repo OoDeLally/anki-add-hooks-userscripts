@@ -322,6 +322,25 @@
     }
   };
 
+  const showHookOnZoneHover = (hookNode, zoneNode) => {
+    zoneNode.onmouseover = () => {
+      hookNode.style.opacity = 1;
+    };
+    zoneNode.onmouseout = () => {
+      hookNode.style.opacity = 0;
+    };
+  };
+
+
+  var showHookOnZoneHover$1 = (hookNode, zoneNodes) => {
+    hookNode.style.opacity = 0;
+    if (zoneNodes.forEach) {
+      zoneNodes.forEach(zoneNode => showHookOnZoneHover(hookNode, zoneNode));
+    } else {
+      showHookOnZoneHover(hookNode, zoneNodes);
+    }
+  };
+
   const dropFrontTextJunk = (node) => {
     const childNodesToRemove = [];
     node.childNodes.forEach((childNode) => {
@@ -375,7 +394,8 @@
     const hook = createHook(extractCallback);
     hook.style.position = 'absolute';
     hook.style.right = '10px';
-    highlightOnHookHover(hook, querySelector(document, '.entry'), 'lightblue');
+    const mainPanel = querySelector(document, '.entry');
+    highlightOnHookHover(hook, mainPanel, 'lightblue');
     parentNode.appendChild(hook);
   };
 
@@ -465,6 +485,7 @@
     hook.style.position = 'absolute';
     hook.style.right = '-5px';
     highlightOnHookHover(hook, parentTdNode, 'lightblue');
+    showHookOnZoneHover$1(hook, parentTdNode);
     parentTdNode.style.position = 'relative';
     parentTdNode.prepend(hook);
   };
@@ -487,9 +508,10 @@
       cardKind: `${extractCardKind()} Contextual`,
     }));
     hook.style.position = 'absolute';
-    hook.style.right = '-80px';
+    hook.style.right = '-70px';
     const parentNode = querySelector(rowNode, 'td:last-child');
     highlightOnHookHover(hook, rowNode, 'lightblue');
+    showHookOnZoneHover$1(hook, rowNode);
     parentNode.style.position = 'relative';
     parentNode.prepend(hook);
   };

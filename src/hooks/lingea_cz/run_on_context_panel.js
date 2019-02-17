@@ -4,6 +4,7 @@ import { querySelector, querySelectorAll, doesAnkiHookExistIn } from '../../help
 import extractCardKind from './extract_card_kind';
 import dropWTags from './drop_w_tags';
 import highlightOnHookHover from '../../helpers/highlight_on_hook_hover';
+import showHookOnZoneHover from '../../helpers/show_hook_on_zone_hover';
 
 
 const runOnRowNode = (rowNode, createHook) => {
@@ -18,9 +19,10 @@ const runOnRowNode = (rowNode, createHook) => {
     cardKind: `${extractCardKind()} Contextual`,
   }));
   hook.style.position = 'absolute';
-  hook.style.right = '-80px';
+  hook.style.right = '-70px';
   const parentNode = querySelector(rowNode, 'td:last-child');
   highlightOnHookHover(hook, rowNode, 'lightblue');
+  showHookOnZoneHover(hook, rowNode);
   parentNode.style.position = 'relative';
   parentNode.prepend(hook);
 };
