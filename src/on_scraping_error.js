@@ -1,4 +1,4 @@
-import * as siteSpecificFunctions from '__SITE_SPECIFIC_FUNCTIONS__'; // eslint-disable-line import/no-unresolved
+import { hookName } from '__SITE_SPECIFIC_FUNCTIONS__'; // eslint-disable-line import/no-unresolved
 
 
 export default (error) => {
@@ -16,7 +16,7 @@ export default (error) => {
 
      Hook Template Version: __ANKI_ADD_HOOKS_VERSION__.
 
-     Hook Userscript Name: ${siteSpecificFunctions.hookName}.
+     Hook Userscript Name: ${hookName}.
 
      Hook UserScript Version: __USERSCRIPT_VERSION__.
 

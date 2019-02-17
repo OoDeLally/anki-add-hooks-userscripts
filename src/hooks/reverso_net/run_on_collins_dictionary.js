@@ -3,6 +3,7 @@ import isTextNode from '../../helpers/is_text_node';
 import stringifyNodeWithStyle from '../../helpers/stringify_node_with_style';
 import { getElementByName, querySelectorAll } from '../../helpers/scraping';
 import getLanguages from './get_languages';
+import composeFunctions from '../../helpers/compose_functions';
 
 
 const cleanTreeRec = (node) => {
@@ -23,14 +24,6 @@ const cleanTree = (rootNode) => {
   return rootNode;
 };
 
-const composeFunctions = (...funs) =>
-  (...args) => {
-    let val = args;
-    funs.forEach((fun) => {
-      val = [fun(...val)];
-    });
-    return val[0];
-  };
 
 /*
   <div>

@@ -189,9 +189,16 @@ const verifyExtractedFields = (extractedFields) => {
   const {
     frontText, backText, cardKind
   } = extractedFields;
-  // console.log('frontText:', frontText);
-  // console.log('backText:', backText);
-  // console.log('cardKind:', cardKind);
+  if (!__IS_PRODUCTION__) {
+    console.log('--- FRONT TEXT ---');
+    console.log(frontText);
+    console.log();
+    console.log('--- BACK TEXT ---');
+    console.log(backText);
+    console.log();
+    console.log('--- CARD KIND ---');
+    console.log(cardKind);
+  }
 
   if (typeof frontText !== 'string') {
     console.error('Found', frontText);

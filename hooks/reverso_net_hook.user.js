@@ -381,6 +381,19 @@
     return [sourceLanguage, targetLanguage];
   };
 
+  // composeFunction(f, g, h) =>
+  //   x => (f∘g∘h)(x)
+
+
+  var composeFunctions = (...funs) =>
+    (...args) => {
+      let val = args;
+      funs.forEach((fun) => {
+        val = [fun(...val)];
+      });
+      return val[0];
+    };
+
   const cleanTreeRec = (node) => {
     if (
       (node.nodeName === 'SPAN' && !node.textContent.replace(/[ \t]/gm, ''))
@@ -399,14 +412,6 @@
     return rootNode;
   };
 
-  const composeFunctions = (...funs) =>
-    (...args) => {
-      let val = args;
-      funs.forEach((fun) => {
-        val = [fun(...val)];
-      });
-      return val[0];
-    };
 
   /*
     <div>
@@ -866,9 +871,6 @@
     const {
       frontText, backText, cardKind
     } = extractedFields;
-    // console.log('frontText:', frontText);
-    // console.log('backText:', backText);
-    // console.log('cardKind:', cardKind);
 
     if (typeof frontText !== 'string') {
       console.error('Found', frontText);

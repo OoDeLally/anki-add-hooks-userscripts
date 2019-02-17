@@ -32,6 +32,7 @@ module.exports = {
     'space-in-parens': 'warn',
     'no-useless-return': 'off',
     'no-multi-spaces': 'warn',
+    'prefer-destructuring': 'warn',
   },
   globals: {
     __ANKI_ADD_HOOKS_VERSION__: true,

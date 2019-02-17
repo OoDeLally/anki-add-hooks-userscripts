@@ -275,6 +275,231 @@
       { throwOnUnfound: false }
     );
 
+  var extractCardKind = () => {
+    const match = window.location.href.match(/lingea\.cz\/(\w+-\w+)\//);
+    if (!match) {
+      throw Error('Failed to extract direction');
+    }
+    return match[1];
+  };
+
+  // On Lingea.cz each word is surrounded by a <w>.
+  // It is useless for our purpose, so we drop it in order to be leaner.
+
+  const dropWTags = (node) => {
+    node.childNodes.forEach((childNode) => {
+      if (
+        childNode.nodeName === 'W'
+        && childNode.childNodes.length === 1
+        && isTextNode(childNode.childNodes[0])
+      ) {
+        childNode.replaceWith(childNode.childNodes[0]);
+      }
+      return dropWTags(childNode);
+    });
+    return node;
+  };
+
+  var highlightOnHookHover = (hookNode, elementsToHighlight, backgroundColor) => {
+    if (elementsToHighlight.forEach) {
+      hookNode.onmouseover = () => {
+        elementsToHighlight.forEach((elt) => {
+          elt.style.background = backgroundColor;
+        });
+      };
+      hookNode.onmouseout = () => {
+        elementsToHighlight.forEach((elt) => {
+          elt.style.background = null;
+        });
+      };
+    } else {
+      hookNode.onmouseover = () => {
+        elementsToHighlight.style.background = backgroundColor;
+      };
+      hookNode.onmouseout = () => {
+        elementsToHighlight.style.background = null;
+      };
+    }
+  };
+
+  const dropFrontTextJunk = (node) => {
+    const childNodesToRemove = [];
+    node.childNodes.forEach((childNode) => {
+      if (
+        // childNode.nodeName === 'SUP' // e.g. "do¹"
+        // ||
+        childNode.nodeValue === '*' // e.g. "do*"
+      ) {
+        childNodesToRemove.push(childNode);
+      }
+    });
+    childNodesToRemove.forEach(childNode => childNode.remove());
+    return node;
+  };
+
+
+  const extractFrontText = () => {
+    const node = querySelector(document, 'table.entry  .head .lex_ful_entr');
+    return stringifyNodeWithStyle(node, dropFrontTextJunk);
+  };
+
+  const extractBackText = () => {
+    const translationRows = querySelectorAll(document, '.entry tr')
+      .filter(tr => !tr.className || !tr.className.includes('head'));
+    const definitionText = translationRows.map(tr => stringifyNodeWithStyle(tr, dropWTags)).join('');
+    return `<table style="text-align:left;margin:auto;">${definitionText}</table>`;
+  };
+
+
+  const extractCallback = () => ({
+    frontText: extractFrontText(),
+    backText: extractBackText(),
+    frontLanguage: null,
+    backLanguage: null,
+    cardKind: `${extractCardKind()} Main Term`,
+  });
+
+
+  var runOnMainPanel = (createHook) => {
+    const parentNode = querySelector(document, '.entry  tr.head td', { throwOnUnfound: false });
+    if (!parentNode) {
+      if (querySelector(document, '.no_entry_found')) {
+        return; // Word was not found
+      } else {
+        throw ScrapingError('Translation was not found, and .no_entry_found was not found.');
+      }
+    }
+    if (doesAnkiHookExistIn(parentNode)) {
+      return;
+    }
+    const hook = createHook(extractCallback);
+    hook.style.position = 'absolute';
+    hook.style.right = '10px';
+    highlightOnHookHover(hook, querySelector(document, '.entry'), 'lightblue');
+    parentNode.appendChild(hook);
+  };
+
+  const replaceCommaByLinebreak = (node) => {
+    node.childNodes.forEach((childNode) => {
+      if (isTextNode(childNode) && childNode.nodeValue === ', ') {
+        childNode.replaceWith(document.createElement('BR'));
+      }
+      return replaceCommaByLinebreak(childNode);
+    });
+    return node;
+  };
+
+  // composeFunction(f, g, h) =>
+  //   x => (f∘g∘h)(x)
+
+
+  var composeFunctions = (...funs) =>
+    (...args) => {
+      let val = args;
+      funs.forEach((fun) => {
+        val = [fun(...val)];
+      });
+      return val[0];
+    };
+
+  const findFirstAncestor = (node, ancestorPredicate) => {
+    const { parentNode } = node;
+    if (!parentNode) {
+      return null;
+    }
+    if (ancestorPredicate(parentNode)) {
+      return parentNode;
+    }
+    return findFirstAncestor(parentNode, ancestorPredicate);
+  };
+
+  const runOnTd = (titleSpanNode, createHook) => {
+    const parentTdNode = findFirstAncestor(titleSpanNode, node => node.nodeName === 'TD');
+    if (!parentTdNode) {
+      throw ScrapingError('Could not find parent TD of .lex_ful_phrs');
+    }
+    if (doesAnkiHookExistIn(parentTdNode)) {
+      return;
+    }
+    const translationSpanNode = querySelector(parentTdNode, '.lex_ful_tran');
+
+    const frontElementsHtml = [
+      stringifyNodeWithStyle(
+        titleSpanNode,
+        dropWTags
+      )
+    ];
+    const backElementsHtml = [
+      stringifyNodeWithStyle(
+        translationSpanNode,
+        composeFunctions(dropWTags, replaceCommaByLinebreak)
+      )
+    ];
+
+    // Sample phrases?
+    querySelectorAll(parentTdNode, '.lex_ful_samp2', { throwOnUnfound: false })
+      .forEach((sampleNode) => {
+        frontElementsHtml.push('<br/><br/>');
+        frontElementsHtml.push(
+          stringifyNodeWithStyle(
+            querySelector(sampleNode, '.lex_ful_samp2s'),
+            dropWTags
+          )
+        );
+        backElementsHtml.push('<br/><br/>');
+        backElementsHtml.push(
+          stringifyNodeWithStyle(
+            querySelector(sampleNode, '.lex_ful_samp2t'),
+            dropWTags
+          )
+        );
+      });
+
+    const hook = createHook(() => ({
+      frontText: frontElementsHtml.join(''),
+      backText: backElementsHtml.join(''),
+      frontLanguage: null,
+      backLanguage: null,
+      cardKind: `${extractCardKind()} Secondary Term`,
+    }));
+    hook.style.position = 'absolute';
+    hook.style.right = '-5px';
+    highlightOnHookHover(hook, parentTdNode, 'lightblue');
+    parentTdNode.style.position = 'relative';
+    parentTdNode.prepend(hook);
+  };
+
+
+  var runOnSecondaryPanel = (createHook) => {
+    querySelectorAll(document, '.lex_ful_phrs', { throwOnUnfound: false })
+      .forEach(titleSpanNode => runOnTd(titleSpanNode, createHook));
+  };
+
+  const runOnRowNode = (rowNode, createHook) => {
+    if (doesAnkiHookExistIn(rowNode)) {
+      return;
+    }
+    const hook = createHook(() => ({
+      frontText: stringifyNodeWithStyle(querySelector(rowNode, '.lex_ftx_samp2s'), dropWTags),
+      backText: stringifyNodeWithStyle(querySelector(rowNode, '.lex_ftx_samp2t'), dropWTags),
+      frontLanguage: null,
+      backLanguage: null,
+      cardKind: `${extractCardKind()} Contextual`,
+    }));
+    hook.style.position = 'absolute';
+    hook.style.right = '-80px';
+    const parentNode = querySelector(rowNode, 'td:last-child');
+    highlightOnHookHover(hook, rowNode, 'lightblue');
+    parentNode.style.position = 'relative';
+    parentNode.prepend(hook);
+  };
+
+
+  var runOnContextPanel = (createHook) => {
+    querySelectorAll(document, '.fulltext tr', { throwOnUnfound: false })
+      .forEach(rowNode => runOnRowNode(rowNode, createHook));
+  };
+
   var onScrapingError = (error) => {
     const productionExtraMessage = `
     Please report the following infos at:
@@ -328,89 +553,13 @@
 
   // @name         Anki Add Hooks for lingea.cz
 
-
   const hookName = 'lingea.cz';
-
-
-  // On Lingea.cz each word is surrounded by a <w>.
-  // It is useless for our purpose, so we drop it in order to be leaner.
-  const dropWTags = (node) => {
-    node.childNodes.forEach((childNode) => {
-      if (
-        childNode.nodeName === 'W'
-        && childNode.childNodes.length === 1
-        && isTextNode(childNode.childNodes[0])
-      ) {
-        childNode.replaceWith(childNode.childNodes[0]);
-      }
-      return dropWTags(childNode);
-    });
-    return node;
-  };
-
-  const dropFrontTextJunk = (node) => {
-    const childNodesToRemove = [];
-    node.childNodes.forEach((childNode) => {
-      if (
-        // childNode.nodeName === 'SUP' // e.g. "do¹"
-        // ||
-        childNode.nodeValue === '*' // e.g. "do*"
-      ) {
-        childNodesToRemove.push(childNode);
-      }
-    });
-    childNodesToRemove.forEach(childNode => childNode.remove());
-    return node;
-  };
-
-
-  const extractFrontText = () => {
-    const node = querySelector(document, 'table.entry  .head .lex_ful_entr');
-    return stringifyNodeWithStyle(node, dropFrontTextJunk);
-  };
-
-  const extractBackText = () => {
-    const translationRows = querySelectorAll(document, '.entry tr')
-      .filter(tr => !tr.className || !tr.className.includes('head'));
-    const definitionText = translationRows.map(tr => stringifyNodeWithStyle(tr, dropWTags)).join('');
-    return `<table style="text-align:left;margin:auto;">${definitionText}</table>`;
-  };
-
-  const extractCardKind = () => {
-    const match = window.location.href.match(/lingea\.cz\/(\w+-\w+)\//);
-    if (!match) {
-      throw Error('Failed to extract direction');
-    }
-    return match[1];
-  };
-
-
-  const extractCallback = () => ({
-    frontText: extractFrontText(),
-    backText: extractBackText(),
-    frontLanguage: null,
-    backLanguage: null,
-    cardKind: extractCardKind(),
-  });
-
 
   const run = (createHook) => {
     periodicallyTry(() => {
-      const parentNode = querySelector(document, '.entry  tr.head td', { throwOnUnfound: false });
-      if (!parentNode) {
-        if (querySelector(document, '.no_entry_found')) {
-          return; // Word was not found
-        } else {
-          throw ScrapingError('Translation was not found, and .no_entry_found was not found.');
-        }
-      }
-      if (doesAnkiHookExistIn(parentNode)) {
-        return;
-      }
-      const hook = createHook(extractCallback);
-      hook.style.position = 'absolute';
-      hook.style.right = '10px';
-      parentNode.appendChild(hook);
+      runOnMainPanel(createHook);
+      runOnSecondaryPanel(createHook);
+      runOnContextPanel(createHook);
     });
   };
 
@@ -591,9 +740,6 @@
     const {
       frontText, backText, cardKind
     } = extractedFields;
-    // console.log('frontText:', frontText);
-    // console.log('backText:', backText);
-    // console.log('cardKind:', cardKind);
 
     if (typeof frontText !== 'string') {
       console.error('Found', frontText);

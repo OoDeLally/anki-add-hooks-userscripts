@@ -682,9 +682,6 @@
     const {
       frontText, backText, cardKind
     } = extractedFields;
-    // console.log('frontText:', frontText);
-    // console.log('backText:', backText);
-    // console.log('cardKind:', cardKind);
 
     if (typeof frontText !== 'string') {
       console.error('Found', frontText);
