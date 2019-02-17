@@ -91,7 +91,7 @@
   const toKebabCase = text => text.replace(/([A-Z])/g, (str, letter) => `-${letter.toLowerCase()}`);
 
 
-  // export remarkable style attributes to text
+  // Export remarkable style attributes to text.
   var exportNodeStyleToText = (node) => {
     const nodeStyle = window.getComputedStyle(node);
     // console.log('nodeStyle:', nodeStyle);
@@ -222,6 +222,7 @@
     }
   };
 
+  // Highlight `elementsToHighlight` with `backgroundColor` when the user hovers the hook `hookNode`.
   var highlightOnHookHover = (hookNode, elementsToHighlight, backgroundColor) => {
     if (elementsToHighlight.forEach) {
       hookNode.onmouseover = () => {

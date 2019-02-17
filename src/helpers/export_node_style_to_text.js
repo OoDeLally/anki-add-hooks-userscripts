@@ -50,7 +50,7 @@ const getStyleDefaultValues = (key) => {
 const toKebabCase = text => text.replace(/([A-Z])/g, (str, letter) => `-${letter.toLowerCase()}`);
 
 
-// export remarkable style attributes to text
+// Export remarkable style attributes to text.
 export default (node) => {
   const nodeStyle = window.getComputedStyle(node);
   // console.log('nodeStyle:', nodeStyle);

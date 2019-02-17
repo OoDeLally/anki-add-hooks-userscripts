@@ -91,7 +91,7 @@
   const toKebabCase = text => text.replace(/([A-Z])/g, (str, letter) => `-${letter.toLowerCase()}`);
 
 
-  // export remarkable style attributes to text
+  // Export remarkable style attributes to text.
   var exportNodeStyleToText = (node) => {
     const nodeStyle = window.getComputedStyle(node);
     // console.log('nodeStyle:', nodeStyle);
@@ -300,6 +300,7 @@
     return node;
   };
 
+  // Highlight `elementsToHighlight` with `backgroundColor` when the user hovers the hook `hookNode`.
   var highlightOnHookHover = (hookNode, elementsToHighlight, backgroundColor) => {
     if (elementsToHighlight.forEach) {
       hookNode.onmouseover = () => {
@@ -332,6 +333,7 @@
   };
 
 
+  // Hide the hook by default, and show it when the user hovers `zoneNodes`.
   var showHookOnZoneHover$1 = (hookNode, zoneNodes) => {
     hookNode.style.opacity = 0;
     if (zoneNodes.forEach) {
@@ -556,6 +558,7 @@
     }
   };
 
+  // Periodically try to run runCallback(). Stops if an error is thrown.
   var periodicallyTry = (runCallback, periodInMs = 500) => {
     const timerId = setInterval(() => {
       try {

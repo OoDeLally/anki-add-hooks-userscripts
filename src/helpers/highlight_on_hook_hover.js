@@ -1,4 +1,4 @@
-
+// Highlight `elementsToHighlight` with `backgroundColor` when the user hovers the hook `hookNode`.
 export default (hookNode, elementsToHighlight, backgroundColor) => {
   if (elementsToHighlight.forEach) {
     hookNode.onmouseover = () => {

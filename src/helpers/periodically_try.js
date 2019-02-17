@@ -1,6 +1,6 @@
 import onScrapingError from '../on_scraping_error';
 
-
+// Periodically try to run runCallback(). Stops if an error is thrown.
 export default (runCallback, periodInMs = 500) => {
   const timerId = setInterval(() => {
     try {

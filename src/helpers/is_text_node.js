@@ -1,4 +1,3 @@
-
 // Tells if a node is a TextNode
 export default (node) => {
   if (!node || node.nodeType === undefined) {

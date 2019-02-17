@@ -31,6 +31,7 @@
 
   __$styleInject(".banner {\n  height: 20px;\n  font-size: 14px;\n  color: deepskyblue;\n  text-align: left;\n}\n\n.banner-language {\n\n}\n\n\n.banner-hook-name {\n  float: right;\n}\n");
 
+  // Highlight `elementsToHighlight` with `backgroundColor` when the user hovers the hook `hookNode`.
   var highlightOnHookHover = (hookNode, elementsToHighlight, backgroundColor) => {
     if (elementsToHighlight.forEach) {
       hookNode.onmouseover = () => {

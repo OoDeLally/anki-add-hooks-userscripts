@@ -9,6 +9,7 @@ const showHookOnZoneHover = (hookNode, zoneNode) => {
 };
 
 
+// Hide the hook by default, and show it when the user hovers `zoneNodes`.
 export default (hookNode, zoneNodes) => {
   hookNode.style.opacity = 0;
   if (zoneNodes.forEach) {
