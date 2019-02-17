@@ -275,6 +275,57 @@
       { throwOnUnfound: false }
     );
 
+  var onScrapingError = (error) => {
+    const productionExtraMessage = `
+    Please report the following infos at:
+    https://github.com/OoDeLally/anki-add-hooks-userscripts/issues`;
+    console.error(
+      `AnkiAddHooks: Error during web page scraping. ${
+      productionExtraMessage
+    }
+
+     Message: ${error.message}.
+
+     Page: ${error.location}.
+
+     Hook Template Version: 2.0.0.
+
+     Hook Userscript Name: ${hookName}.
+
+     Hook UserScript Version: 2.1.
+
+     Stack: ${error.stack}
+    `
+    );
+    {
+      alert(`AnkiAddHooks Error
+          There was an error in reading the web page.
+          You can help us solve it:
+          1- Open the console (F12 key => tab "Console").
+          2- Copy the error message.
+          3- Paste the error message in a github issue at the url mentioned in the error message.
+          Thank you.
+    `);
+    }
+  };
+
+  var periodicallyTry = (runCallback, periodInMs = 500) => {
+    const timerId = setInterval(() => {
+      try {
+        runCallback();
+      } catch (error) {
+        if (error.name === 'ScrapingError') {
+          clearInterval(timerId);
+          const [, ...stackLines] = error.stack.split('\n');
+          error.stack = stackLines.join('\n');
+          onScrapingError(error);
+        } else {
+          throw error;
+        }
+      }
+    }, periodInMs);
+  };
+
   // @name         Anki Add Hooks for lingea.cz
 
 
@@ -344,10 +395,14 @@
 
 
   const run = (createHook) => {
-    setInterval(() => {
-      const parentNode = querySelector(document, '.entry  tr.head td');
+    periodicallyTry(() => {
+      const parentNode = querySelector(document, '.entry  tr.head td', { throwOnUnfound: false });
       if (!parentNode) {
-        return; // Container not found
+        if (querySelector(document, '.no_entry_found')) {
+          return; // Word was not found
+        } else {
+          throw ScrapingError('Translation was not found, and .no_entry_found was not found.');
+        }
       }
       if (doesAnkiHookExistIn(parentNode)) {
         return;
@@ -356,7 +411,7 @@
       hook.style.position = 'absolute';
       hook.style.right = '10px';
       parentNode.appendChild(hook);
-    }, 500);
+    });
   };
 
   const AnkiCardAddingError = (message, response) => {
@@ -392,41 +447,6 @@
           ${htmlContent}
           </div>
         `;
-  };
-
-
-  const handleScrapingError = (error) => {
-    const productionExtraMessage = `
-    Please report the following infos at:
-    https://github.com/OoDeLally/anki-add-hooks-userscripts/issues`;
-    console.error(
-      `AnkiAddHooks: Error during web page scraping. ${
-      productionExtraMessage
-    }
-
-     Message: ${error.message}.
-
-     Page: ${error.location}.
-
-     Hook Template Version: 2.0.0.
-
-     Hook Userscript Name: ${hookName}.
-
-     Hook UserScript Version: 2.1.
-
-     Stack: ${error.stack}
-    `
-    );
-    {
-      alert(`AnkiAddHooks Error
-          There was an error in reading the web page.
-          You can help us solve it:
-          1- Open the console (F12 key => tab "Console").
-          2- Copy the error message.
-          3- Paste the error message in a github issue at the url mentioned in the error message.
-          Thank you.
-    `);
-    }
   };
 
 
@@ -613,7 +633,7 @@
     } catch (error) {
       if (error.name === 'ScrapingError') {
         await updateButtonState(hookNode, 'error');
-        handleScrapingError(error);
+        onScrapingError(error);
       } else if (error.name === 'AnkiCardAddingError') {
         await updateButtonState(hookNode, 'error');
         ankiRequestOnFail(error.message, fields.cardKind);

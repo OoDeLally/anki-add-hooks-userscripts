@@ -7,6 +7,8 @@
 import stringifyNodeWithStyle from '../helpers/stringify_node_with_style';
 import isTextNode from '../helpers/is_text_node';
 import { querySelector, querySelectorAll, doesAnkiHookExistIn } from '../helpers/scraping';
+import periodicallyTry from '../helpers/periodically_try';
+import ScrapingError from '../scraping_error';
 
 
 export const hookName = 'lingea.cz';
@@ -75,10 +77,14 @@ const extractCallback = () => ({
 
 
 export const run = (createHook) => {
-  setInterval(() => {
-    const parentNode = querySelector(document, '.entry  tr.head td');
+  periodicallyTry(() => {
+    const parentNode = querySelector(document, '.entry  tr.head td', { throwOnUnfound: false });
     if (!parentNode) {
-      return; // Container not found
+      if (querySelector(document, '.no_entry_found')) {
+        return; // Word was not found
+      } else {
+        throw ScrapingError('Translation was not found, and .no_entry_found was not found.');
+      }
     }
     if (doesAnkiHookExistIn(parentNode)) {
       return;
@@ -87,5 +93,5 @@ export const run = (createHook) => {
     hook.style.position = 'absolute';
     hook.style.right = '10px';
     parentNode.appendChild(hook);
-  }, 500);
+  });
 };
