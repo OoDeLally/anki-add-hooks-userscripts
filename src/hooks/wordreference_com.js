@@ -7,6 +7,7 @@
 import stringifyNodeWithStyle from '../helpers/stringify_node_with_style';
 import highlightOnHookHover from '../helpers/highlight_on_hook_hover';
 import { querySelector, querySelectorAll } from '../helpers/scraping';
+import ScrapingError from '../scraping_error';
 
 
 // Wordreference entries are laid as following:
@@ -168,7 +169,19 @@ const addHooksInTable = (tableNode, createHook) => {
 };
 
 
-const getTables = () => querySelectorAll(document, '.WRD');
+const getTables = () => {
+  // Search for translation tables
+  const tables = querySelectorAll(document, '.WRD', { throwOnUnfound: false });
+  if (tables.length > 0) {
+    return tables;
+  }
+  // tables.length == 0. Does it mean that the word wasnt found?
+  const wordNotFoundNotifNode = querySelector(document, '#noEntryFound', { throwOnUnfound: false });
+  if (wordNotFoundNotifNode) {
+    return []; // The word was not found, so we simply return no table.
+  }
+  throw ScrapingError('.WRD table was not found and #noEntryFound was not found');
+};
 
 
 export const hookName = 'wordreference.com';

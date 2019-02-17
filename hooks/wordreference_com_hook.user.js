@@ -450,7 +450,19 @@
   };
 
 
-  const getTables = () => querySelectorAll(document, '.WRD');
+  const getTables = () => {
+    // Search for translation tables
+    const tables = querySelectorAll(document, '.WRD', { throwOnUnfound: false });
+    if (tables.length > 0) {
+      return tables;
+    }
+    // tables.length == 0. Does it mean that the word wasnt found?
+    const wordNotFoundNotifNode = querySelector(document, '#noEntryFound', { throwOnUnfound: false });
+    if (wordNotFoundNotifNode) {
+      return []; // The word was not found, so we simply return no table.
+    }
+    throw ScrapingError('.WRD table was not found and #noEntryFound was not found');
+  };
 
 
   const hookName = 'wordreference.com';
