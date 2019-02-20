@@ -71,7 +71,7 @@
     direction: ['', 'ltr'],
     flex: '0 1 auto',
     float: 'none',
-    fontSize: '14px',
+    fontSize: '20px',
     fontStyle: 'normal',
     fontWeight: '400',
     left: ['auto', '0px'],
@@ -124,7 +124,6 @@
       if (
         propertyValue
         && !defaultValues.includes(propertyValue)
-        && propertyValue !== window.getComputedStyle(node.parentNode)[styleKey]
       ) {
         elements.push(`${toKebabCase(styleKey)}:${propertyValue};`);
         // console.log(`${toKebabCase(styleKey)}:${propertyValue};`);
@@ -132,9 +131,9 @@
       return elements;
     }, []);
     // console.log('node.nodeName:', node.nodeName)
-    // console.log('nodeStyle.display:', nodeStyle.display)
+    // console.log('nodeStyle.fontSize:', nodeStyle.fontSize)
     if (
-      (node.nodeName === 'DIV' && nodeStyle.display !== 'block')
+      (['DIV', 'H1', 'H2', 'H3', 'H4', 'H5'].includes(node.nodeName) && nodeStyle.display !== 'block')
       || (node.nodeName === 'TR' && nodeStyle.display !== 'table-row')
       || (node.nodeName === 'TD' && nodeStyle.display !== 'table-cell')
       || (node.nodeName !== 'DIV' && nodeStyle.display === 'block')

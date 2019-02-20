@@ -48,7 +48,7 @@
     direction: ['', 'ltr'],
     flex: '0 1 auto',
     float: 'none',
-    fontSize: '14px',
+    fontSize: '20px',
     fontStyle: 'normal',
     fontWeight: '400',
     left: ['auto', '0px'],
@@ -101,7 +101,6 @@
       if (
         propertyValue
         && !defaultValues.includes(propertyValue)
-        && propertyValue !== window.getComputedStyle(node.parentNode)[styleKey]
       ) {
         elements.push(`${toKebabCase(styleKey)}:${propertyValue};`);
         // console.log(`${toKebabCase(styleKey)}:${propertyValue};`);
@@ -109,9 +108,9 @@
       return elements;
     }, []);
     // console.log('node.nodeName:', node.nodeName)
-    // console.log('nodeStyle.display:', nodeStyle.display)
+    // console.log('nodeStyle.fontSize:', nodeStyle.fontSize)
     if (
-      (node.nodeName === 'DIV' && nodeStyle.display !== 'block')
+      (['DIV', 'H1', 'H2', 'H3', 'H4', 'H5'].includes(node.nodeName) && nodeStyle.display !== 'block')
       || (node.nodeName === 'TR' && nodeStyle.display !== 'table-row')
       || (node.nodeName === 'TD' && nodeStyle.display !== 'table-cell')
       || (node.nodeName !== 'DIV' && nodeStyle.display === 'block')
@@ -323,6 +322,80 @@
     }
   };
 
+  const dropFrontTextJunk = (node) => {
+    const childNodesToRemove = [];
+    node.childNodes.forEach((childNode) => {
+      if (
+        // childNode.nodeName === 'SUP' // e.g. "do¹"
+        // ||
+        childNode.nodeValue === '*' // e.g. "do*"
+      ) {
+        childNodesToRemove.push(childNode);
+      }
+    });
+    childNodesToRemove.forEach(childNode => childNode.remove());
+    return node;
+  };
+
+
+  const extractFrontText = (headerNodes) => {
+    const hmtl = headerNodes
+      .map(headerNode => stringifyNodeWithStyle(headerNode, dropFrontTextJunk))
+      .join('<br/>');
+    return `<div style="display:table;margin:auto;text-align:left;">${hmtl}</div>`;
+  };
+
+
+  const extractBackText = () => {
+    const translationRows = querySelectorAll(document, '.entry tr')
+      .filter(tr => !tr.className || !tr.className.includes('head'));
+    const definitionText = translationRows.map(tr => stringifyNodeWithStyle(tr, dropWTags)).join('');
+    return `<table style="text-align:left;margin:auto;">${definitionText}</table>`;
+  };
+
+
+  const extractCallback = headerNodes => ({
+    frontText: extractFrontText(headerNodes),
+    backText: extractBackText(),
+    frontLanguage: null,
+    backLanguage: null,
+    cardKind: `${extractCardKind()} Main Term`,
+  });
+
+
+  var runOnMainPanel = (createHook) => {
+    // Sometimes there will be several headerNodes e.g. when searching for `rozlétly`.
+    // In such case we only put the button to the first row.
+    const headerNodes = querySelectorAll(document, '.entry  tr.head td', { throwOnUnfound: false });
+    if (headerNodes.length === 0) {
+      if (querySelector(document, '.no_entry_found')) {
+        return; // Word was not found
+      } else {
+        throw ScrapingError('Translation was not found, and .no_entry_found was not found.');
+      }
+    }
+    const parentNode = headerNodes[0];
+    if (doesAnkiHookExistIn(parentNode)) {
+      return;
+    }
+    const hook = createHook(() => extractCallback(headerNodes));
+    hook.style.position = 'absolute';
+    hook.style.right = '10px';
+    const mainPanel = querySelectorAll(document, '.entry');
+    highlightOnHookHover(hook, mainPanel, 'lightblue');
+    parentNode.appendChild(hook);
+  };
+
+  const replaceCommaByLinebreak = (node) => {
+    node.childNodes.forEach((childNode) => {
+      if (isTextNode(childNode) && childNode.nodeValue === ', ') {
+        childNode.replaceWith(document.createElement('BR'));
+      }
+      return replaceCommaByLinebreak(childNode);
+    });
+    return node;
+  };
+
   const showHookOnZoneHover = (hookNode, zoneNode) => {
     zoneNode.onmouseover = () => {
       hookNode.style.opacity = 1;
@@ -341,74 +414,6 @@
     } else {
       showHookOnZoneHover(hookNode, zoneNodes);
     }
-  };
-
-  const dropFrontTextJunk = (node) => {
-    const childNodesToRemove = [];
-    node.childNodes.forEach((childNode) => {
-      if (
-        // childNode.nodeName === 'SUP' // e.g. "do¹"
-        // ||
-        childNode.nodeValue === '*' // e.g. "do*"
-      ) {
-        childNodesToRemove.push(childNode);
-      }
-    });
-    childNodesToRemove.forEach(childNode => childNode.remove());
-    return node;
-  };
-
-
-  const extractFrontText = () => {
-    const node = querySelector(document, 'table.entry  .head .lex_ful_entr');
-    return stringifyNodeWithStyle(node, dropFrontTextJunk);
-  };
-
-  const extractBackText = () => {
-    const translationRows = querySelectorAll(document, '.entry tr')
-      .filter(tr => !tr.className || !tr.className.includes('head'));
-    const definitionText = translationRows.map(tr => stringifyNodeWithStyle(tr, dropWTags)).join('');
-    return `<table style="text-align:left;margin:auto;">${definitionText}</table>`;
-  };
-
-
-  const extractCallback = () => ({
-    frontText: extractFrontText(),
-    backText: extractBackText(),
-    frontLanguage: null,
-    backLanguage: null,
-    cardKind: `${extractCardKind()} Main Term`,
-  });
-
-
-  var runOnMainPanel = (createHook) => {
-    const parentNode = querySelector(document, '.entry  tr.head td', { throwOnUnfound: false });
-    if (!parentNode) {
-      if (querySelector(document, '.no_entry_found')) {
-        return; // Word was not found
-      } else {
-        throw ScrapingError('Translation was not found, and .no_entry_found was not found.');
-      }
-    }
-    if (doesAnkiHookExistIn(parentNode)) {
-      return;
-    }
-    const hook = createHook(extractCallback);
-    hook.style.position = 'absolute';
-    hook.style.right = '10px';
-    const mainPanel = querySelector(document, '.entry');
-    highlightOnHookHover(hook, mainPanel, 'lightblue');
-    parentNode.appendChild(hook);
-  };
-
-  const replaceCommaByLinebreak = (node) => {
-    node.childNodes.forEach((childNode) => {
-      if (isTextNode(childNode) && childNode.nodeValue === ', ') {
-        childNode.replaceWith(document.createElement('BR'));
-      }
-      return replaceCommaByLinebreak(childNode);
-    });
-    return node;
   };
 
   // composeFunction(f, g, h) =>
