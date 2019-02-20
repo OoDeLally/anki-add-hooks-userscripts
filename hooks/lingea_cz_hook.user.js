@@ -5,7 +5,7 @@
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for lingea.cz
-// @version      2.2
+// @version      2.3
 // @description  Generate a hook for AnkiConnect on Lingea.cz
 // @author       Pascal Heitz
 // @include      /slovniky\.lingea\.cz\/\w+-\w+/.+/
@@ -546,7 +546,7 @@
 
      Hook Userscript Name: ${hookName}.
 
-     Hook UserScript Version: 2.2.
+     Hook UserScript Version: 2.3.
 
      Stack: ${error.stack}
     `
