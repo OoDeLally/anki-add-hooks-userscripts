@@ -105,7 +105,7 @@ const runOnSingleNature = (headerNodes, createHook) => {
   const backSideTrs = querySelectorAll(document, '.entry tr');
   const hook = createHook(() => extractCallback(headerNodes, backSideTrs));
   hook.style.position = 'absolute';
-  hook.style.right = '10px';
+  hook.style.right = '0px';
   const mainPanel = querySelectorAll(document, '.entry');
   highlightOnHookHover(hook, mainPanel, 'lightblue');
   parentNode.appendChild(hook);
@@ -140,7 +140,7 @@ const runOnMultipleNatures = (headerNodes, firstTrs, createHook) => {
     } while (currentTr && currentTr !== nextFirstTr);
     const hook = createHook(() => extractCallback([...headerNodes, firstTr], backSideTrs));
     hook.style.position = 'absolute';
-    hook.style.right = '10px';
+    hook.style.right = '0px';
     highlightOnHookHover(hook, [...backSideTrs, ...headerNodes], 'lightblue');
     const parentNode = querySelector(firstTr, 'td:last-child');
     parentNode.style.position = 'relative';

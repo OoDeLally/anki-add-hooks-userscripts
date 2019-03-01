@@ -468,7 +468,7 @@
     const backSideTrs = querySelectorAll(document, '.entry tr');
     const hook = createHook(() => extractCallback(headerNodes, backSideTrs));
     hook.style.position = 'absolute';
-    hook.style.right = '10px';
+    hook.style.right = '0px';
     const mainPanel = querySelectorAll(document, '.entry');
     highlightOnHookHover(hook, mainPanel, 'lightblue');
     parentNode.appendChild(hook);
@@ -503,7 +503,7 @@
       } while (currentTr && currentTr !== nextFirstTr);
       const hook = createHook(() => extractCallback([...headerNodes, firstTr], backSideTrs));
       hook.style.position = 'absolute';
-      hook.style.right = '10px';
+      hook.style.right = '0px';
       highlightOnHookHover(hook, [...backSideTrs, ...headerNodes], 'lightblue');
       const parentNode = querySelector(firstTr, 'td:last-child');
       parentNode.style.position = 'relative';
@@ -613,7 +613,7 @@
       cardKind: `${extractCardKind()} Secondary Term`,
     }));
     hook.style.position = 'absolute';
-    hook.style.right = '-5px';
+    hook.style.right = '0px';
     highlightOnHookHover(hook, parentTdNode, 'lightblue');
     showHookOnZoneHover$1(hook, parentTdNode);
     parentTdNode.style.position = 'relative';

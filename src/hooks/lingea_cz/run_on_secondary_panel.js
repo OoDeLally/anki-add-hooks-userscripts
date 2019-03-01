@@ -59,7 +59,7 @@ const runOnTd = (titleSpanNode, createHook) => {
     cardKind: `${extractCardKind()} Secondary Term`,
   }));
   hook.style.position = 'absolute';
-  hook.style.right = '-5px';
+  hook.style.right = '0px';
   highlightOnHookHover(hook, parentTdNode, 'lightblue');
   showHookOnZoneHover(hook, parentTdNode);
   parentTdNode.style.position = 'relative';
