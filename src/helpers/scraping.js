@@ -45,8 +45,7 @@ export const getNodeWithIdMatchingRegExp = (
 };
 
 
-// Just like parentNode.querySelectorAll, but throws if not found
-export const querySelectorAll = (parentNode, selector, { throwOnUnfound = true } = {}) => {
+const querySelectorAllInOneNode = (parentNode, selector, { throwOnUnfound = true } = {}) => {
   if (!parentNode || !parentNode.querySelectorAll) {
     throw Error(`parentNode does not seem to be a DOM node: ${parentNode}`);
   }
@@ -61,7 +60,47 @@ export const querySelectorAll = (parentNode, selector, { throwOnUnfound = true }
 };
 
 
-// Just like parentNode.querySelector, but throws if not found, or several found
+const getElementsByNameInOneNode = (parentNode, name, { throwOnUnfound = true } = {}) => {
+  if (!parentNode || !parentNode.getElementsByName) {
+    throw Error(`parentNode does not seem to be a DOM node: ${parentNode}`);
+  }
+  if (typeof name !== 'string') {
+    throw Error('name must be a string');
+  }
+  const foundNodes = Array.from(parentNode.getElementsByName(name));
+  if (foundNodes.length === 0 && throwOnUnfound) {
+    throw ScrapingError(`No node matches the name '${name}'`);
+  }
+  return foundNodes;
+};
+
+
+// Just like parentNode.querySelectorAll, but:
+// - can throw if not found.
+// - accepts parentNode as an array of nodes to look from.
+export const querySelectorAll = (parentNode, selector, options = {}) => {
+  if (typeof options !== 'object') {
+    throw Error('If provided, `options`, must be an object');
+  }
+  if (Array.isArray(parentNode)) {
+    let results = [];
+    parentNode.forEach((node) => {
+      const foundNodes = querySelectorAllInOneNode(node, selector, { throwOnUnfound: false });
+      results = [...results, ...foundNodes];
+    });
+    if (results.length > 1 && options.throwOnFoundSeveral) {
+      throw ScrapingError(`Several nodes match the selector '${selector}'`);
+    }
+    return results;
+  } else {
+    return querySelectorAllInOneNode(parentNode, selector, options);
+  }
+};
+
+
+// Just like parentNode.querySelector, but:
+// - can throw if not found, or several found.
+// - accepts parentNode as an array of nodes to look from.
 export const querySelector = (
   parentNode, selector, { throwOnUnfound = true, throwOnFoundSeveral = true } = {}
 ) => {
@@ -82,23 +121,32 @@ export const querySelector = (
 };
 
 
-// Just like parentNode.getElementsByName, but throws if not found
-export const getElementsByName = (parentNode, name, { throwOnUnfound = true } = {}) => {
-  if (!parentNode || !parentNode.getElementsByName) {
-    throw Error(`parentNode does not seem to be a DOM node: ${parentNode}`);
+// Just like parentNode.getElementsByName, but:
+// - can throw if not found.
+// - accepts parentNode as an array of nodes to look from.
+export const getElementsByName = (parentNode, name, options = {}) => {
+  if (typeof options !== 'object') {
+    throw Error('If provided, `options`, must be an object');
   }
-  if (typeof name !== 'string') {
-    throw Error('name must be a string');
+  if (Array.isArray(parentNode)) {
+    let results = [];
+    parentNode.forEach((node) => {
+      const foundNodes = getElementsByNameInOneNode(node, name, { throwOnUnfound: false });
+      results = [...results, ...foundNodes];
+    });
+    if (results.length > 1 && options.throwOnFoundSeveral) {
+      throw ScrapingError(`Several nodes match the name '${name}'`);
+    }
+    return results;
+  } else {
+    return getElementsByNameInOneNode(parentNode, name, options);
   }
-  const foundNodes = Array.from(parentNode.getElementsByName(name));
-  if (foundNodes.length === 0 && throwOnUnfound) {
-    throw ScrapingError(`No node matches the name '${name}'`);
-  }
-  return foundNodes;
 };
 
 
-// Just like parentNode.getElementByName (hypothetically), but throws if not found, or several found
+// Just like parentNode.getElementByName, but:
+// - can throw if not found, or several found.
+// - accepts parentNode as an array of nodes to look from.
 export const getElementByName = (
   parentNode, name, { throwOnUnfound = true, throwOnFoundSeveral = true } = {}
 ) => {
@@ -119,8 +167,10 @@ export const getElementByName = (
 };
 
 
+// Tells if `parentNode` already contains an anki hook.
+// `parentNode` can be an array of nodes to look from.
 export const doesAnkiHookExistIn = parentNode =>
-  querySelector(
+  !!querySelector(
     parentNode,
     ANKI_ADD_BUTTON_CLASS_SELECTOR,
     { throwOnUnfound: false }

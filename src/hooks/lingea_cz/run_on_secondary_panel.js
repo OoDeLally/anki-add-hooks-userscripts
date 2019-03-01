@@ -7,18 +7,7 @@ import ScrapingError from '../../scraping_error';
 import highlightOnHookHover from '../../helpers/highlight_on_hook_hover';
 import showHookOnZoneHover from '../../helpers/show_hook_on_zone_hover';
 import composeFunctions from '../../helpers/compose_functions';
-
-
-const findFirstAncestor = (node, ancestorPredicate) => {
-  const { parentNode } = node;
-  if (!parentNode) {
-    return null;
-  }
-  if (ancestorPredicate(parentNode)) {
-    return parentNode;
-  }
-  return findFirstAncestor(parentNode, ancestorPredicate);
-};
+import findFirstAncestor from '../../helpers/find_first_ancestor';
 
 const runOnTd = (titleSpanNode, createHook) => {
   const parentTdNode = findFirstAncestor(titleSpanNode, node => node.nodeName === 'TD');

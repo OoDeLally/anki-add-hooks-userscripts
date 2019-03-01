@@ -230,8 +230,7 @@
     return error;
   };
 
-  // Just like parentNode.querySelectorAll, but throws if not found
-  const querySelectorAll = (parentNode, selector, { throwOnUnfound = true } = {}) => {
+  const querySelectorAllInOneNode = (parentNode, selector, { throwOnUnfound = true } = {}) => {
     if (!parentNode || !parentNode.querySelectorAll) {
       throw Error(`parentNode does not seem to be a DOM node: ${parentNode}`);
     }
@@ -246,7 +245,32 @@
   };
 
 
-  // Just like parentNode.querySelector, but throws if not found, or several found
+  // Just like parentNode.querySelectorAll, but:
+  // - can throw if not found.
+  // - accepts parentNode as an array of nodes to look from.
+  const querySelectorAll = (parentNode, selector, options = {}) => {
+    if (typeof options !== 'object') {
+      throw Error('If provided, `options`, must be an object');
+    }
+    if (Array.isArray(parentNode)) {
+      let results = [];
+      parentNode.forEach((node) => {
+        const foundNodes = querySelectorAllInOneNode(node, selector, { throwOnUnfound: false });
+        results = [...results, ...foundNodes];
+      });
+      if (results.length > 1 && options.throwOnFoundSeveral) {
+        throw ScrapingError(`Several nodes match the selector '${selector}'`);
+      }
+      return results;
+    } else {
+      return querySelectorAllInOneNode(parentNode, selector, options);
+    }
+  };
+
+
+  // Just like parentNode.querySelector, but:
+  // - can throw if not found, or several found.
+  // - accepts parentNode as an array of nodes to look from.
   const querySelector = (
     parentNode, selector, { throwOnUnfound = true, throwOnFoundSeveral = true } = {}
   ) => {
@@ -267,8 +291,10 @@
   };
 
 
+  // Tells if `parentNode` already contains an anki hook.
+  // `parentNode` can be an array of nodes to look from.
   const doesAnkiHookExistIn = parentNode =>
-    querySelector(
+    !!querySelector(
       parentNode,
       ANKI_ADD_BUTTON_CLASS_SELECTOR,
       { throwOnUnfound: false }
@@ -322,6 +348,17 @@
     }
   };
 
+  const findFirstAncestor = (node, ancestorPredicate) => {
+    const { parentNode } = node;
+    if (!parentNode) {
+      return null;
+    }
+    if (ancestorPredicate(parentNode)) {
+      return parentNode;
+    }
+    return findFirstAncestor(parentNode, ancestorPredicate);
+  };
+
   // composeFunction(f, g, h) =>
   //   x => (f∘g∘h)(x)
 
@@ -360,7 +397,10 @@
 
 
   const getWordToSubstitute = (headerNode) => {
-    const h1 = querySelector(headerNode, '.lex_ful_entr');
+    const h1 = querySelector(headerNode, '.lex_ful_entr', { throwOnUnfound: false });
+    if (!h1) {
+      return null;
+    }
     const word = h1.childNodes[0].textContent.split(/[-. ]/)[0];
     if (!word) {
       throw ScrapingError('Could not find word to substitute');
@@ -395,10 +435,10 @@
     };
 
 
-  const extractBackText = (headerNodes) => {
-    const translationRows = querySelectorAll(document, '.entry tr')
+  const extractBackText = (headerNodes, backSideTrs) => {
+    const translationRows = backSideTrs
       .filter(tr => !tr.className || !tr.className.includes('head'));
-    const wordsToSubstitute = headerNodes.map(getWordToSubstitute);
+    const wordsToSubstitute = headerNodes.map(getWordToSubstitute).filter(w => w);
     const definitionText = translationRows.map(
       tr =>
         stringifyNodeWithStyle(
@@ -410,13 +450,66 @@
   };
 
 
-  const extractCallback = headerNodes => ({
+  const extractCallback = (headerNodes, backSideTrs) => ({
     frontText: extractFrontText(headerNodes),
-    backText: extractBackText(headerNodes),
+    backText: extractBackText(headerNodes, backSideTrs),
     frontLanguage: null,
     backLanguage: null,
     cardKind: `${extractCardKind()} Main Term`,
   });
+
+
+  // Some words have only one nature. e.g. `hrabat` can only be a verb.
+  const runOnSingleNature = (headerNodes, createHook) => {
+    const parentNode = headerNodes[0];
+    if (doesAnkiHookExistIn(parentNode)) {
+      return;
+    }
+    const backSideTrs = querySelectorAll(document, '.entry tr');
+    const hook = createHook(() => extractCallback(headerNodes, backSideTrs));
+    hook.style.position = 'absolute';
+    hook.style.right = '10px';
+    const mainPanel = querySelectorAll(document, '.entry');
+    highlightOnHookHover(hook, mainPanel, 'lightblue');
+    parentNode.appendChild(hook);
+  };
+
+
+  // Some words can have several natures. e.g. `land` is both an verb, a noun and an adjective.
+  const runOnMultipleNatures = (headerNodes, firstTrs, createHook) => {
+    // For each firstTr, we take every tr until the next one:
+    // <table>
+    //   <tr>nature 0 - firstTr</tr>
+    //   <tr>nature 0 - def 0</tr>
+    //   <tr>nature 0 - def 1</tr>
+    //   <tr>nature 0 - def 2</tr>
+    //   <tr>nature 1 - firstTr</tr>
+    //   <tr>nature 1 - def 0</tr>
+    //   <tr>nature 2 - firstTr</tr>
+    //   <tr>nature 2 - def 0</tr>
+    //   <tr>nature 2 - def 1</tr>
+    //   <tr>nature 2 - def 1</tr>
+    // <table>
+    firstTrs.forEach((firstTr, firstTrIndex) => {
+      if (doesAnkiHookExistIn(firstTr)) {
+        return;
+      }
+      const nextFirstTr = firstTrs[firstTrIndex + 1];
+      const backSideTrs = [];
+      let currentTr = firstTr;
+      do {
+        backSideTrs.push(currentTr);
+        currentTr = currentTr.nextSibling;
+      } while (currentTr && currentTr !== nextFirstTr);
+      const hook = createHook(() => extractCallback([...headerNodes, firstTr], backSideTrs));
+      hook.style.position = 'absolute';
+      hook.style.right = '10px';
+      highlightOnHookHover(hook, [...backSideTrs, ...headerNodes], 'lightblue');
+      const parentNode = querySelector(firstTr, 'td:last-child');
+      parentNode.style.position = 'relative';
+      parentNode.appendChild(hook);
+    });
+  };
 
 
   var runOnMainPanel = (createHook) => {
@@ -426,16 +519,18 @@
     if (headerNodes.length === 0) {
       return; // Word was not found, or error 505, or captcha
     }
-    const parentNode = headerNodes[0];
-    if (doesAnkiHookExistIn(parentNode)) {
-      return;
+
+    const termNatureNodes = querySelectorAll(document, 'td:first-child .lex_ful_morf:first-child', { throwOnUnfound: false });
+    // Whether the word has several natures or just one, the layout is different.
+    if (termNatureNodes.length > 0) {
+      runOnMultipleNatures(
+        headerNodes,
+        termNatureNodes.map(termNatureNode => findFirstAncestor(termNatureNode, node => node.nodeName === 'TR')),
+        createHook
+      );
+    } else {
+      runOnSingleNature(headerNodes, createHook);
     }
-    const hook = createHook(() => extractCallback(headerNodes));
-    hook.style.position = 'absolute';
-    hook.style.right = '10px';
-    const mainPanel = querySelectorAll(document, '.entry');
-    highlightOnHookHover(hook, mainPanel, 'lightblue');
-    parentNode.appendChild(hook);
   };
 
   const replaceCommaByLinebreak = (node) => {
@@ -466,17 +561,6 @@
     } else {
       showHookOnZoneHover(hookNode, zoneNodes);
     }
-  };
-
-  const findFirstAncestor = (node, ancestorPredicate) => {
-    const { parentNode } = node;
-    if (!parentNode) {
-      return null;
-    }
-    if (ancestorPredicate(parentNode)) {
-      return parentNode;
-    }
-    return findFirstAncestor(parentNode, ancestorPredicate);
   };
 
   const runOnTd = (titleSpanNode, createHook) => {

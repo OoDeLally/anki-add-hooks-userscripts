@@ -70,8 +70,7 @@
   const ANKI_HOOK_BUTTON_TEXT_CLASS = '-anki-add-hook-text';
   const ANKI_HOOK_BUTTON_TEXT_CLASS_SELECTOR = `.${ANKI_HOOK_BUTTON_TEXT_CLASS}`;
 
-  // Just like parentNode.querySelectorAll, but throws if not found
-  const querySelectorAll = (parentNode, selector, { throwOnUnfound = true } = {}) => {
+  const querySelectorAllInOneNode = (parentNode, selector, { throwOnUnfound = true } = {}) => {
     if (!parentNode || !parentNode.querySelectorAll) {
       throw Error(`parentNode does not seem to be a DOM node: ${parentNode}`);
     }
@@ -86,7 +85,32 @@
   };
 
 
-  // Just like parentNode.querySelector, but throws if not found, or several found
+  // Just like parentNode.querySelectorAll, but:
+  // - can throw if not found.
+  // - accepts parentNode as an array of nodes to look from.
+  const querySelectorAll = (parentNode, selector, options = {}) => {
+    if (typeof options !== 'object') {
+      throw Error('If provided, `options`, must be an object');
+    }
+    if (Array.isArray(parentNode)) {
+      let results = [];
+      parentNode.forEach((node) => {
+        const foundNodes = querySelectorAllInOneNode(node, selector, { throwOnUnfound: false });
+        results = [...results, ...foundNodes];
+      });
+      if (results.length > 1 && options.throwOnFoundSeveral) {
+        throw ScrapingError(`Several nodes match the selector '${selector}'`);
+      }
+      return results;
+    } else {
+      return querySelectorAllInOneNode(parentNode, selector, options);
+    }
+  };
+
+
+  // Just like parentNode.querySelector, but:
+  // - can throw if not found, or several found.
+  // - accepts parentNode as an array of nodes to look from.
   const querySelector = (
     parentNode, selector, { throwOnUnfound = true, throwOnFoundSeveral = true } = {}
   ) => {
@@ -107,8 +131,10 @@
   };
 
 
+  // Tells if `parentNode` already contains an anki hook.
+  // `parentNode` can be an array of nodes to look from.
   const doesAnkiHookExistIn = parentNode =>
-    querySelector(
+    !!querySelector(
       parentNode,
       ANKI_ADD_BUTTON_CLASS_SELECTOR,
       { throwOnUnfound: false }
