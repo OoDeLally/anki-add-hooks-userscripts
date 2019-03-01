@@ -494,6 +494,9 @@
       if (doesAnkiHookExistIn(firstTr)) {
         return;
       }
+      if (firstTr.innerText === 'phr') {
+        return; // phrase example. Those are handled differently by another function.
+      }
       const nextFirstTr = firstTrs[firstTrIndex + 1];
       const backSideTrs = [];
       let currentTr = firstTr;
