@@ -52,11 +52,7 @@ export default (createHook) => {
   // In such case we only put the button to the first row.
   const headerNodes = querySelectorAll(document, '.entry  tr.head td', { throwOnUnfound: false });
   if (headerNodes.length === 0) {
-    if (querySelector(document, '.no_entry_found')) {
-      return; // Word was not found
-    } else {
-      throw ScrapingError('Translation was not found, and .no_entry_found was not found.');
-    }
+    return; // Word was not found, or error 505, or captcha
   }
   const parentNode = headerNodes[0];
   if (doesAnkiHookExistIn(parentNode)) {
