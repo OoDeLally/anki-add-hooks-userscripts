@@ -322,6 +322,19 @@
     }
   };
 
+  // composeFunction(f, g, h) =>
+  //   x => (f∘g∘h)(x)
+
+
+  var composeFunctions = (...funs) =>
+    (...args) => {
+      let val = args;
+      funs.forEach((fun) => {
+        val = [fun(...val)];
+      });
+      return val[0];
+    };
+
   const dropFrontTextJunk = (node) => {
     const childNodesToRemove = [];
     node.childNodes.forEach((childNode) => {
@@ -346,17 +359,60 @@
   };
 
 
-  const extractBackText = () => {
+  const getWordToSubstitute = (headerNode) => {
+    const h1 = querySelector(headerNode, '.lex_ful_entr');
+    const word = h1.childNodes[0].textContent.split(/[-. ]/)[0];
+    if (!word) {
+      throw ScrapingError('Could not find word to substitute');
+    }
+    return word;
+  };
+
+
+  // Replace ${wordToSubstitute} by `[.....]` in every node of `rootNode` tree.
+  // This is use to give away the front side in the backside.
+  const replaceWordOccurencesByWildcard = (rootNode, wordToSubstitute) => {
+    const regexp = new RegExp(`\\b${wordToSubstitute}\\b`, 'igm');
+    const substitute = `[${[...Array(wordToSubstitute.length - 1)].map(() => '.').join('')}]`;
+    const replaceRec = (node) => {
+      node.childNodes.forEach((childNode) => {
+        if (isTextNode(childNode)) {
+          childNode.textContent = childNode.textContent.replace(regexp, substitute);
+        } else {
+          replaceRec(childNode);
+        }
+      });
+      return node;
+    };
+    replaceRec(rootNode);
+  };
+
+
+  const replaceWordsOccurencesByWildcards = wordsToSubstitute =>
+    (node) => {
+      wordsToSubstitute.forEach(word => replaceWordOccurencesByWildcard(node, word));
+      return node;
+    };
+
+
+  const extractBackText = (headerNodes) => {
     const translationRows = querySelectorAll(document, '.entry tr')
       .filter(tr => !tr.className || !tr.className.includes('head'));
-    const definitionText = translationRows.map(tr => stringifyNodeWithStyle(tr, dropWTags)).join('');
+    const wordsToSubstitute = headerNodes.map(getWordToSubstitute);
+    const definitionText = translationRows.map(
+      tr =>
+        stringifyNodeWithStyle(
+          tr,
+          composeFunctions(dropWTags, replaceWordsOccurencesByWildcards(wordsToSubstitute))
+        )
+    ).join('');
     return `<table style="text-align:left;margin:auto;">${definitionText}</table>`;
   };
 
 
   const extractCallback = headerNodes => ({
     frontText: extractFrontText(headerNodes),
-    backText: extractBackText(),
+    backText: extractBackText(headerNodes),
     frontLanguage: null,
     backLanguage: null,
     cardKind: `${extractCardKind()} Main Term`,
@@ -411,19 +467,6 @@
       showHookOnZoneHover(hookNode, zoneNodes);
     }
   };
-
-  // composeFunction(f, g, h) =>
-  //   x => (f∘g∘h)(x)
-
-
-  var composeFunctions = (...funs) =>
-    (...args) => {
-      let val = args;
-      funs.forEach((fun) => {
-        val = [fun(...val)];
-      });
-      return val[0];
-    };
 
   const findFirstAncestor = (node, ancestorPredicate) => {
     const { parentNode } = node;
