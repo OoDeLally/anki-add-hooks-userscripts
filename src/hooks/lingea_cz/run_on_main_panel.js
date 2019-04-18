@@ -168,7 +168,9 @@ export default (createHook) => {
       termNatureNodes.map(termNatureNode => findFirstAncestor(termNatureNode, node => node.nodeName === 'TR')),
       createHook
     );
-  } else {
+  }
+  // Nature `phr` doesnt count since it is usually just a idiom using the word in question
+  if (termNatureNodes.filter(node => node.innerText !== 'phr').length === 0) {
     runOnSingleNature(headerNodes, createHook);
   }
 };
