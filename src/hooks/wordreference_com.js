@@ -2,7 +2,7 @@
 // @version      2.1
 // @description  Generate a hook for AnkiConnect on WordReference.com
 // @author       Pascal Heitz
-// @include      /http://www\.wordreference\.com\/[a-z]{4}\/.+/
+// @include      /https?://www\.wordreference\.com\/[a-z]{4}\/.+/
 
 import stringifyNodeWithStyle from '../helpers/stringify_node_with_style';
 import highlightOnHookHover from '../helpers/highlight_on_hook_hover';
