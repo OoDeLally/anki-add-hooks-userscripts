@@ -8,7 +8,7 @@
 // @version      2.1
 // @description  Generate a hook for AnkiConnect on WordReference.com
 // @author       Pascal Heitz
-// @include      /http://www\.wordreference\.com\/[a-z]{4}\/.+/
+// @include      /https?://www\.wordreference\.com\/[a-z]{4}\/.+/
 // ==/UserScript==
 
 (function () {
