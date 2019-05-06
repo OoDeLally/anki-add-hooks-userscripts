@@ -61,9 +61,12 @@ The most convenient way to develop a new tampermonkey script is to install a use
 * `dev-hooks/my_website_com_dev_hook_required.js`
 
 3- Make sure Tampermonkey extension can access files from your computer:
+
     1- Go to `chrome://extensions` with Chrome.
     2- Find `Tampermonkey` and click `Details`.
-    3- Find the `Allow access to file URLs` setting and turned it on.
+    3- Find the `Allow access to file URLs` setting and turn it on.
+    
+    
 You need this so that `my_website_com_dev_hook.user.js` is allowed to require local file `my_website_com_dev_hook_required.js`.
 
 4- Install `dev-hooks/my_website_com_dev_hook.user.js` in Tampermonkey.
