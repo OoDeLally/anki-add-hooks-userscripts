@@ -17,7 +17,6 @@ const runOnTd = (titleSpanNode, createHook) => {
   if (doesAnkiHookExistIn(parentTdNode)) {
     return;
   }
-  const translationSpanNode = querySelector(parentTdNode, '.lex_ful_tran');
 
   const frontElementsHtml = [
     stringifyNodeWithStyle(
@@ -25,12 +24,16 @@ const runOnTd = (titleSpanNode, createHook) => {
       dropWTags
     )
   ];
-  const backElementsHtml = [
-    stringifyNodeWithStyle(
-      translationSpanNode,
-      composeFunctions(dropWTags, replaceCommaByLinebreak)
-    )
-  ];
+  const backElementsHtml = [];
+  const translationSpanNode = querySelector(parentTdNode, '.lex_ful_tran', { throwOnUnfound: false });
+  if (translationSpanNode) {
+    backElementsHtml.push(
+      stringifyNodeWithStyle(
+        translationSpanNode,
+        composeFunctions(dropWTags, replaceCommaByLinebreak)
+      )
+    );
+  }
 
   // Sample phrases?
   querySelectorAll(parentTdNode, '.lex_ful_samp2', { throwOnUnfound: false })

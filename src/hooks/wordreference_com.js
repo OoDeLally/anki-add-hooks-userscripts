@@ -91,8 +91,12 @@ const getAdditionalInfosFromTrGroup = trGroup =>
 
 const extractFrontText = (trGroup) => {
   const wordNode = querySelector(trGroup[0], 'td', { throwOnFoundSeveral: false });
+  console.log('wordNode:', wordNode)
+  console.log('stringifyNodeWithStyle(wordNode):', stringifyNodeWithStyle(wordNode))
   const additionalInfos = getAdditionalInfosFromTrGroup(trGroup);
+  console.log('additionalInfos:', additionalInfos)
   const examples = getExamplesTdFromTrGroup(trGroup, 'FrEx');
+  console.log('examples:', examples)
   return [
     stringifyNodeWithStyle(wordNode),
     (additionalInfos.length > 0 ? '<br/>' : ''),
