@@ -1,5 +1,5 @@
 // @name         Anki Add Hooks for WordReference.com
-// @version      2.1
+// @version      2.2
 // @description  Generate a hook for AnkiConnect on WordReference.com
 // @author       Pascal Heitz
 // @include      /https?://www\.wordreference\.com\/[a-z]{4}\/.+/
