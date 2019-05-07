@@ -394,16 +394,20 @@
       .map(stringifiedNodes => `<div>${stringifiedNodes.join('')}</div>`);
 
 
+  const convertTdToDiv = (tdNode) => {
+    const divNode = document.createElement('DIV');
+    tdNode.childNodes.forEach((childNode) => {
+      divNode.appendChild(childNode);
+    });
+    return divNode;
+  };
+
   const extractFrontText = (trGroup) => {
     const wordNode = querySelector(trGroup[0], 'td', { throwOnFoundSeveral: false });
-    console.log('wordNode:', wordNode);
-    console.log('stringifyNodeWithStyle(wordNode):', stringifyNodeWithStyle(wordNode));
     const additionalInfos = getAdditionalInfosFromTrGroup(trGroup);
-    console.log('additionalInfos:', additionalInfos);
     const examples = getExamplesTdFromTrGroup(trGroup, 'FrEx');
-    console.log('examples:', examples);
     return [
-      stringifyNodeWithStyle(wordNode),
+      stringifyNodeWithStyle(wordNode, convertTdToDiv),
       (additionalInfos.length > 0 ? '<br/>' : ''),
       ...additionalInfos,
       (examples.length > 0 ? '<br/>' : ''),
@@ -451,7 +455,6 @@
 
   const extractCallback = (trGroup) => {
     const [sourceLanguage, targetLanguage] = getLanguages();
-    // console.log('extractFrontText(trGroup):', extractFrontText(trGroup))
     return {
       frontText: extractFrontText(trGroup),
       backText: extractBackText(trGroup),
