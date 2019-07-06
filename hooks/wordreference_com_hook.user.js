@@ -5,7 +5,7 @@
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for WordReference.com
-// @version      2.1
+// @version      2.2
 // @description  Generate a hook for AnkiConnect on WordReference.com
 // @author       Pascal Heitz
 // @include      /https?://www\.wordreference\.com\/[a-z]{4}\/.+/
@@ -519,7 +519,7 @@
 
      Hook Userscript Name: ${hookName}.
 
-     Hook UserScript Version: 2.1.
+     Hook UserScript Version: 2.2.
 
      Stack: ${error.stack}
     `

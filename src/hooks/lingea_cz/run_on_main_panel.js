@@ -24,10 +24,18 @@ const dropFrontTextJunk = (node) => {
   return node;
 };
 
+const convertRootNodeToDiv = (tdNode) => {
+    const divNode = document.createElement('DIV');
+    tdNode.childNodes.forEach((childNode) => {
+      divNode.appendChild(childNode);
+    });
+    return divNode;
+  };
+
 
 const extractFrontText = (headerNodes) => {
   const hmtl = headerNodes
-    .map(headerNode => stringifyNodeWithStyle(headerNode, dropFrontTextJunk))
+    .map(headerNode => stringifyNodeWithStyle(headerNode, composeFunctions(dropFrontTextJunk, convertRootNodeToDiv)))
     .join('<br/>');
   return `<div style="display:table;margin:auto;text-align:left;">${hmtl}</div>`;
 };
@@ -80,7 +88,7 @@ const extractBackText = (headerNodes, backSideTrs) => {
     tr =>
       stringifyNodeWithStyle(
         tr,
-        composeFunctions(dropWTags, replaceWordsOccurencesByWildcards(wordsToSubstitute))
+        composeFunctions(dropWTags, replaceWordsOccurencesByWildcards(wordsToSubstitute), convertRootNodeToDiv)
       )
   ).join('');
   return `<table style="text-align:left;margin:auto;">${definitionText}</table>`;

@@ -5,7 +5,7 @@
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for lingea.cz
-// @version      2.3
+// @version      2.4
 // @description  Generate a hook for AnkiConnect on Lingea.cz
 // @author       Pascal Heitz
 // @include      /slovniky\.lingea\.cz\/\w+-\w+/.+/
@@ -387,10 +387,18 @@
     return node;
   };
 
+  const convertRootNodeToDiv = (tdNode) => {
+      const divNode = document.createElement('DIV');
+      tdNode.childNodes.forEach((childNode) => {
+        divNode.appendChild(childNode);
+      });
+      return divNode;
+    };
+
 
   const extractFrontText = (headerNodes) => {
     const hmtl = headerNodes
-      .map(headerNode => stringifyNodeWithStyle(headerNode, dropFrontTextJunk))
+      .map(headerNode => stringifyNodeWithStyle(headerNode, composeFunctions(dropFrontTextJunk, convertRootNodeToDiv)))
       .join('<br/>');
     return `<div style="display:table;margin:auto;text-align:left;">${hmtl}</div>`;
   };
@@ -443,7 +451,7 @@
       tr =>
         stringifyNodeWithStyle(
           tr,
-          composeFunctions(dropWTags, replaceWordsOccurencesByWildcards(wordsToSubstitute))
+          composeFunctions(dropWTags, replaceWordsOccurencesByWildcards(wordsToSubstitute), convertRootNodeToDiv)
         )
     ).join('');
     return `<table style="text-align:left;margin:auto;">${definitionText}</table>`;
@@ -677,7 +685,7 @@
 
      Hook Userscript Name: ${hookName}.
 
-     Hook UserScript Version: 2.3.
+     Hook UserScript Version: 2.4.
 
      Stack: ${error.stack}
     `
