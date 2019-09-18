@@ -25,12 +25,14 @@ const dropFrontTextJunk = (node) => {
 };
 
 const convertRootNodeToDiv = (tdNode) => {
-    const divNode = document.createElement('DIV');
-    tdNode.childNodes.forEach((childNode) => {
-      divNode.appendChild(childNode);
-    });
-    return divNode;
-  };
+  // console.log('convertRootNodeToDiv:', tdNode);
+  const divNode = document.createElement('DIV');
+  tdNode.childNodes.forEach((childNode) => {
+    // console.log('childNode:', childNode);
+    divNode.appendChild(childNode);
+  });
+  return divNode;
+};
 
 
 const extractFrontText = (headerNodes) => {
@@ -84,13 +86,13 @@ const extractBackText = (headerNodes, backSideTrs) => {
   const translationRows = backSideTrs
     .filter(tr => !tr.className || !tr.className.includes('head'));
   const wordsToSubstitute = headerNodes.map(getWordToSubstitute).filter(w => w);
-  const definitionText = translationRows.map(
-    tr =>
-      stringifyNodeWithStyle(
-        tr,
-        composeFunctions(dropWTags, replaceWordsOccurencesByWildcards(wordsToSubstitute), convertRootNodeToDiv)
-      )
-  ).join('');
+  const definitionText = stringifyNodeWithStyle(
+    translationRows,
+    composeFunctions(
+      dropWTags,
+      replaceWordsOccurencesByWildcards(wordsToSubstitute),
+    )
+  );
   return `<table style="text-align:left;margin:auto;">${definitionText}</table>`;
 };
 

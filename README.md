@@ -24,9 +24,9 @@ Add a button on translation websites to create an Anki card from a translation.
 ## Super Quick Setup
 
 1- Install a userscript add-on for your favorite browser:
-* **Chrome**: install [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). 
-* **Firefox**: install [Tampermonkey](https://addons.mozilla.org/firefox/addon/tampermonkey/) or [Greasemonkey](https://addons.mozilla.org/firefox/addon/greasemonkey/). 
-* **Safari**: install [Tampermonkey](https://tampermonkey.net/?browser=safari). 
+* **Chrome**: install [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo).
+* **Firefox**: install [Tampermonkey](https://addons.mozilla.org/firefox/addon/tampermonkey/) or [Greasemonkey](https://addons.mozilla.org/firefox/addon/greasemonkey/).
+* **Safari**: install [Tampermonkey](https://tampermonkey.net/?browser=safari).
 * **Other browsers**: Check [Tampermonkey Website](https://tampermonkey.net).
 
 This extension allows the browser to run the AnkiAddHooks userscripts.
@@ -56,23 +56,25 @@ The most convenient way to develop a new tampermonkey script is to install a use
 
 1- Rename `src/hooks/my_website_com.js` and fix inside all the metatags and the exported members.
 
-2- Run `npm run dev-build` to create two files:
+2- Run `npm install` to install dependencies.
+
+3- Run `npm run dev-build` to create two files:
 * `dev-hooks/my_website_com_dev_hook.user.js`
 * `dev-hooks/my_website_com_dev_hook_required.js`
 
-3- Make sure Tampermonkey extension can access files from your computer:
+4- Make sure Tampermonkey extension is allowed to access local files from your computer:
 
     1- Go to `chrome://extensions` with Chrome.
     2- Find `Tampermonkey` and click `Details`.
     3- Find the `Allow access to file URLs` setting and turn it on.
-    
-    
+
+
 You need this so that `my_website_com_dev_hook.user.js` is allowed to require local file `my_website_com_dev_hook_required.js`.
 
-4- Install `dev-hooks/my_website_com_dev_hook.user.js` in Tampermonkey.
+5- Install `dev-hooks/my_website_com_dev_hook.user.js` in Tampermonkey.
 
-5- Now when you modify and save `src/hooks/my_website_com.js`, you just need to reload your website to see the result of your modifications, without having to reinstall your script everytime!
+6- Now when you modify and save `src/hooks/my_website_com.js`, you just need to reload your website to see the result of your modifications, without having to reinstall your script everytime!
 
-6- When you are happy with your script, run `npm run build` to compile it to the final standalone userscript `hooks/my_website_com_hook.user.js`.
+7- When you are happy with your script, run `npm run build` to compile it to the final standalone userscript `hooks/my_website_com_hook.user.js`.
 
-7- Make a pull-request if you think it can be useful for other people.
+8- Make a pull-request if you think it can be useful for other people.
