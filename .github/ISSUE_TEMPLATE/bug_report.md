@@ -11,6 +11,7 @@ assignees: OoDeLally
  - OS: [e.g. Windows 10, iOS8.1]
  - Browser [e.g. Chrome, Firefox, Safari] & Version [e.g. 22]
  - Extension [e.g. Tampermoney, Greasemonkey] & Version [e.g. 1.4.8]
+ - Version of the Tampermonkey/Greasemonkey script (Click on icon > Dashboard > Column "Version" of the installed script.)
 
 
 **Describe the bug**
