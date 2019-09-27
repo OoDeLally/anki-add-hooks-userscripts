@@ -285,7 +285,7 @@ try {
   siteSpecificFunctions.run(createHook);
 } catch (error) {
   if (error.name === 'ScrapingError') {
-    handleScrapingError(error);
+    onScrapingError(error);
   } else {
     throw error;
   }
