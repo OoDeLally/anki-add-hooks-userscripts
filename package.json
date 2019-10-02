@@ -1,6 +1,6 @@
 {
   "name": "anki-add-hooks-userscripts",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "Anki Add Hooks Userscripts",
   "directories": {
     "doc": "doc"

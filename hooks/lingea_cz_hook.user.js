@@ -683,7 +683,7 @@
 
      Page: ${error.location}.
 
-     Hook Template Version: 2.1.1.
+     Hook Template Version: 2.2.0.
 
      Hook Userscript Name: ${hookName}.
 
