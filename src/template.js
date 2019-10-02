@@ -12,9 +12,9 @@ import {
 import onScrapingError from './on_scraping_error';
 
 
-const AnkiCardAddingError = (message, response) => {
+const AnkiConnectError = (message, response) => {
   const error = Error(message);
-  error.name = 'AnkiCardAddingError';
+  error.name = 'AnkiConnectError';
   error.response = response;
   return error;
 };
@@ -48,52 +48,6 @@ const buildCardFace = (htmlContent, language, hookName) => {
 };
 
 
-// Associate a deck to the kind of card
-const getDeckName = async (cardKind) => {
-  const deckNameMapKey = getDeckNameMapKey(cardKind);
-  let deckName = await GM.getValue(deckNameMapKey);
-  if (!deckName) {
-    deckName = prompt(`Enter the name of the deck you want to add '${cardKind}' cards from this website`, 'Default');
-    if (!deckName) {
-      throw CancelledError();
-    }
-    GM.setValue(deckNameMapKey, deckName);
-  }
-  return deckName;
-};
-
-// Associate a card model to the kind of card
-const getModelName = async (cardKind) => {
-  const modelNameMapKey = getModelNameMapKey(cardKind);
-  let modelName = await GM.getValue(modelNameMapKey);
-  if (!modelName) {
-    modelName = prompt(`Enter the name of the card model you want to create for '${cardKind}'`, 'Basic (and reversed card)');
-    if (!modelName) {
-      throw CancelledError();
-    }
-    await GM.setValue(modelNameMapKey, modelName);
-  }
-  return modelName;
-};
-
-
-const ankiRequestOnFail = async (message, cardKind) => {
-  console.error(message);
-  if (message.includes('deck was not found')) {
-    await GM.setValue(getDeckNameMapKey(cardKind), null);
-  }
-  if (message.includes('model was not found')) {
-    await GM.setValue(getModelNameMapKey(cardKind), null);
-  }
-  alert(message);
-};
-
-
-const ankiRequestOnSuccess = (hookNode) => {
-  hookNode.onclick = () => {};
-};
-
-
 const ankiConnectRequest = (action, params) =>
   new Promise(
     async (resolve, reject) =>
@@ -103,11 +57,11 @@ const ankiConnectRequest = (action, params) =>
         data: JSON.stringify({ action, version: 6, params }),
         onabort: (response) => {
           console.error(response);
-          reject(AnkiCardAddingError('Request was aborted'));
+          reject(AnkiConnectError('Request was aborted'));
         },
         onerror: (response) => {
           console.error(response);
-          reject(AnkiCardAddingError(
+          reject(AnkiConnectError(
             `Could not connect to Anki Desktop. Please make sure that:
     - Anki Desktop is running.
     - AnkiConnect add-on is installed on Anki Desktop.
@@ -115,18 +69,109 @@ const ankiConnectRequest = (action, params) =>
           ));
         },
         onload: (response) => {
-          const result = JSON.parse(response.responseText);
-          if (result.error) {
-            reject(AnkiCardAddingError(result.error));
+          const reponseJson = JSON.parse(response.responseText);
+          if (reponseJson.error) {
+            reject(AnkiConnectError(reponseJson.error));
             return;
           }
-          resolve(response.responseText);
+          resolve(reponseJson.result);
         },
       })
   );
 
+const ankiConnectGetDecksRequest = async () =>
+  ankiConnectRequest('deckNames');
 
-const ankiConnectAddRequest = async fields =>
+const ankiConnectGetModelsRequest = async () =>
+  ankiConnectRequest('modelNames');
+
+
+const promptDeckList = async (cardKind) => {
+  const availableDecks = await ankiConnectGetDecksRequest();
+  if (availableDecks.length === 0) {
+    throw Error('No deck are available. Please create one on Anki first.');
+  }
+  if (availableDecks.length === 1) {
+    return availableDecks[0];
+  }
+  let chosenDeckIndex = null;
+  while (chosenDeckIndex === null) {
+    const chosenDeckIndexStr = prompt(
+      `Adding card of type:\n       [ ${cardKind} ]\n`
+      + `${availableDecks.length} decks have been found on your Anki account:\n`
+      + `${availableDecks.map((deckName, deckIndex) => `        ${deckIndex + 1} - ${deckName}\n`).join('')}`
+      + 'Enter the index (e.g. "1") of the deck you want:'
+    );
+    console.log('chosenDeckIndexStr:', chosenDeckIndexStr);
+    if (chosenDeckIndexStr == null) {
+      throw CancelledError();
+    }
+    const index = parseInt(chosenDeckIndexStr, 10);
+    if (!Number.isNaN(index) && index >= 1 && index <= availableDecks.length) {
+      chosenDeckIndex = index - 1;
+    }
+  }
+  return availableDecks[chosenDeckIndex];
+};
+
+
+// Associate a deck to the kind of card
+const getDeckName = async (cardKind) => {
+  const deckNameMapKey = getDeckNameMapKey(cardKind);
+  let deckName = await GM.getValue(deckNameMapKey);
+  if (!deckName) {
+    deckName = await promptDeckList(cardKind);
+    GM.setValue(deckNameMapKey, deckName);
+  }
+  return deckName;
+};
+
+
+const promptModelList = async (cardKind) => {
+  const availableModels = await ankiConnectGetModelsRequest();
+  if (availableModels.length === 0) {
+    throw Error('No model are available. Please create one on Anki first.');
+  }
+  if (availableModels.length === 1) {
+    return availableModels[0];
+  }
+  let choseModelIndex = null;
+  while (choseModelIndex === null) {
+    const choseModelIndexStr = prompt(
+      `Adding card of type:\n       [ ${cardKind} ]\n`
+      + `${availableModels.length} models have been found on your Anki account:\n`
+      + `${availableModels.map((modelName, modelIndex) => `        ${modelIndex + 1} - ${modelName}\n`).join('')}`
+      + 'Enter the index (e.g. "1") of the model you want:'
+    );
+    console.log('choseModelIndexStr:', choseModelIndexStr);
+    if (choseModelIndexStr == null) {
+      throw CancelledError();
+    }
+    const index = parseInt(choseModelIndexStr, 10);
+    if (!Number.isNaN(index) && index >= 1 && index <= availableModels.length) {
+      choseModelIndex = index - 1;
+    }
+  }
+  return availableModels[choseModelIndex];
+};
+
+
+// Associate a card model to the kind of card
+const getModelName = async (cardKind) => {
+  const modelNameMapKey = getModelNameMapKey(cardKind);
+  let modelName = await GM.getValue(modelNameMapKey);
+  if (!modelName) {
+    modelName = await promptModelList(cardKind);
+    if (!modelName) {
+      throw CancelledError();
+    }
+    await GM.setValue(modelNameMapKey, modelName);
+  }
+  return modelName;
+};
+
+
+const ankiConnectAddNoteRequest = async fields =>
   ankiConnectRequest('addNote', {
     note: {
       deckName: await getDeckName(fields.cardKind),
@@ -149,6 +194,23 @@ const ankiConnectAddRequest = async fields =>
       tags: [siteSpecificFunctions.hookName],
     },
   });
+
+
+const ankiAddNoteRequestOnFail = async (message, cardKind) => {
+  console.error(message);
+  if (message.includes('deck was not found')) {
+    await GM.setValue(getDeckNameMapKey(cardKind), null);
+  }
+  if (message.includes('model was not found')) {
+    await GM.setValue(getModelNameMapKey(cardKind), null);
+  }
+  alert(message);
+};
+
+
+const ankiAddNoteRequestOnSuccess = (hookNode) => {
+  hookNode.onclick = () => {};
+};
 
 
 const wait = async ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -232,16 +294,16 @@ const onHookClick = async (event, extractFieldsCallback, hookNode) => {
   try {
     fields = verifyExtractedFields(extractFieldsCallback());
     await updateButtonState(hookNode, 'loading');
-    await ankiConnectAddRequest(fields);
+    await ankiConnectAddNoteRequest(fields);
     await updateButtonState(hookNode, 'added');
-    ankiRequestOnSuccess(hookNode);
+    ankiAddNoteRequestOnSuccess(hookNode);
   } catch (error) {
     if (error.name === 'ScrapingError') {
       await updateButtonState(hookNode, 'error');
       onScrapingError(error);
-    } else if (error.name === 'AnkiCardAddingError') {
+    } else if (error.name === 'AnkiConnectError') {
       await updateButtonState(hookNode, 'error');
-      ankiRequestOnFail(error.message, fields.cardKind);
+      ankiAddNoteRequestOnFail(error.message, fields.cardKind);
     } else if (error.name === 'CancelledError') {
       await updateButtonState(hookNode, 'available');
       return; // Cancelled by user.
