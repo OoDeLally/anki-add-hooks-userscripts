@@ -1,5 +1,5 @@
 // @name         Anki Add Hooks for lingea.cz
-// @version      2.4
+// @version      2.5
 // @description  Generate a hook for AnkiConnect on Lingea.cz
 // @author       Pascal Heitz
 // @include      /slovniky\.lingea\.cz\/\w+-\w+/.+/
