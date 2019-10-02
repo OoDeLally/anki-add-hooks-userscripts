@@ -330,11 +330,14 @@
   const ankiConnectGetModelsRequest = async () =>
     ankiConnectRequest('modelNames');
 
+  const ankiConnectGetModelFieldNamesRequest = async modelName =>
+    ankiConnectRequest('modelFieldNames', { modelName });
+
 
   const promptDeckList = async (cardKind) => {
     const availableDecks = await ankiConnectGetDecksRequest();
     if (availableDecks.length === 0) {
-      throw Error('No deck are available. Please create one on Anki first.');
+      throw AnkiConnectError('No deck are available. Please create one on Anki first.');
     }
     if (availableDecks.length === 1) {
       return availableDecks[0];
@@ -347,7 +350,6 @@
         + `${availableDecks.map((deckName, deckIndex) => `        ${deckIndex + 1} - ${deckName}\n`).join('')}`
         + 'Enter the index (e.g. "1") of the deck you want:'
       );
-      console.log('chosenDeckIndexStr:', chosenDeckIndexStr);
       if (chosenDeckIndexStr == null) {
         throw CancelledError();
       }
@@ -375,7 +377,7 @@
   const promptModelList = async (cardKind) => {
     const availableModels = await ankiConnectGetModelsRequest();
     if (availableModels.length === 0) {
-      throw Error('No model are available. Please create one on Anki first.');
+      throw AnkiConnectError('No model are available. Please create one on Anki first.');
     }
     if (availableModels.length === 1) {
       return availableModels[0];
@@ -388,7 +390,6 @@
         + `${availableModels.map((modelName, modelIndex) => `        ${modelIndex + 1} - ${modelName}\n`).join('')}`
         + 'Enter the index (e.g. "1") of the model you want:'
       );
-      console.log('choseModelIndexStr:', choseModelIndexStr);
       if (choseModelIndexStr == null) {
         throw CancelledError();
       }
@@ -416,21 +417,30 @@
   };
 
 
-  const ankiConnectAddNoteRequest = async fields =>
-    ankiConnectRequest('addNote', {
+  const ankiConnectAddNoteRequest = async (fields) => {
+    const deckName = await getDeckName(fields.cardKind);
+    const modelName = await getModelName(fields.cardKind);
+    const modelFields = await ankiConnectGetModelFieldNamesRequest(modelName);
+    if (modelFields.length !== 2) {
+      throw AnkiConnectError(
+        `Your model [ ${modelName} ] uses ${modelFields.length} fields: ${modelFields.map(field => `[ ${field} ]`).join(', ')}.\n`
+        + 'Please use a model with exactly two fields.'
+      );
+    }
+    return ankiConnectRequest('addNote', {
       note: {
-        deckName: await getDeckName(fields.cardKind),
-        modelName: await getModelName(fields.cardKind),
+        deckName,
+        modelName,
         options: {
           allowDuplicate: true,
         },
         fields: {
-          Front: buildCardFace(
+          [modelFields[0]]: buildCardFace(
             fields.frontText,
             fields.frontLanguage,
             hookName
           ),
-          Back: buildCardFace(
+          [modelFields[1]]: buildCardFace(
             fields.backText,
             fields.backLanguage,
             hookName
@@ -439,6 +449,7 @@
         tags: [hookName],
       },
     });
+  };
 
 
   const ankiAddNoteRequestOnFail = async (message, cardKind) => {
