@@ -18,7 +18,14 @@ const createUserScriptPlugin = (entryFile, entryName) => ({
   generateBundle: () => {
     let content = '// ==UserScript==\n';
     content += fs.readFileSync('./src/userscript_metatags.js', 'utf-8');
-    content += `${getMetatagLinesFromFile(entryFile).join('\n')}\n`;
+    const metaTagsFromFile = getMetatagLinesFromFile(entryFile).map((line) => {
+      if (/^\/\/\s*@name\s+/.test(line)) {
+        return `${line} [DEV]`;
+      } else {
+        return line;
+      }
+    });
+    content += `${metaTagsFromFile.join('\n')}\n`;
     const requiredFile = path.resolve(__dirname, `dev-hooks/${getRequiredScriptFileName(entryName)}`);
     content += `// @require      file://${requiredFile}\n`;
     content += '// ==/UserScript==\n';
