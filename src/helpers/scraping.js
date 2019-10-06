@@ -144,10 +144,10 @@ export const getElementsByName = (parentNode, name, options = {}) => {
 };
 
 
-// Just like parentNode.getElementByName, but:
+// Just like parentNode.getOneElementByName, but:
 // - can throw if not found, or several found.
 // - accepts parentNode as an array of nodes to look from.
-export const getElementByName = (
+export const getOneElementByName = (
   parentNode, name, { throwOnUnfound = true, throwOnFoundSeveral = true } = {}
 ) => {
   let matchingNodes;

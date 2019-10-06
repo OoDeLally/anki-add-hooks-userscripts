@@ -3,6 +3,8 @@ import stringifyNodeWithStyle from '../../helpers/stringify_node_with_style';
 import { querySelector, querySelectorAll } from '../../helpers/scraping';
 import getLanguages from './get_languages';
 
+// e.g. https://dictionnaire.reverso.net/francais-anglais/hello
+//        Table on the bottom with a few examples.
 
 const extractFrontText = trNode =>
   stringifyNodeWithStyle(querySelector(trNode, 'td.src'));
@@ -19,7 +21,6 @@ export const extract = divGroup => ({
 
 export default (createHook) => {
   querySelectorAll(document, '#ctxBody tr', { throwOnUnfound: false })
-
     .filter(
       trNode =>
         // The first row is often empty, we take only those with a td.src inside

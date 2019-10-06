@@ -5,10 +5,10 @@
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for Reverso
-// @version      2.3
+// @version      2.4
 // @description  Generate a hook for AnkiConnect on Reverso
 // @author       Pascal Heitz
-// @include      /reverso\.net\/\w+-\w+/.+/
+// @include      /reverso\.net\/(\w+\/)?\w+-\w+\/.+/
 // ==/UserScript==
 
 (function () {
@@ -394,35 +394,12 @@
     }
   };
 
-
-  // Just like parentNode.getElementByName, but:
-  // - can throw if not found, or several found.
-  // - accepts parentNode as an array of nodes to look from.
-  const getElementByName = (
-    parentNode, name, { throwOnUnfound = true, throwOnFoundSeveral = true } = {}
-  ) => {
-    let matchingNodes;
-    try {
-      matchingNodes = getElementsByName(parentNode, name, { throwOnUnfound });
-    } catch (error) {
-      if (error.name === 'ScrapingError') {
-        throw ScrapingError(error.message); // Remove the extra stackframe
-      } else {
-        throw error;
-      }
-    }
-    if (matchingNodes.length > 1 && throwOnFoundSeveral) {
-      throw ScrapingError(`Several nodes match the name '${name}'`);
-    }
-    return matchingNodes[0];
-  };
-
   var getLanguages = () => {
-    const match = window.location.href.match(/reverso\.net\/([a-z]+)-([a-z]+)\//);
+    const match = window.location.href.match(/reverso\.net\/(\w+\/)?([a-z]+)-([a-z]+)\//);
     if (!match) {
       throw ScrapingError('Could not extract languages from url');
     }
-    const [, sourceLanguage, targetLanguage] = match;
+    const [,, sourceLanguage, targetLanguage] = match;
     if (!sourceLanguage || !targetLanguage) {
       throw ScrapingError('Could not extract languages from url');
     }
@@ -537,30 +514,29 @@
 
 
   var runOnCollinsDictionary = (createHook) => {
-    const translateBox = getElementByName(document, 'translate_box', { throwOnUnfound: false });
-    if (!translateBox) {
-      return;
-    }
-    const wordNodes = querySelectorAll(translateBox, 'div > b:first-child', { throwOnUnfound: false });
-    wordNodes.forEach((wordNode, wordNodeIndex) => {
-      const divGroup = getDivGroup(wordNode, wordNodes[wordNodeIndex + 1]);
-      const hook = createHook(() => {
-        const [sourceLanguage, targetLanguage] = getLanguages();
-        return {
-          frontText: extractFrontText(divGroup),
-          backText: extractBackText(divGroup),
-          frontLanguage: sourceLanguage,
-          backLanguage: targetLanguage,
-          cardKind: `${sourceLanguage} -> ${targetLanguage}`,
-        };
+    getElementsByName(document, 'translate_box', { throwOnUnfound: false })
+      .forEach((translateBox) => {
+        const wordNodes = querySelectorAll(translateBox, 'div > b:first-child', { throwOnUnfound: false });
+        wordNodes.forEach((wordNode, wordNodeIndex) => {
+          const divGroup = getDivGroup(wordNode, wordNodes[wordNodeIndex + 1]);
+          const hook = createHook(() => {
+            const [sourceLanguage, targetLanguage] = getLanguages();
+            return {
+              frontText: extractFrontText(divGroup),
+              backText: extractBackText(divGroup),
+              frontLanguage: sourceLanguage,
+              backLanguage: targetLanguage,
+              cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+            };
+          });
+          hook.style.position = 'absolute';
+          hook.style.right = '0px';
+          hook.style.top = '10px';
+          highlightOnHookHover(hook, divGroup, 'lightblue');
+          wordNode.parentNode.style.position = 'relative';
+          wordNode.parentNode.append(hook);
+        });
       });
-      hook.style.position = 'absolute';
-      hook.style.right = '0px';
-      hook.style.top = '10px';
-      highlightOnHookHover(hook, divGroup, 'lightblue');
-      wordNode.parentNode.style.position = 'relative';
-      wordNode.parentNode.append(hook);
-    });
   };
 
   const extractFrontText$1 = () => {
@@ -649,6 +625,9 @@
       });
   };
 
+  // e.g. https://dictionnaire.reverso.net/francais-anglais/hello
+  //        Table on the bottom with a few examples.
+
   const extractFrontText$3 = trNode =>
     stringifyNodeWithStyle(querySelector(trNode, 'td.src'));
 
@@ -656,9 +635,8 @@
     stringifyNodeWithStyle(querySelector(trNode, 'td.tgt'));
 
 
-  var runOnContextualDictionary = (createHook) => {
+  var runOnDictionaryContextualDictionary = (createHook) => {
     querySelectorAll(document, '#ctxBody tr', { throwOnUnfound: false })
-
       .filter(
         trNode =>
           // The first row is often empty, we take only those with a td.src inside
@@ -685,6 +663,35 @@
       });
   };
 
+  // e.g. https://context.reverso.net/traduction/anglais-francais/hello
+
+  const extractFrontText$4 = containerDiv =>
+    stringifyNodeWithStyle(querySelector(containerDiv, '.src.ltr > .text'));
+
+  const extractBackText$4 = containerDiv =>
+    stringifyNodeWithStyle(querySelector(containerDiv, '.trg.ltr > .text'));
+
+
+  var runOnContextReverso = (createHook) => {
+    querySelectorAll(document, '.example', { throwOnUnfound: false })
+      .forEach((containerDiv) => {
+        const hook = createHook(() => {
+          const [sourceLanguage, targetLanguage] = getLanguages();
+          return {
+            frontText: extractFrontText$4(containerDiv),
+            backText: extractBackText$4(containerDiv),
+            frontLanguage: sourceLanguage,
+            backLanguage: targetLanguage,
+            cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+          };
+        });
+        hook.style.float = 'right';
+        highlightOnHookHover(hook, containerDiv, 'lightblue');
+        containerDiv.style.position = 'relative';
+        containerDiv.querySelector('.options .trg').prepend(hook);
+      });
+  };
+
   // @name         Anki Add Hooks for Reverso
 
 
@@ -702,10 +709,11 @@
 
   const run = (createHook) => {
     hideNbspSpans();
+    runOnContextReverso(createHook);
     runOnCollinsDictionary(createHook);
     runOnMainDictionary(createHook);
     runOnCollaborativeDictionary(createHook);
-    runOnContextualDictionary(createHook);
+    runOnDictionaryContextualDictionary(createHook);
   };
 
   var onScrapingError = (error) => {
@@ -725,9 +733,7 @@
 
      Hook Userscript Name: ${hookName}.
 
-     Hook UserScript Version: 2.3.
-
-     Stack: ${error.stack}
+     Hook UserScript Version: 2.4.
     `
     );
     {
@@ -735,7 +741,8 @@
           There was an error in reading the web page.
           You can help us solve it:
           1- Open the console (F12 key => tab "Console").
-          2- Copy the error message.
+          2- Close this popup.
+          3- Copy the error message from the console.
           3- Paste the error message in a github issue at the url mentioned in the error message.
           Thank you.
     `);
