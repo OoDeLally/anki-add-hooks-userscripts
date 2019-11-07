@@ -6,10 +6,10 @@ import getLanguages from './get_languages';
 // e.g. https://context.reverso.net/traduction/anglais-francais/hello
 
 const extractFrontText = containerDiv =>
-  stringifyNodeWithStyle(querySelector(containerDiv, '.src.ltr > .text'));
+  stringifyNodeWithStyle(querySelector(containerDiv, '.src > .text'));
 
 const extractBackText = containerDiv =>
-  stringifyNodeWithStyle(querySelector(containerDiv, '.trg.ltr > .text'));
+  stringifyNodeWithStyle(querySelector(containerDiv, '.trg > .text'));
 
 
 export const extract = divGroup => ({

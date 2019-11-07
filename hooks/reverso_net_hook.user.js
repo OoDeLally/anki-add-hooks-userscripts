@@ -5,7 +5,7 @@
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for Reverso
-// @version      2.4
+// @version      2.5
 // @description  Generate a hook for AnkiConnect on Reverso
 // @author       Pascal Heitz
 // @include      /reverso\.net\/(\w+\/)?\w+-\w+\/.+/
@@ -666,10 +666,10 @@
   // e.g. https://context.reverso.net/traduction/anglais-francais/hello
 
   const extractFrontText$4 = containerDiv =>
-    stringifyNodeWithStyle(querySelector(containerDiv, '.src.ltr > .text'));
+    stringifyNodeWithStyle(querySelector(containerDiv, '.src > .text'));
 
   const extractBackText$4 = containerDiv =>
-    stringifyNodeWithStyle(querySelector(containerDiv, '.trg.ltr > .text'));
+    stringifyNodeWithStyle(querySelector(containerDiv, '.trg > .text'));
 
 
   var runOnContextReverso = (createHook) => {
@@ -733,7 +733,7 @@
 
      Hook Userscript Name: ${hookName}.
 
-     Hook UserScript Version: 2.4.
+     Hook UserScript Version: 2.5.
     `
     );
     {
