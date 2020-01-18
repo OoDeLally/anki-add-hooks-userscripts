@@ -5,7 +5,7 @@
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for WordReference.com
-// @version      2.4
+// @version      2.5
 // @description  Generate a hook for AnkiConnect on WordReference.com
 // @author       Pascal Heitz
 // @include      /https?://www\.wordreference\.com\/[a-z]{4}\/.+/
@@ -226,12 +226,16 @@
     if (elementsToHighlight.forEach) {
       hookNode.onmouseover = () => {
         elementsToHighlight.forEach((elt) => {
-          elt.style.background = backgroundColor;
+          if (elt.style !== undefined) {
+            elt.style.background = backgroundColor;
+          }
         });
       };
       hookNode.onmouseout = () => {
         elementsToHighlight.forEach((elt) => {
-          elt.style.background = null;
+          if (elt.style !== undefined) {
+            elt.style.background = null;
+          }
         });
       };
     } else {
@@ -311,9 +315,6 @@
     }
     return matchingNodes[0];
   };
-
-  // @name         Anki Add Hooks for WordReference.com
-
 
   // Wordreference entries are laid as following:
   // <tr class="even">
@@ -441,6 +442,136 @@
   };
 
 
+  const extractCallback = (trGroup, sourceLanguage, targetLanguage) => {
+    return {
+      frontText: extractFrontText(trGroup),
+      backText: extractBackText(trGroup),
+      frontLanguage: sourceLanguage,
+      backLanguage: targetLanguage,
+      cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+    };
+  };
+
+
+  const addHooksInTrGroup = (trGroup, createHook, sourceLanguage, targetLanguage) => {
+    const parent = querySelector(trGroup[0], 'td:last-child');
+    parent.style.position = 'relative';
+    const hook = createHook(() => extractCallback(trGroup, sourceLanguage, targetLanguage));
+    hook.style.position = 'absolute';
+    hook.style.right = '-80px';
+    highlightOnHookHover(hook, trGroup, 'gold');
+    parent.append(hook);
+  };
+
+
+  const addHooksInTable = (tableNode, createHook, sourceLanguage, targetLanguage) => {
+    getTrGroups(tableNode).forEach(trGroup => addHooksInTrGroup(trGroup, createHook, sourceLanguage, targetLanguage));
+  };
+
+
+  const getTables = () => {
+    // Search for translation tables
+    return querySelectorAll(document, '.WRD', { throwOnUnfound: false });
+  };
+
+
+  const runOnMainTables = (createHook, sourceLanguage, targetLanguage) => {
+    getTables().forEach(tableNode => addHooksInTable(tableNode, createHook, sourceLanguage, targetLanguage));
+  };
+
+  const runOnCollinsRussian = (createHook, sourceLanguage, targetLanguage) => {
+    const articleDiv = querySelector(document, '#article', { throwOnUnfound: false });
+    if (!articleDiv) {
+      return;
+    }
+
+    const frontElements = [];
+
+    let childIndex = 0;
+    const children = Array.from(articleDiv.childNodes);
+
+    // Iterate through the articleDiv's children.
+    // Assumed syntax:
+    //  (junk) .hw .phonetics (.ps .IN a)+ #enrufootnote
+
+    while (childIndex < children.length) {
+      // Skip until we find hw.
+      const child = children[childIndex];
+      childIndex++;
+      if (/\bhw\b/.test(child.className)) {
+        frontElements.push(child);
+        break;
+      }
+    }
+
+    while (childIndex < children.length) {
+      // Push everything to `frontElements` we find until we find .ps.
+      const child = children[childIndex];
+      if (/\bps\b/.test(child.className)) {
+        break;
+      } else {
+        frontElements.push(child);
+        childIndex++;
+      }
+    }
+    if (frontElements.length === 0) {
+      return; // Didnt find anything.
+    }
+    const allDefinitions = [];
+    let currentDefinitionElements = [children[childIndex]];
+    childIndex++;
+    while (childIndex < children.length) {
+      // Push everything to `currentDefinitionElements` that
+      // we find until we find another .ps or #enrufootnote.
+      const child = children[childIndex];
+      if (new RegExp(`\\b${sourceLanguage}${targetLanguage}footnote\\b`).test(child.id)) {
+        break;
+      }
+      if (/\bps\b/.test(child.className)) {
+        if (currentDefinitionElements.length > 0) {
+          allDefinitions.push(currentDefinitionElements);
+        }
+        currentDefinitionElements = [child];
+      } else {
+        currentDefinitionElements.push(child);
+      }
+      childIndex++;
+    }
+    if (currentDefinitionElements.length > 0) {
+      allDefinitions.push(currentDefinitionElements);
+    }
+
+    if (allDefinitions.length === 0) {
+      return; // Didnt find anything.
+    }
+
+    // Create the hook.
+    articleDiv.style.position = 'relative';
+    const hook = createHook(() => ({
+      frontText: stringifyNodeWithStyle(frontElements),
+      backText: stringifyNodeWithStyle(
+        allDefinitions.map((definitionElements, definitionIndex) => {
+          if (definitionIndex < allDefinitions.length) {
+            return [...definitionElements, document.createElement('BR')];
+          } else {
+            return definitionElements;
+          }
+        })
+          .flat()
+      ),
+      frontLanguage: sourceLanguage,
+      backLanguage: targetLanguage,
+      cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+    }));
+    hook.style.position = 'absolute';
+    hook.style.right = '20px';
+    articleDiv.prepend(hook);
+  };
+
+  // @name         Anki Add Hooks for WordReference.com
+
+
+
   const getLanguages = () => {
     const urlMatch = window.location.href.match(/wordreference\.com\/([a-z]{2})([a-z]{2})(\/(reverse))?\//);
     if (urlMatch[4] === 'reverse') {
@@ -453,53 +584,13 @@
   };
 
 
-  const extractCallback = (trGroup) => {
-    const [sourceLanguage, targetLanguage] = getLanguages();
-    return {
-      frontText: extractFrontText(trGroup),
-      backText: extractBackText(trGroup),
-      frontLanguage: sourceLanguage,
-      backLanguage: targetLanguage,
-      cardKind: `${sourceLanguage} -> ${targetLanguage}`,
-    };
-  };
-
-
-  const addHooksInTrGroup = (trGroup, createHook) => {
-    const parent = querySelector(trGroup[0], 'td:last-child');
-    parent.style.position = 'relative';
-    const hook = createHook(() => extractCallback(trGroup));
-    hook.style.position = 'absolute';
-    hook.style.right = '-80px';
-    highlightOnHookHover(hook, trGroup, 'gold');
-    parent.append(hook);
-  };
-
-
-  const addHooksInTable = (tableNode, createHook) => {
-    getTrGroups(tableNode).forEach(trGroup => addHooksInTrGroup(trGroup, createHook));
-  };
-
-
-  const getTables = () => {
-    // Search for translation tables
-    const tables = querySelectorAll(document, '.WRD', { throwOnUnfound: false });
-    if (tables.length > 0) {
-      return tables;
-    }
-    // tables.length == 0. Does it mean that the word wasnt found?
-    const wordNotFoundNotifNode = querySelector(document, '#noEntryFound', { throwOnUnfound: false });
-    if (wordNotFoundNotifNode) {
-      return []; // The word was not found, so we simply return no table.
-    }
-    throw ScrapingError('.WRD table was not found and #noEntryFound was not found');
-  };
-
 
   const hookName = 'wordreference.com';
 
   const run = (createHook) => {
-    getTables().forEach(tableNode => addHooksInTable(tableNode, createHook));
+    const [sourceLanguage, targetLanguage] = getLanguages();
+    runOnMainTables(createHook, sourceLanguage, targetLanguage);
+    runOnCollinsRussian(createHook, sourceLanguage, targetLanguage);
   };
 
   var onScrapingError = (error) => {
@@ -519,7 +610,7 @@
 
      Hook Userscript Name: ${hookName}.
 
-     Hook UserScript Version: 2.4.
+     Hook UserScript Version: 2.5.
     `
     );
     {

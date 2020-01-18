@@ -3,12 +3,16 @@ export default (hookNode, elementsToHighlight, backgroundColor) => {
   if (elementsToHighlight.forEach) {
     hookNode.onmouseover = () => {
       elementsToHighlight.forEach((elt) => {
-        elt.style.background = backgroundColor;
+        if (elt.style !== undefined) {
+          elt.style.background = backgroundColor;
+        }
       });
     };
     hookNode.onmouseout = () => {
       elementsToHighlight.forEach((elt) => {
-        elt.style.background = null;
+        if (elt.style !== undefined) {
+          elt.style.background = null;
+        }
       });
     };
   } else {

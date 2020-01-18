@@ -33,6 +33,7 @@ module.exports = {
     'no-useless-return': 'off',
     'no-multi-spaces': 'warn',
     'prefer-destructuring': 'warn',
+    'import/prefer-default-export': 'off',
   },
   globals: {
     __ANKI_ADD_HOOKS_VERSION__: true,

@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			".github": true,
+			"dev-hooks": true,
+			"hooks": true
+		}
+	}
+}
