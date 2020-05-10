@@ -240,7 +240,7 @@
 
      Page: ${error.location}.
 
-     Hook Template Version: 2.2.0.
+     Hook Template Version: 2.3.0.
 
      Hook Userscript Name: ${hookName}.
 

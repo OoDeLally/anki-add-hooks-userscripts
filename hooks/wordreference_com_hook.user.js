@@ -5,10 +5,10 @@
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for WordReference.com
-// @version      2.5
+// @version      2.6
 // @description  Generate a hook for AnkiConnect on WordReference.com
 // @author       Pascal Heitz
-// @include      /https?://www\.wordreference\.com\/[a-z]{4}\/.+/
+// @include      /https?:\/\/www\.wordreference\.com\/(([a-z]{4}\/.+)|([a-z]{2}(\/[a-z]{2})?\/translation.asp\b.*))/
 // ==/UserScript==
 
 (function () {
@@ -571,9 +571,24 @@
   // @name         Anki Add Hooks for WordReference.com
 
 
+  // e.g. https://www.wordreference.com/es/translation.asp?tranword=food
+  const getLanguagesFromSpanishUrl = () => {
+    const urlMatch = window.location.href.match(/wordreference\.com\/([a-z]{2})(\/([a-z]{2}))?\/translation\.asp/);
+    if (!urlMatch) {
+      return undefined;
+    }
+    const firstLanguage = urlMatch[1];
+    const secondLanguage = urlMatch[3] || 'en';
+    return [firstLanguage, secondLanguage];
+  };
 
-  const getLanguages = () => {
+
+  // e.g. https://www.wordreference.com/fren/oui
+  const getLanguagesFromNormalUrl = () => {
     const urlMatch = window.location.href.match(/wordreference\.com\/([a-z]{2})([a-z]{2})(\/(reverse))?\//);
+    if (!urlMatch) {
+      return undefined;
+    }
     if (urlMatch[4] === 'reverse') {
       // e.g. http://www.wordreference.com/czen/reverse/foobar means en -> cz
       return [urlMatch[2], urlMatch[1]];
@@ -584,11 +599,18 @@
   };
 
 
+  const getLanguages = () => getLanguagesFromNormalUrl() || getLanguagesFromSpanishUrl();
+
 
   const hookName = 'wordreference.com';
 
   const run = (createHook) => {
-    const [sourceLanguage, targetLanguage] = getLanguages();
+    const urlMatch = getLanguages();
+    if (!urlMatch) {
+      console.error('Could not match the URL. Giving up.');
+      return;
+    }
+    const [sourceLanguage, targetLanguage] = urlMatch;
     runOnMainTables(createHook, sourceLanguage, targetLanguage);
     runOnCollinsRussian(createHook, sourceLanguage, targetLanguage);
   };
@@ -606,11 +628,11 @@
 
      Page: ${error.location}.
 
-     Hook Template Version: 2.2.0.
+     Hook Template Version: 2.3.0.
 
      Hook Userscript Name: ${hookName}.
 
-     Hook UserScript Version: 2.5.
+     Hook UserScript Version: 2.6.
     `
     );
     {
