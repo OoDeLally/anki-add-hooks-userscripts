@@ -78,3 +78,6 @@ You need this so that `my_website_com_dev_hook.user.js` is allowed to require lo
 7- When you are happy with your script, run `npm run build` to compile it to the final standalone userscript `hooks/my_website_com_hook.user.js`.
 
 8- Make a pull-request if you think it can be useful for other people.
+
+###👥💐 Thank you for visiting
+- stay home and keep smiling
