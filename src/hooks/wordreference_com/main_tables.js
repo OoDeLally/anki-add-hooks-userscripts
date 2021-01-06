@@ -1,6 +1,7 @@
 import stringifyNodeWithStyle from '../../helpers/stringify_node_with_style';
 import highlightOnHookHover from '../../helpers/highlight_on_hook_hover';
 import { querySelector, querySelectorAll } from '../../helpers/scraping';
+import exportNodeStyleToText from '../../helpers/export_node_style_to_text';
 
 
 // Wordreference entries are laid as following:
@@ -65,7 +66,7 @@ const getExamplesTdFromTrGroup = (trGroup, exampleClassName) =>
   Array.from(trGroup)
     .map(trNode => querySelectorAll(trNode, 'td')[1])
     .filter(td => td && td.className && td.className.includes(exampleClassName))
-    .map(td => `<div style="color:#808080;">${td.innerText}</div>`);
+    .map(td => `<div style="${exportNodeStyleToText(td)};color:#808080;">${td.innerText}</div>`);
 
 const getAdditionalInfosFromTrGroup = trGroup =>
   trGroup
@@ -75,7 +76,14 @@ const getAdditionalInfosFromTrGroup = trGroup =>
     .map(
       nodes => nodes
         .filter(node => !node.className || !node.className.includes('dsense'))
-        .map(node => stringifyNodeWithStyle(node).trim())
+        .map(node => {
+          const stringified = stringifyNodeWithStyle(node).trim();
+          if (!stringified) {
+            return null;
+          }
+          const parentTdStyle = exportNodeStyleToText(node.parentNode);
+          return `<div style="${parentTdStyle}">${stringified}</div>`
+        })
         .filter(html => html)
     )
     .filter(stringifiedNodes => stringifiedNodes.length > 0)
