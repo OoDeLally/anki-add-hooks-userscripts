@@ -49,6 +49,7 @@ const querySelectorAllInOneNode = (parentNode, selector, { throwOnUnfound = true
   if (!parentNode || !parentNode.querySelectorAll) {
     throw Error(`parentNode does not seem to be a DOM node: ${parentNode}`);
   }
+
   if (typeof selector !== 'string') {
     throw Error('selector must be a string');
   }

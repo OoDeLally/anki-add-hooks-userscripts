@@ -5,7 +5,7 @@
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for Google Translate
-// @version      2.2
+// @version      2.3
 // @description  Generate a hook for AnkiConnect on Google Translate
 // @author       Pascal Heitz
 // @include      /translate\.google\.com\//
@@ -27,36 +27,9 @@
       return css;
   }
 
-  __$styleInject(".-anki-add-hook {\r\n  -moz-user-select: none;\r\n  -ms-user-select: none;\r\n  -o-user-select: none;\r\n  -webkit-touch-callout: none;\r\n  -webkit-user-select: none;\r\n  background-color: #aaaaaa;\r\n  border-radius: 5px;\r\n  border: 2px solid #222222;\r\n  box-sizing: content-box;\r\n  color: white;\r\n  cursor: pointer;\r\n  display: inline-block;\r\n  font-family: 'Roboto', sans-serif;\r\n  font-size: 12px;\r\n  font-weight: bold;\r\n  height: 15px;\r\n  line-height: 17px;\r\n  opacity: 0.8;\r\n  overflow-wrap: normal;\r\n  overflow: hidden;\r\n  padding-left: 30px;\r\n  padding-right: 5px;\r\n  position: relative;\r\n  right: 0px;\r\n  text-align: left;\r\n  text-indent: 0;\r\n  top: 0px;\r\n  user-select: none;\r\n  vertical-align: middle;\r\n  width: 35px;\r\n  z-index: 1000;\r\n}\r\n.-anki-add-hook-added {\r\n  border: 2px solid green;\r\n  opacity: 1;\r\n  cursor: auto;\r\n  color: green;\r\n  background-color: #cccccc;\r\n}\r\n.-anki-add-hook:hover {\r\n  opacity: 1;\r\n}\r\n\r\n.-anki-add-hook-star {\r\n  display: block;\r\n  transform: rotate(-15deg);\r\n  position: absolute;\r\n}\r\n.-anki-add-hook-added .-anki-add-hook-star-small {\r\n  color: green;\r\n}\r\n.-anki-add-hook-star-big {\r\n  font-size: 40px;\r\n  color: white;\r\n  z-index: 1005;\r\n  left: -7px;\r\n  top: -1px;\r\n}\r\n.-anki-add-hook-star-small {\r\n  font-size: 25px;\r\n  color: #0099ff;\r\n  color: grdsdsdqwdfedwdsdwesdddsdwdn;\r\n  z-index: 1010;\r\n  left: 0px;\r\n  top: -1px;\r\n}\r\n\r\n.-anki-add-hook-text {\r\n  text-decoration: none !important;\r\n  font-size: 12px !important;\r\n}\r\n\r\n\r\n.-anki-add-hook-loading .-anki-add-hook-star {\r\n  animation-name: spin;\r\n  animation-duration: 2000ms;\r\n  animation-iteration-count: infinite;\r\n  animation-timing-function: linear;\r\n}\r\n\r\n@keyframes spin {\r\n    from {\r\n        transform:rotate(0deg);\r\n    }\r\n    to {\r\n        transform:rotate(360deg);\r\n    }\r\n}\r\n\r\n.-anki-add-hook-error {\r\n  border: 2px solid red;\r\n  opacity: 1;\r\n  color: red;\r\n  background-color: #cccccc;\r\n}\r\n.-anki-add-hook-error .-anki-add-hook-star-small {\r\n  color: red;\r\n}\r\n");
+  __$styleInject(".-anki-add-hook {\n  -moz-user-select: none;\n  -ms-user-select: none;\n  -o-user-select: none;\n  -webkit-touch-callout: none;\n  -webkit-user-select: none;\n  background-color: #aaaaaa;\n  border-radius: 5px;\n  border: 2px solid #222222;\n  box-sizing: content-box;\n  color: white;\n  cursor: pointer;\n  display: inline-block;\n  font-family: 'Roboto', sans-serif;\n  font-size: 12px;\n  font-weight: bold;\n  height: 15px;\n  line-height: 17px;\n  opacity: 0.8;\n  overflow-wrap: normal;\n  overflow: hidden;\n  padding-left: 30px;\n  padding-right: 5px;\n  position: relative;\n  right: 0px;\n  text-align: left;\n  text-indent: 0;\n  top: 0px;\n  user-select: none;\n  vertical-align: middle;\n  width: 35px;\n  z-index: 1000;\n}\n.-anki-add-hook-added {\n  border: 2px solid green;\n  opacity: 1;\n  cursor: auto;\n  color: green;\n  background-color: #cccccc;\n}\n.-anki-add-hook:hover {\n  opacity: 1;\n}\n\n.-anki-add-hook-star {\n  display: block;\n  transform: rotate(-15deg);\n  position: absolute;\n}\n.-anki-add-hook-added .-anki-add-hook-star-small {\n  color: green;\n}\n.-anki-add-hook-star-big {\n  font-size: 40px;\n  color: white;\n  z-index: 1005;\n  left: -7px;\n  top: -1px;\n}\n.-anki-add-hook-star-small {\n  font-size: 25px;\n  color: #0099ff;\n  color: grdsdsdqwdfedwdsdwesdddsdwdn;\n  z-index: 1010;\n  left: 0px;\n  top: -1px;\n}\n\n.-anki-add-hook-text {\n  text-decoration: none !important;\n  font-size: 12px !important;\n}\n\n\n.-anki-add-hook-loading .-anki-add-hook-star {\n  animation-name: spin;\n  animation-duration: 2000ms;\n  animation-iteration-count: infinite;\n  animation-timing-function: linear;\n}\n\n@keyframes spin {\n    from {\n        transform:rotate(0deg);\n    }\n    to {\n        transform:rotate(360deg);\n    }\n}\n\n.-anki-add-hook-error {\n  border: 2px solid red;\n  opacity: 1;\n  color: red;\n  background-color: #cccccc;\n}\n.-anki-add-hook-error .-anki-add-hook-star-small {\n  color: red;\n}\n");
 
-  __$styleInject(".banner {\r\n  height: 20px;\r\n  font-size: 14px;\r\n  color: deepskyblue;\r\n  text-align: left;\r\n}\r\n\r\n.banner-language {\r\n\r\n}\r\n\r\n\r\n.banner-hook-name {\r\n  float: right;\r\n}\r\n");
-
-  // Highlight `elementsToHighlight` with `backgroundColor` when the user hovers the hook `hookNode`.
-  var highlightOnHookHover = (hookNode, elementsToHighlight, backgroundColor) => {
-    if (elementsToHighlight.forEach) {
-      hookNode.onmouseover = () => {
-        elementsToHighlight.forEach((elt) => {
-          if (elt.style !== undefined) {
-            elt.style.background = backgroundColor;
-          }
-        });
-      };
-      hookNode.onmouseout = () => {
-        elementsToHighlight.forEach((elt) => {
-          if (elt.style !== undefined) {
-            elt.style.background = null;
-          }
-        });
-      };
-    } else {
-      hookNode.onmouseover = () => {
-        elementsToHighlight.style.background = backgroundColor;
-      };
-      hookNode.onmouseout = () => {
-        elementsToHighlight.style.background = null;
-      };
-    }
-  };
+  __$styleInject(".banner {\n  height: 20px;\n  font-size: 14px;\n  color: deepskyblue;\n  text-align: left;\n}\n\n.banner-language {\n\n}\n\n\n.banner-hook-name {\n  float: right;\n}\n");
 
   var ScrapingError = (message) => {
     const error = Error(message);
@@ -78,6 +51,7 @@
     if (!parentNode || !parentNode.querySelectorAll) {
       throw Error(`parentNode does not seem to be a DOM node: ${parentNode}`);
     }
+
     if (typeof selector !== 'string') {
       throw Error('selector must be a string');
     }
@@ -144,44 +118,142 @@
       { throwOnUnfound: false }
     );
 
+  const getUrlParameter = (name) => {
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    return urlParams.get(name);
+  };
+
   const getSourceLanguage = () =>
-    querySelector(document, '.sl-sugg .jfk-button-checked').innerText.split(/ *- */)[0];
+    getUrlParameter('sl');
 
   const getTargetLanguage = () =>
-    querySelector(document, '.tl-sugg .jfk-button-checked').innerText;
+    getUrlParameter('tl');
 
-  const frontFieldSelector = 'textarea#source';
-  const backFieldSelector = '.translation';
+  const findAllParents = (node) => {
+    const parents = [];
+    do {
+      parents.push(node);
+      node = node.parentNode;
+    } while (node);
+    return parents;
+  };
 
+  const findFirstCommonItem = (itemLists) => {
+    if (itemLists.length === 0) {
+      return null;
+    }
+    if (itemLists.length === 1) {
+      return itemLists[0] || null;
+    }
+    const [firstList, ...otherLists] = itemLists;
+    for (const item of firstList) {
+      let itemFoundInAll = true;
+      for (const otherList of otherLists) {
+        if (!otherList.includes(item)) {
+          itemFoundInAll = false;
+          break;
+        }
+      }
+      if (itemFoundInAll) {
+        return item; // All lists have this item too.
+      }
+    }
+    return null;
+  };
+
+  const findFirstCommonAncester = (nodes) => {
+    const allParents = nodes.map(findAllParents);
+    return findFirstCommonItem(allParents);
+  };
+
+  const findFooterButton = innerText =>
+    Array.from(document.querySelectorAll('i.material-icons-extended'))
+      .find(i => i.innerText === innerText) || null;
+
+  const findButtonFooter = () => {
+    // Since Google Translate uses cyphered class names,
+    // this function relies on the presence of a "copy" button.
+    const copyButtonIcon = findFooterButton('content_copy');
+    if (!copyButtonIcon) {
+      return null;
+    }
+    const shareButtonIcon = findFooterButton('share');
+    if (!shareButtonIcon) {
+      return null;
+    }
+    return findFirstCommonAncester([copyButtonIcon, shareButtonIcon]);
+  };
 
   var runOnMainPanel = (createHook) => {
-    const containerBlock = querySelector(document, '.source-target-row');
-    const parentNode = querySelector(containerBlock, '.result-footer', { throwOnUnfound: false });
-    if (!parentNode) {
+    const footerNode = findButtonFooter();
+    if (!footerNode) {
       return;
     }
-    if (doesAnkiHookExistIn(parentNode)) {
+    if (doesAnkiHookExistIn(footerNode)) {
       return;
     }
-    const children = Array.from(parentNode.childNodes);
-    const firstFloatLeftNode = children.find(node => node.style.float === 'left');
+
+    const containerNode = footerNode.parentNode;
+    if (!containerNode) {
+      return;
+    }
+
+    const sourceTextNode = document.querySelector('span[lang] textarea');
+    if (!sourceTextNode) {
+      return;
+    }
+
+    const traductionContainer = containerNode.children[0];
+    if (!traductionContainer) {
+      return;
+    }
+    const traductionNode = traductionContainer.children[0];
+    if (!traductionNode) {
+      return;
+    }
+
     const hook = createHook(() => {
       const sourceLanguage = getSourceLanguage();
       const targetLanguage = getTargetLanguage();
       return {
-        frontText: querySelector(document, frontFieldSelector).value,
-        backText: querySelector(document, backFieldSelector).innerText,
+        frontText: sourceTextNode.value,
+        backText: traductionNode.innerText,
         frontLanguage: sourceLanguage,
         backLanguage: targetLanguage,
         cardKind: `${sourceLanguage} -> ${targetLanguage}`,
       };
     });
-    hook.style.float = 'right';
     hook.style.top = '15px';
-    hook.style.right = '10px';
-    const frontAndBackFields = querySelectorAll(containerBlock, `${frontFieldSelector},${backFieldSelector}`);
-    highlightOnHookHover(hook, frontAndBackFields, '#d2e3fc');
-    parentNode.insertBefore(hook, firstFloatLeftNode);
+    hook.style.left = '5px';
+    footerNode.appendChild(hook);
+  };
+
+  // Highlight `elementsToHighlight` with `backgroundColor` when the user hovers the hook `hookNode`.
+  var highlightOnHookHover = (hookNode, elementsToHighlight, backgroundColor) => {
+    if (elementsToHighlight.forEach) {
+      hookNode.onmouseover = () => {
+        elementsToHighlight.forEach((elt) => {
+          if (elt.style !== undefined) {
+            elt.style.background = backgroundColor;
+          }
+        });
+      };
+      hookNode.onmouseout = () => {
+        elementsToHighlight.forEach((elt) => {
+          if (elt.style !== undefined) {
+            elt.style.background = null;
+          }
+        });
+      };
+    } else {
+      hookNode.onmouseover = () => {
+        elementsToHighlight.style.background = backgroundColor;
+      };
+      hookNode.onmouseout = () => {
+        elementsToHighlight.style.background = null;
+      };
+    }
   };
 
   const tryAddingToRow = (parentTr, createHook) => {
@@ -219,11 +291,23 @@
 
   const hookName = 'translate.google.com';
 
+  /**
+    26 Jan 2021: The page uses iframes, for this reason the script is run once in each iframe.
+    Make sure the script exits gracefully if nothing is found.
+  */
 
   const run = (createHook) => {
     setInterval(() => {
-      runOnMainPanel(createHook);
-      runOnSecondaryPanel(createHook);
+      try {
+        runOnMainPanel(createHook);
+      } catch (error) {
+        console.warn(error);
+      }
+      try {
+        runOnSecondaryPanel(createHook);
+      } catch (error) {
+        console.warn(error);
+      }
     }, 500);
   };
 
@@ -244,7 +328,7 @@
 
      Hook Userscript Name: ${hookName}.
 
-     Hook UserScript Version: 2.2.
+     Hook UserScript Version: 2.3.
     `
     );
     {

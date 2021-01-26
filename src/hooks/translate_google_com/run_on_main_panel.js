@@ -1,38 +1,66 @@
-import highlightOnHookHover from '../../helpers/highlight_on_hook_hover';
-import { querySelector, querySelectorAll, doesAnkiHookExistIn } from '../../helpers/scraping';
+import { doesAnkiHookExistIn } from '../../helpers/scraping';
 import { getSourceLanguage, getTargetLanguage } from './get_languages';
+import { findFirstCommonAncester } from '../../helpers/find_first_common_ancester';
 
 
-const frontFieldSelector = 'textarea#source';
-const backFieldSelector = '.translation';
+const findFooterButton = innerText =>
+  Array.from(document.querySelectorAll('i.material-icons-extended'))
+    .find(i => i.innerText === innerText) || null;
 
+const findButtonFooter = () => {
+  // Since Google Translate uses cyphered class names,
+  // this function relies on the presence of a "copy" button.
+  const copyButtonIcon = findFooterButton('content_copy');
+  if (!copyButtonIcon) {
+    return null;
+  }
+  const shareButtonIcon = findFooterButton('share');
+  if (!shareButtonIcon) {
+    return null;
+  }
+  return findFirstCommonAncester([copyButtonIcon, shareButtonIcon]);
+};
 
 export default (createHook) => {
-  const containerBlock = querySelector(document, '.source-target-row');
-  const parentNode = querySelector(containerBlock, '.result-footer', { throwOnUnfound: false });
-  if (!parentNode) {
+  const footerNode = findButtonFooter();
+  if (!footerNode) {
     return;
   }
-  if (doesAnkiHookExistIn(parentNode)) {
+  if (doesAnkiHookExistIn(footerNode)) {
     return;
   }
-  const children = Array.from(parentNode.childNodes);
-  const firstFloatLeftNode = children.find(node => node.style.float === 'left');
+
+  const containerNode = footerNode.parentNode;
+  if (!containerNode) {
+    return;
+  }
+
+  const sourceTextNode = document.querySelector('span[lang] textarea');
+  if (!sourceTextNode) {
+    return;
+  }
+
+  const traductionContainer = containerNode.children[0];
+  if (!traductionContainer) {
+    return;
+  }
+  const traductionNode = traductionContainer.children[0];
+  if (!traductionNode) {
+    return;
+  }
+
   const hook = createHook(() => {
     const sourceLanguage = getSourceLanguage();
     const targetLanguage = getTargetLanguage();
     return {
-      frontText: querySelector(document, frontFieldSelector).value,
-      backText: querySelector(document, backFieldSelector).innerText,
+      frontText: sourceTextNode.value,
+      backText: traductionNode.innerText,
       frontLanguage: sourceLanguage,
       backLanguage: targetLanguage,
       cardKind: `${sourceLanguage} -> ${targetLanguage}`,
     };
   });
-  hook.style.float = 'right';
   hook.style.top = '15px';
-  hook.style.right = '10px';
-  const frontAndBackFields = querySelectorAll(containerBlock, `${frontFieldSelector},${backFieldSelector}`);
-  highlightOnHookHover(hook, frontAndBackFields, '#d2e3fc');
-  parentNode.insertBefore(hook, firstFloatLeftNode);
+  hook.style.left = '5px';
+  footerNode.appendChild(hook);
 };

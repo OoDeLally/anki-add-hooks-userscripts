@@ -4,6 +4,8 @@ module.exports = {
     browser: true,
   },
   'rules': {
+    'no-empty': 'off',
+    'no-restricted-syntax': 'off',
     'arrow-body-style': 'warn',
     'arrow-parens': 'warn',
     'comma-dangle': 'off',
@@ -16,7 +18,6 @@ module.exports = {
     'no-alert': 'off',
     'no-console': 'off',
     'no-else-return': 'off',
-    'no-empty': 'warn',
     'no-multiple-empty-lines': 'warn',
     'no-param-reassign': 'off',
     'no-plusplus': 'off',

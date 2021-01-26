@@ -1,7 +1,12 @@
-import { querySelector } from '../../helpers/scraping';
+
+const getUrlParameter = (name) => {
+  const queryString = window.location.search;
+  const urlParams = new URLSearchParams(queryString);
+  return urlParams.get(name);
+};
 
 export const getSourceLanguage = () =>
-  querySelector(document, '.sl-sugg .jfk-button-checked').innerText.split(/ *- */)[0];
+  getUrlParameter('sl');
 
 export const getTargetLanguage = () =>
-  querySelector(document, '.tl-sugg .jfk-button-checked').innerText;
+  getUrlParameter('tl');
