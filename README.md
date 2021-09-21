@@ -5,7 +5,7 @@ Add a button on translation websites to create an Anki card from a translation.
 ## Currently supported websites
 
 ### translate.google.com
-
+  ⚠️ Currently does NOT work because of Google Translate CSP, see https://github.com/OoDeLally/anki-add-hooks-userscripts/issues/44
   [/hooks/translate_google_com_hook.user.js](https://github.com/OoDeLally/tampermonkey-anki-add-hooks/raw/master/hooks/translate_google_com_hook.user.js)
 
 ### wordreference.com
