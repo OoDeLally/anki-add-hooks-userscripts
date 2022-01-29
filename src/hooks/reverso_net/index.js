@@ -1,5 +1,5 @@
 // @name         Anki Add Hooks for Reverso
-// @version      3.0
+// @version      3.1
 // @description  Generate a hook for AnkiConnect on Reverso
 // @author       Pascal Heitz
 // @include      /reverso\.net\/(\w+\/)?\w+-\w+\/
