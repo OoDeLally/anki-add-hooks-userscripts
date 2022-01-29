@@ -5,7 +5,7 @@
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for Reverso
-// @version      3.0
+// @version      3.2
 // @description  Generate a hook for AnkiConnect on Reverso
 // @author       Pascal Heitz
 // @include      /reverso\.net\/(\w+\/)?\w+-\w+\/
@@ -56,6 +56,197 @@
         elementsToHighlight.style.background = null;
       };
     }
+  };
+
+  var ScrapingError = (message) => {
+    const error = Error(message);
+    error.name = 'ScrapingError';
+    error.location = window.location;
+    return error;
+  };
+
+  const ANKI_ADD_BUTTON_CLASS = '-anki-add-hook';
+  const ANKI_ADD_BUTTON_CLASS_SELECTOR = `.${ANKI_ADD_BUTTON_CLASS}`;
+  const ANKI_HOOK_BUTTON_LOADING_CLASS = '-anki-add-hook-loading';
+  const ANKI_HOOK_BUTTON_ERROR_CLASS = '-anki-add-hook-error';
+  const ANKI_HOOK_BUTTON_ADDED_CLASS = '-anki-add-hook-added';
+  const ANKI_HOOK_BUTTON_TEXT_CLASS = '-anki-add-hook-text';
+  const ANKI_HOOK_BUTTON_TEXT_CLASS_SELECTOR = `.${ANKI_HOOK_BUTTON_TEXT_CLASS}`;
+
+  const querySelectorAllInOneNode = (parentNode, selector, { throwOnUnfound = true } = {}) => {
+    if (!parentNode || !parentNode.querySelectorAll) {
+      throw Error(`parentNode does not seem to be a DOM node: ${parentNode}`);
+    }
+
+    if (typeof selector !== 'string') {
+      throw Error('selector must be a string');
+    }
+    const foundNodes = Array.from(parentNode.querySelectorAll(selector));
+    if (foundNodes.length === 0 && throwOnUnfound) {
+      throw ScrapingError(`No node matches the selector '${selector}'`);
+    }
+    return foundNodes;
+  };
+
+
+  // Just like parentNode.querySelectorAll, but:
+  // - can throw if not found.
+  // - accepts parentNode as an array of nodes to look from.
+  const querySelectorAll = (parentNode, selector, options = {}) => {
+    if (typeof options !== 'object') {
+      throw Error('If provided, `options`, must be an object');
+    }
+    if (Array.isArray(parentNode)) {
+      let results = [];
+      parentNode.forEach((node) => {
+        const foundNodes = querySelectorAllInOneNode(node, selector, { throwOnUnfound: false });
+        results = [...results, ...foundNodes];
+      });
+      if (results.length > 1 && options.throwOnFoundSeveral) {
+        throw ScrapingError(`Several nodes match the selector '${selector}'`);
+      }
+      return results;
+    } else {
+      return querySelectorAllInOneNode(parentNode, selector, options);
+    }
+  };
+
+
+  // Just like parentNode.querySelector, but:
+  // - can throw if not found, or several found.
+  // - accepts parentNode as an array of nodes to look from.
+  const querySelector = (
+    parentNode, selector, { throwOnUnfound = true, throwOnFoundSeveral = true } = {}
+  ) => {
+    let matchingNodes;
+    try {
+      matchingNodes = querySelectorAll(parentNode, selector, { throwOnUnfound });
+    } catch (error) {
+      if (error.name === 'ScrapingError') {
+        throw ScrapingError(error.message); // Remove the extra stackframe
+      } else {
+        throw error;
+      }
+    }
+    if (matchingNodes.length > 1 && throwOnFoundSeveral) {
+      throw ScrapingError(`Several nodes match the selector '${selector}'`);
+    }
+    return matchingNodes[0];
+  };
+
+
+  // Tells if `parentNode` already contains an anki hook.
+  // `parentNode` can be an array of nodes to look from.
+  const doesAnkiHookExistIn = parentNode =>
+    !!querySelector(
+      parentNode,
+      ANKI_ADD_BUTTON_CLASS_SELECTOR,
+      { throwOnUnfound: false, throwOnFoundSeveral: false }
+    );
+
+  var getLanguages = () => {
+    const match = window.location.hash.match(/\bsl=(\w+)&tl=(\w+)/);
+    if (!match) {
+      throw ScrapingError('Could not extract languages from url');
+    }
+    const [, sourceLanguage, targetLanguage] = match;
+    if (!sourceLanguage || !targetLanguage) {
+      throw ScrapingError('Could not extract languages from url');
+    }
+    return [sourceLanguage, targetLanguage];
+  };
+
+  const extractFrontText = () => {
+    const textArea = querySelector(document, '.translation-input__main__textarea-and-sentences textarea');
+    return textArea.value;
+  };
+
+  const extractBackText = (contextItem) => {
+    const translationSpan = querySelector(contextItem, '.text__translation');
+    return translationSpan.innerText;
+  };
+
+  const tryToAddHook = (createHook) => {
+    const contextItems = querySelectorAll(document, '.context-item', { throwOnUnfound: false });
+    contextItems.forEach((contextItem) => {
+      const optionBar = querySelector(contextItem, '.options', { throwOnUnfound: false });
+      if (!(contextItem && optionBar)) {
+        return; // The translation may not have been loaded yet. Better luck next time?
+      }
+      if (doesAnkiHookExistIn(optionBar)) {
+        return;
+      }
+      const hook = createHook(() => {
+        const [sourceLanguage, targetLanguage] = getLanguages();
+        return {
+          frontText: extractFrontText(),
+          backText: extractBackText(contextItem),
+          frontLanguage: sourceLanguage,
+          backLanguage: targetLanguage,
+          cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+        };
+      });
+      highlightOnHookHover(hook, contextItem, 'lightblue');
+      optionBar.prepend(hook);
+    });
+  };
+
+
+  var runOnMainDictionaryOneWord = (createHook) => {
+    setInterval(() => {
+      try {
+        tryToAddHook(createHook);
+      } catch (error) {
+        console.error(error);
+      }
+    }, 500);
+  };
+
+  const extractFrontText$1 = () => {
+    const textArea = querySelector(document, '.translation-input__main__textarea-and-sentences textarea');
+    return textArea.value;
+  };
+
+  const extractBackText$1 = () => {
+    const translationDiv = querySelector(document, '.translation-input__result .sentence-wrapper');
+    return translationDiv.innerText;
+  };
+
+  const tryToAddHook$1 = (createHook) => {
+    const resultInput = querySelector(document, '.translation-input__result', { throwOnUnfound: false });
+    if (!resultInput) {
+      return;
+    }
+    const translationDiv = querySelector(document, '.translation-input__result .sentence-wrapper', { throwOnUnfound: false });
+    const optionBar = querySelector(document, '.translation-input__target .translation-input__bottom_controls', { throwOnUnfound: false });
+    if (!(translationDiv && optionBar)) {
+      return; // The translation may not have been loaded yet. Better luck next time?
+    }
+    if (doesAnkiHookExistIn(optionBar)) {
+      return;
+    }
+    const hook = createHook(() => {
+      const [sourceLanguage, targetLanguage] = getLanguages();
+      return {
+        frontText: extractFrontText$1(),
+        backText: extractBackText$1(),
+        frontLanguage: sourceLanguage,
+        backLanguage: targetLanguage,
+        cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+      };
+    });
+    hook.style.position = 'absolute';
+    hook.style.right = '40px';
+    hook.style.top = '12px';
+    highlightOnHookHover(hook, translationDiv, 'lightblue');
+    optionBar.style.position = 'relative';
+    optionBar.append(hook);
+  };
+
+  var runOnMainDictionarySentence = (createHook) => {
+    setInterval(() => {
+      tryToAddHook$1(createHook);
+    }, 500);
   };
 
   // Tells if a node is a TextNode
@@ -161,14 +352,6 @@
     return styleChunks.join('');
   };
 
-  const ANKI_ADD_BUTTON_CLASS = '-anki-add-hook';
-  const ANKI_ADD_BUTTON_CLASS_SELECTOR = `.${ANKI_ADD_BUTTON_CLASS}`;
-  const ANKI_HOOK_BUTTON_LOADING_CLASS = '-anki-add-hook-loading';
-  const ANKI_HOOK_BUTTON_ERROR_CLASS = '-anki-add-hook-error';
-  const ANKI_HOOK_BUTTON_ADDED_CLASS = '-anki-add-hook-added';
-  const ANKI_HOOK_BUTTON_TEXT_CLASS = '-anki-add-hook-text';
-  const ANKI_HOOK_BUTTON_TEXT_CLASS_SELECTOR = `.${ANKI_HOOK_BUTTON_TEXT_CLASS}`;
-
   const allowedAttributes = ['style', 'colspan', 'rowspan'];
 
 
@@ -249,359 +432,10 @@
     }
   };
 
-  var ScrapingError = (message) => {
-    const error = Error(message);
-    error.name = 'ScrapingError';
-    error.location = window.location;
-    error.stack = error.stack.split(/[\n\r]/gm).slice(4).join('\n');
-    return error;
-  };
-
-  const querySelectorAllInOneNode = (parentNode, selector, { throwOnUnfound = true } = {}) => {
-    if (!parentNode || !parentNode.querySelectorAll) {
-      throw Error(`parentNode does not seem to be a DOM node: ${parentNode}`);
-    }
-
-    if (typeof selector !== 'string') {
-      throw Error('selector must be a string');
-    }
-    const foundNodes = Array.from(parentNode.querySelectorAll(selector));
-    if (foundNodes.length === 0 && throwOnUnfound) {
-      throw ScrapingError(`No node matches the selector '${selector}'`);
-    }
-    return foundNodes;
-  };
-
-
-  const getElementsByNameInOneNode = (parentNode, name, { throwOnUnfound = true } = {}) => {
-    if (!parentNode || !parentNode.getElementsByName) {
-      throw Error(`parentNode does not seem to be a DOM node: ${parentNode}`);
-    }
-    if (typeof name !== 'string') {
-      throw Error('name must be a string');
-    }
-    const foundNodes = Array.from(parentNode.getElementsByName(name));
-    if (foundNodes.length === 0 && throwOnUnfound) {
-      throw ScrapingError(`No node matches the name '${name}'`);
-    }
-    return foundNodes;
-  };
-
-
-  // Just like parentNode.querySelectorAll, but:
-  // - can throw if not found.
-  // - accepts parentNode as an array of nodes to look from.
-  const querySelectorAll = (parentNode, selector, options = {}) => {
-    if (typeof options !== 'object') {
-      throw Error('If provided, `options`, must be an object');
-    }
-    if (Array.isArray(parentNode)) {
-      let results = [];
-      parentNode.forEach((node) => {
-        const foundNodes = querySelectorAllInOneNode(node, selector, { throwOnUnfound: false });
-        results = [...results, ...foundNodes];
-      });
-      if (results.length > 1 && options.throwOnFoundSeveral) {
-        throw ScrapingError(`Several nodes match the selector '${selector}'`);
-      }
-      return results;
-    } else {
-      return querySelectorAllInOneNode(parentNode, selector, options);
-    }
-  };
-
-
-  // Just like parentNode.querySelector, but:
-  // - can throw if not found, or several found.
-  // - accepts parentNode as an array of nodes to look from.
-  const querySelector = (
-    parentNode, selector, { throwOnUnfound = true, throwOnFoundSeveral = true } = {}
-  ) => {
-    let matchingNodes;
-    try {
-      matchingNodes = querySelectorAll(parentNode, selector, { throwOnUnfound });
-    } catch (error) {
-      if (error.name === 'ScrapingError') {
-        throw ScrapingError(error.message); // Remove the extra stackframe
-      } else {
-        throw error;
-      }
-    }
-    if (matchingNodes.length > 1 && throwOnFoundSeveral) {
-      throw ScrapingError(`Several nodes match the selector '${selector}'`);
-    }
-    return matchingNodes[0];
-  };
-
-
-  // Just like parentNode.getElementsByName, but:
-  // - can throw if not found.
-  // - accepts parentNode as an array of nodes to look from.
-  const getElementsByName = (parentNode, name, options = {}) => {
-    if (typeof options !== 'object') {
-      throw Error('If provided, `options`, must be an object');
-    }
-    if (Array.isArray(parentNode)) {
-      let results = [];
-      parentNode.forEach((node) => {
-        const foundNodes = getElementsByNameInOneNode(node, name, { throwOnUnfound: false });
-        results = [...results, ...foundNodes];
-      });
-      if (results.length > 1 && options.throwOnFoundSeveral) {
-        throw ScrapingError(`Several nodes match the name '${name}'`);
-      }
-      return results;
-    } else {
-      return getElementsByNameInOneNode(parentNode, name, options);
-    }
-  };
-
-
-  // Tells if `parentNode` already contains an anki hook.
-  // `parentNode` can be an array of nodes to look from.
-  const doesAnkiHookExistIn = parentNode =>
-    !!querySelector(
-      parentNode,
-      ANKI_ADD_BUTTON_CLASS_SELECTOR,
-      { throwOnUnfound: false, throwOnFoundSeveral: false }
-    );
-
-  var getLanguages = () => {
-    const match = window.location.hash.match(/\bsl=(\w+)&tl=(\w+)/);
-    if (!match) {
-      throw ScrapingError('Could not extract languages from url');
-    }
-    const [, sourceLanguage, targetLanguage] = match;
-    if (!sourceLanguage || !targetLanguage) {
-      throw ScrapingError('Could not extract languages from url');
-    }
-    return [sourceLanguage, targetLanguage];
-  };
-
-  // composeFunction(f, g, h) =>
-  //   x => (f∘g∘h)(x)
-
-
-  var composeFunctions = (...funs) =>
-    (...args) => {
-      let val = args;
-      funs.forEach((fun) => {
-        val = [fun(...val)];
-      });
-      return val[0];
-    };
-
-  const cleanTreeRec = (node) => {
-    if (
-      (node.nodeName === 'SPAN' && !node.textContent.replace(/[ \t]/gm, ''))
-      || node.nodeName === 'HR'
-    ) {
-      node.remove();
-      return;
-    }
-    // Clone the array to avoid screwing the iteration when a child if removed
-    Array.from(node.childNodes)
-      .forEach(childNode => cleanTreeRec(childNode));
-  };
-
-  const cleanTree = (rootNode) => {
-    cleanTreeRec(rootNode);
-    return rootNode;
-  };
-
-
-  /*
-    <div>
-      <b><h2>FirstWord</h2></b>
-      <!-- Stuff -->
-      <b>adj</b>
-      <!-- First word translation -->
-    </div>
-    <div>
-      <!-- First word translation -->
-    </div>
-    <div>
-      <b>SecondWord</b>
-      <!-- Stuff -->
-      <b>adj</b>
-      <!-- Second word translation -->
-    </div>
-    <div>
-      <!-- Second word translation -->
-    </div>
-
-    We need to separate the first div in two, because it contains information
-    for both sides of the card.
-    We take up to the second <b></b> for the first div.
-    The rest of the first div and the subsequent divs are part of the back of the card.
-  */
-  const partitionFrontAndBackInFirstDiv = (divGroup) => {
-    const nodes = Array.from(divGroup[0].childNodes);
-    const nodesToKeep = [];
-    let bNodeSeen = 0;
-    for (let nodeIndex = 0; nodeIndex < nodes.length; nodeIndex++) {
-      const node = nodes[nodeIndex];
-      nodesToKeep.push(node);
-      if (node.nodeName === 'B') {
-        bNodeSeen++;
-        if (bNodeSeen === 2) {
-          return [nodesToKeep, nodes.slice(nodeIndex + 1)];
-        }
-      }
-    }
-    return [nodesToKeep, []];
-  };
-
-
-  const extractFrontText = (divGroup) => {
-    const transformTree = composeFunctions(cleanTree);
-    return stringifyNodeWithStyle(partitionFrontAndBackInFirstDiv(divGroup)[0], transformTree);
-  };
-
-  const extractBackText = (divGroup) => {
-    const [, ...rest] = divGroup;
-    return `<div style="text-align:left;margin:auto;display:table;">
-            ${stringifyNodeWithStyle(partitionFrontAndBackInFirstDiv(divGroup)[1])}
-            ${stringifyNodeWithStyle(rest, cleanTree)}
-          </div>
-        `;
-  };
-
-
-  const getDivGroup = (wordNode, nextWordNode) => {
-    const divsToHighlight = [];
-    if (nextWordNode) {
-      let node = wordNode.parentNode;
-      while (node && node !== nextWordNode.parentNode) {
-        if (!isTextNode(node)) {
-          divsToHighlight.push(node);
-        }
-        node = node.nextSibling;
-      }
-    } else {
-      divsToHighlight.push(wordNode.parentNode);
-    }
-    return divsToHighlight;
-  };
-
-
-  var runOnCollinsDictionary = (createHook) => {
-    getElementsByName(document, 'translate_box', { throwOnUnfound: false })
-      .forEach((translateBox) => {
-        const wordNodes = querySelectorAll(translateBox, 'div > b:first-child', { throwOnUnfound: false });
-        wordNodes.forEach((wordNode, wordNodeIndex) => {
-          const divGroup = getDivGroup(wordNode, wordNodes[wordNodeIndex + 1]);
-          const hook = createHook(() => {
-            const [sourceLanguage, targetLanguage] = getLanguages();
-            return {
-              frontText: extractFrontText(divGroup),
-              backText: extractBackText(divGroup),
-              frontLanguage: sourceLanguage,
-              backLanguage: targetLanguage,
-              cardKind: `${sourceLanguage} -> ${targetLanguage}`,
-            };
-          });
-          hook.style.position = 'absolute';
-          hook.style.right = '0px';
-          hook.style.top = '10px';
-          highlightOnHookHover(hook, divGroup, 'lightblue');
-          wordNode.parentNode.style.position = 'relative';
-          wordNode.parentNode.append(hook);
-        });
-      });
-  };
-
-  const extractFrontText$1 = () => {
-    const textArea = querySelector(document, '.translation-input__main__textarea-and-sentences textarea');
-    return textArea.value;
-  };
-
-  const extractBackText$1 = () => {
-    const translationSpan = querySelector(document, '.translation-input__target .text__translation');
-    return translationSpan.innerText;
-  };
-
-  const tryToAddHook = (createHook) => {
-    const translationSpan = querySelector(document, '.translation-input__target .text__translation', { throwOnUnfound: false });
-    const optionBar = querySelector(document, '.translation-input__target .options', { throwOnUnfound: false });
-    if (!(translationSpan && optionBar)) {
-      return; // The translation may not have been loaded yet. Better luck next time?
-    }
-    if (doesAnkiHookExistIn(optionBar)) {
-      return;
-    }
-    const hook = createHook(() => {
-      const [sourceLanguage, targetLanguage] = getLanguages();
-      return {
-        frontText: extractFrontText$1(),
-        backText: extractBackText$1(),
-        frontLanguage: sourceLanguage,
-        backLanguage: targetLanguage,
-        cardKind: `${sourceLanguage} -> ${targetLanguage}`,
-      };
-    });
-    highlightOnHookHover(hook, translationSpan, 'lightblue');
-    optionBar.prepend(hook);
-  };
-
-
-  var runOnMainDictionaryOneWord = (createHook) => {
-    setInterval(() => {
-      tryToAddHook(createHook);
-    }, 500);
-  };
-
-  const extractFrontText$2 = () => {
-    const textArea = querySelector(document, '.translation-input__main__textarea-and-sentences textarea');
-    return textArea.value;
-  };
-
-  const extractBackText$2 = () => {
-    const translationDiv = querySelector(document, '.translation-input__result .sentence-wrapper');
-    return translationDiv.innerText;
-  };
-
-  const tryToAddHook$1 = (createHook) => {
-    const resultInput = querySelector(document, '.translation-input__result', { throwOnUnfound: false });
-    if (!resultInput) {
-      return;
-    }
-    const translationDiv = querySelector(document, '.translation-input__result .sentence-wrapper', { throwOnUnfound: false });
-    const optionBar = querySelector(document, '.translation-input__target .translation-input__bottom_controls', { throwOnUnfound: false });
-    if (!(translationDiv && optionBar)) {
-      return; // The translation may not have been loaded yet. Better luck next time?
-    }
-    if (doesAnkiHookExistIn(optionBar)) {
-      return;
-    }
-    const hook = createHook(() => {
-      const [sourceLanguage, targetLanguage] = getLanguages();
-      return {
-        frontText: extractFrontText$2(),
-        backText: extractBackText$2(),
-        frontLanguage: sourceLanguage,
-        backLanguage: targetLanguage,
-        cardKind: `${sourceLanguage} -> ${targetLanguage}`,
-      };
-    });
-    hook.style.position = 'absolute';
-    hook.style.right = '40px';
-    hook.style.top = '12px';
-    highlightOnHookHover(hook, translationDiv, 'lightblue');
-    optionBar.style.position = 'relative';
-    optionBar.append(hook);
-  };
-
-  var runOnMainDictionarySentence = (createHook) => {
-    setInterval(() => {
-      tryToAddHook$1(createHook);
-    }, 500);
-  };
-
-  const extractFrontText$3 = row =>
+  const extractFrontText$2 = row =>
     stringifyNodeWithStyle(querySelector(row, '.CDResSource'));
 
-  const extractBackText$3 = row =>
+  const extractBackText$2 = row =>
     stringifyNodeWithStyle(querySelector(row, '.CDResTarget'));
 
 
@@ -614,8 +448,8 @@
       [sourceLanguage, targetLanguage] = getLanguages();
     }
     return {
-      frontText: extractFrontText$3(row),
-      backText: extractBackText$3(row),
+      frontText: extractFrontText$2(row),
+      backText: extractBackText$2(row),
       frontLanguage: sourceLanguage,
       backLanguage: targetLanguage,
       cardKind: `${sourceLanguage} -> ${targetLanguage}`,
@@ -653,47 +487,68 @@
   // e.g. https://dictionnaire.reverso.net/francais-anglais/hello
   //        Table on the bottom with a few examples.
 
-  const extractFrontText$4 = trNode =>
-    stringifyNodeWithStyle(querySelector(trNode, 'td.src'));
+  const extractFrontText$3 = (itemDiv) => {
+    const div = querySelector(itemDiv, '.source');
+    return div.innerText;
+  };
 
-  const extractBackText$4 = trNode =>
-    stringifyNodeWithStyle(querySelector(trNode, 'td.tgt'));
+
+  const extractBackText$3 = (itemDiv) => {
+    const div = querySelector(itemDiv, '.target');
+    return div.innerText;
+  };
 
 
-  var runOnDictionaryContextualDictionary = (createHook) => {
-    querySelectorAll(document, '#ctxBody tr', { throwOnUnfound: false })
-      .filter(
-        trNode =>
-          // The first row is often empty, we take only those with a td.src inside
-          querySelector(trNode, 'td.src', { throwOnUnfound: false })
-      )
-      .forEach((trNode) => {
+  const tryToAddHook$2 = (createHook) => {
+    querySelectorAll(document, '.context-examples .example', { throwOnUnfound: false })
+      .forEach((itemDiv) => {
+        if (doesAnkiHookExistIn(itemDiv)) {
+          return;
+        }
         const hook = createHook(() => {
           const [sourceLanguage, targetLanguage] = getLanguages();
           return {
-            frontText: extractFrontText$4(trNode),
-            backText: extractBackText$4(trNode),
+            frontText: extractFrontText$3(itemDiv),
+            backText: extractBackText$3(itemDiv),
             frontLanguage: sourceLanguage,
             backLanguage: targetLanguage,
             cardKind: `${sourceLanguage} -> ${targetLanguage}`,
           };
         });
         hook.style.position = 'absolute';
-        hook.style.top = '3px';
-        hook.style.right = '-80px';
-        highlightOnHookHover(hook, trNode, 'lightblue');
-        const parentNode = querySelector(trNode, 'td:last-child');
-        parentNode.style.position = 'relative';
-        parentNode.append(hook);
+        hook.style.top = '10px';
+        hook.style.right = '5px';
+        highlightOnHookHover(hook, itemDiv, 'lightblue');
+        itemDiv.style.position = 'relative';
+        itemDiv.append(hook);
       });
+  };
+
+  var runOnDictionaryContextualDictionary = (createHook) => {
+    setInterval(() => {
+      tryToAddHook$2(createHook);
+    }, 500);
   };
 
   // e.g. https://context.reverso.net/traduction/anglais-francais/hello
 
-  const extractFrontText$5 = containerDiv =>
+
+  const getLanguages$1 = () => {
+    const match = window.location.href.match(/reverso\.net\/(\w+\/)?([a-z]+)-([a-z]+)\//);
+    if (!match) {
+      throw ScrapingError('Could not extract languages from url');
+    }
+    const [,, sourceLanguage, targetLanguage] = match;
+    if (!sourceLanguage || !targetLanguage) {
+      throw ScrapingError('Could not extract languages from url');
+    }
+    return [sourceLanguage, targetLanguage];
+  };
+
+  const extractFrontText$4 = containerDiv =>
     stringifyNodeWithStyle(querySelector(containerDiv, '.src > .text'));
 
-  const extractBackText$5 = containerDiv =>
+  const extractBackText$4 = containerDiv =>
     stringifyNodeWithStyle(querySelector(containerDiv, '.trg > .text'));
 
 
@@ -701,18 +556,19 @@
     querySelectorAll(document, '.example', { throwOnUnfound: false })
       .forEach((containerDiv) => {
         const hook = createHook(() => {
-          const [sourceLanguage, targetLanguage] = getLanguages();
+          const [sourceLanguage, targetLanguage] = getLanguages$1();
           return {
-            frontText: extractFrontText$5(containerDiv),
-            backText: extractBackText$5(containerDiv),
+            frontText: extractFrontText$4(containerDiv),
+            backText: extractBackText$4(containerDiv),
             frontLanguage: sourceLanguage,
             backLanguage: targetLanguage,
             cardKind: `${sourceLanguage} -> ${targetLanguage}`,
           };
         });
+        hook.style.position = 'relative';
+        hook.style.top = 'auto';
         hook.style.float = 'right';
         highlightOnHookHover(hook, containerDiv, 'lightblue');
-        containerDiv.style.position = 'relative';
         containerDiv.querySelector('.options .trg').prepend(hook);
       });
   };
@@ -725,7 +581,6 @@
 
   const run = (createHook) => {
     runOnContextReverso(createHook);
-    runOnCollinsDictionary(createHook);
 
     // Reverso main dictionary has two modes, depending on wether the input is one word or a sentence.
     runOnMainDictionaryOneWord(createHook);
@@ -752,7 +607,7 @@
 
      Hook Userscript Name: ${hookName}.
 
-     Hook UserScript Version: 3.0.
+     Hook UserScript Version: 3.2.
     `
     );
     {
