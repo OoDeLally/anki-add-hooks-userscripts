@@ -4,21 +4,21 @@ Add a button on translation websites to create an Anki card from a translation.
 
 ## Currently supported websites
 
-### translate.google.com
-  ⚠️ Currently does NOT work because of Google Translate's CSP, see [the related issue](https://github.com/OoDeLally/anki-add-hooks-userscripts/issues/44).
-  [/hooks/translate_google_com_hook.user.js](https://github.com/OoDeLally/tampermonkey-anki-add-hooks/raw/master/hooks/translate_google_com_hook.user.js)
-
 ### wordreference.com
 
   [/hooks/wordreference_com_hook.user.js](https://github.com/OoDeLally/tampermonkey-anki-add-hooks/raw/master/hooks/wordreference_com_hook.user.js)
 
-### reverso.net
+### reverso.net (Last update Jan 29, 2022)
 
   [/hooks/reverso_net_hook.user.js](https://github.com/OoDeLally/tampermonkey-anki-add-hooks/raw/master/hooks/reverso_net_hook.user.js)
 
 ### lingea.cz
 
   [/hooks/lingea_cz_hook.user.js](https://github.com/OoDeLally/tampermonkey-anki-add-hooks/raw/master/hooks/lingea_cz_hook.user.js)
+
+### translate.google.com (Out-of-order)
+  ⚠️ Currently does NOT work because of Google Translate's CSP, see [the related issue](https://github.com/OoDeLally/anki-add-hooks-userscripts/issues/44).
+  [/hooks/translate_google_com_hook.user.js](https://github.com/OoDeLally/tampermonkey-anki-add-hooks/raw/master/hooks/translate_google_com_hook.user.js)
 
 
 ## Super Quick Setup
