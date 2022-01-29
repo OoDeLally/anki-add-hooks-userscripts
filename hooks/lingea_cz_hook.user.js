@@ -298,7 +298,7 @@
     !!querySelector(
       parentNode,
       ANKI_ADD_BUTTON_CLASS_SELECTOR,
-      { throwOnUnfound: false }
+      { throwOnUnfound: false, throwOnFoundSeveral: false }
     );
 
   var extractCardKind = () => {

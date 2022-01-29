@@ -5,10 +5,10 @@
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for Reverso
-// @version      2.5
+// @version      3.0
 // @description  Generate a hook for AnkiConnect on Reverso
 // @author       Pascal Heitz
-// @include      /reverso\.net\/(\w+\/)?\w+-\w+\/.+/
+// @include      /reverso\.net\/(\w+\/)?\w+-\w+\/
 // ==/UserScript==
 
 (function () {
@@ -162,6 +162,7 @@
   };
 
   const ANKI_ADD_BUTTON_CLASS = '-anki-add-hook';
+  const ANKI_ADD_BUTTON_CLASS_SELECTOR = `.${ANKI_ADD_BUTTON_CLASS}`;
   const ANKI_HOOK_BUTTON_LOADING_CLASS = '-anki-add-hook-loading';
   const ANKI_HOOK_BUTTON_ERROR_CLASS = '-anki-add-hook-error';
   const ANKI_HOOK_BUTTON_ADDED_CLASS = '-anki-add-hook-added';
@@ -255,50 +256,6 @@
     error.stack = error.stack.split(/[\n\r]/gm).slice(4).join('\n');
     return error;
   };
-
-  let allIds = null;
-
-  // Return the list of nodes with an id matching the provided pattern
-  const getNodesWithIdMatchingRegExp = (pattern, { throwOnUnfound = true } = {}) => {
-    if (allIds == null) {
-      allIds = Array.from(document.querySelectorAll('*[id]'));
-    }
-    let nodes;
-    if (typeof pattern === 'string') {
-      nodes = allIds.filter(node => node.id.includes(pattern));
-    } else if (pattern instanceof RegExp) {
-      nodes = allIds.filter(node => pattern.test(node.id));
-    } else {
-      console.error('Pattern:', pattern);
-      throw Error(`Unexpected pattern type: ${typeof pattern}`);
-    }
-    if (nodes.length === 0 && throwOnUnfound) {
-      throw ScrapingError(`No id matches the pattern ${pattern}`);
-    }
-    return nodes;
-  };
-
-
-  // Return one node with an id matching the provided pattern
-  const getNodeWithIdMatchingRegExp = (
-    pattern, { throwOnUnfound = true, throwOnFoundSeveral = true } = {}
-  ) => {
-    let matchingNodes;
-    try {
-      matchingNodes = getNodesWithIdMatchingRegExp(pattern, { throwOnUnfound });
-    } catch (error) {
-      if (error.name === 'ScrapingError') {
-        throw ScrapingError(error.message); // Remove the extra stackframe
-      } else {
-        throw error;
-      }
-    }
-    if (matchingNodes.length > 1 && throwOnFoundSeveral) {
-      throw ScrapingError(`Several ids match the pattern ${pattern}`);
-    }
-    return matchingNodes[0];
-  };
-
 
   const querySelectorAllInOneNode = (parentNode, selector, { throwOnUnfound = true } = {}) => {
     if (!parentNode || !parentNode.querySelectorAll) {
@@ -399,12 +356,22 @@
     }
   };
 
+
+  // Tells if `parentNode` already contains an anki hook.
+  // `parentNode` can be an array of nodes to look from.
+  const doesAnkiHookExistIn = parentNode =>
+    !!querySelector(
+      parentNode,
+      ANKI_ADD_BUTTON_CLASS_SELECTOR,
+      { throwOnUnfound: false, throwOnFoundSeveral: false }
+    );
+
   var getLanguages = () => {
-    const match = window.location.href.match(/reverso\.net\/(\w+\/)?([a-z]+)-([a-z]+)\//);
+    const match = window.location.hash.match(/\bsl=(\w+)&tl=(\w+)/);
     if (!match) {
       throw ScrapingError('Could not extract languages from url');
     }
-    const [,, sourceLanguage, targetLanguage] = match;
+    const [, sourceLanguage, targetLanguage] = match;
     if (!sourceLanguage || !targetLanguage) {
       throw ScrapingError('Could not extract languages from url');
     }
@@ -545,19 +512,22 @@
   };
 
   const extractFrontText$1 = () => {
-    const sourceWord = getNodeWithIdMatchingRegExp(/_lblEntry$/);
-    return stringifyNodeWithStyle(sourceWord);
+    const textArea = querySelector(document, '.translation-input__main__textarea-and-sentences textarea');
+    return textArea.value;
   };
 
   const extractBackText$1 = () => {
-    const targetWord = getNodeWithIdMatchingRegExp(/_lblTranslation$/);
-    return stringifyNodeWithStyle(targetWord);
+    const translationSpan = querySelector(document, '.translation-input__target .text__translation');
+    return translationSpan.innerText;
   };
 
-
-  var runOnMainDictionary = (createHook) => {
-    const resultBox = querySelector(document, '.center_frameColl', { throwOnUnfound: false });
-    if (!resultBox) {
+  const tryToAddHook = (createHook) => {
+    const translationSpan = querySelector(document, '.translation-input__target .text__translation', { throwOnUnfound: false });
+    const optionBar = querySelector(document, '.translation-input__target .options', { throwOnUnfound: false });
+    if (!(translationSpan && optionBar)) {
+      return; // The translation may not have been loaded yet. Better luck next time?
+    }
+    if (doesAnkiHookExistIn(optionBar)) {
       return;
     }
     const hook = createHook(() => {
@@ -570,18 +540,68 @@
         cardKind: `${sourceLanguage} -> ${targetLanguage}`,
       };
     });
-    hook.style.position = 'absolute';
-    hook.style.right = '100px';
-    hook.style.top = '5px';
-    highlightOnHookHover(hook, resultBox, 'lightblue');
-    resultBox.style.position = 'relative';
-    resultBox.append(hook);
+    highlightOnHookHover(hook, translationSpan, 'lightblue');
+    optionBar.prepend(hook);
   };
 
-  const extractFrontText$2 = row =>
+
+  var runOnMainDictionaryOneWord = (createHook) => {
+    setInterval(() => {
+      tryToAddHook(createHook);
+    }, 500);
+  };
+
+  const extractFrontText$2 = () => {
+    const textArea = querySelector(document, '.translation-input__main__textarea-and-sentences textarea');
+    return textArea.value;
+  };
+
+  const extractBackText$2 = () => {
+    const translationDiv = querySelector(document, '.translation-input__result .sentence-wrapper');
+    return translationDiv.innerText;
+  };
+
+  const tryToAddHook$1 = (createHook) => {
+    const resultInput = querySelector(document, '.translation-input__result', { throwOnUnfound: false });
+    if (!resultInput) {
+      return;
+    }
+    const translationDiv = querySelector(document, '.translation-input__result .sentence-wrapper', { throwOnUnfound: false });
+    const optionBar = querySelector(document, '.translation-input__target .translation-input__bottom_controls', { throwOnUnfound: false });
+    if (!(translationDiv && optionBar)) {
+      return; // The translation may not have been loaded yet. Better luck next time?
+    }
+    if (doesAnkiHookExistIn(optionBar)) {
+      return;
+    }
+    const hook = createHook(() => {
+      const [sourceLanguage, targetLanguage] = getLanguages();
+      return {
+        frontText: extractFrontText$2(),
+        backText: extractBackText$2(),
+        frontLanguage: sourceLanguage,
+        backLanguage: targetLanguage,
+        cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+      };
+    });
+    hook.style.position = 'absolute';
+    hook.style.right = '40px';
+    hook.style.top = '12px';
+    highlightOnHookHover(hook, translationDiv, 'lightblue');
+    optionBar.style.position = 'relative';
+    optionBar.append(hook);
+  };
+
+  var runOnMainDictionarySentence = (createHook) => {
+    setInterval(() => {
+      tryToAddHook$1(createHook);
+    }, 500);
+  };
+
+  const extractFrontText$3 = row =>
     stringifyNodeWithStyle(querySelector(row, '.CDResSource'));
 
-  const extractBackText$2 = row =>
+  const extractBackText$3 = row =>
     stringifyNodeWithStyle(querySelector(row, '.CDResTarget'));
 
 
@@ -594,8 +614,8 @@
       [sourceLanguage, targetLanguage] = getLanguages();
     }
     return {
-      frontText: extractFrontText$2(row),
-      backText: extractBackText$2(row),
+      frontText: extractFrontText$3(row),
+      backText: extractBackText$3(row),
       frontLanguage: sourceLanguage,
       backLanguage: targetLanguage,
       cardKind: `${sourceLanguage} -> ${targetLanguage}`,
@@ -633,10 +653,10 @@
   // e.g. https://dictionnaire.reverso.net/francais-anglais/hello
   //        Table on the bottom with a few examples.
 
-  const extractFrontText$3 = trNode =>
+  const extractFrontText$4 = trNode =>
     stringifyNodeWithStyle(querySelector(trNode, 'td.src'));
 
-  const extractBackText$3 = trNode =>
+  const extractBackText$4 = trNode =>
     stringifyNodeWithStyle(querySelector(trNode, 'td.tgt'));
 
 
@@ -651,8 +671,8 @@
         const hook = createHook(() => {
           const [sourceLanguage, targetLanguage] = getLanguages();
           return {
-            frontText: extractFrontText$3(trNode),
-            backText: extractBackText$3(trNode),
+            frontText: extractFrontText$4(trNode),
+            backText: extractBackText$4(trNode),
             frontLanguage: sourceLanguage,
             backLanguage: targetLanguage,
             cardKind: `${sourceLanguage} -> ${targetLanguage}`,
@@ -670,10 +690,10 @@
 
   // e.g. https://context.reverso.net/traduction/anglais-francais/hello
 
-  const extractFrontText$4 = containerDiv =>
+  const extractFrontText$5 = containerDiv =>
     stringifyNodeWithStyle(querySelector(containerDiv, '.src > .text'));
 
-  const extractBackText$4 = containerDiv =>
+  const extractBackText$5 = containerDiv =>
     stringifyNodeWithStyle(querySelector(containerDiv, '.trg > .text'));
 
 
@@ -683,8 +703,8 @@
         const hook = createHook(() => {
           const [sourceLanguage, targetLanguage] = getLanguages();
           return {
-            frontText: extractFrontText$4(containerDiv),
-            backText: extractBackText$4(containerDiv),
+            frontText: extractFrontText$5(containerDiv),
+            backText: extractBackText$5(containerDiv),
             frontLanguage: sourceLanguage,
             backLanguage: targetLanguage,
             cardKind: `${sourceLanguage} -> ${targetLanguage}`,
@@ -703,20 +723,14 @@
   const hookName = 'reverso.net';
 
 
-  // There are weird "&nbsp;" spans with a white border-bottom, that make it
-  // ugly when we put a background. So we set them to transparent instead.
-  const hideNbspSpans = () => {
-    querySelectorAll(document, '.nbsp1', { throwOnUnfound: false }).forEach((span) => {
-      span.style.setProperty('border-color', 'transparent', 'important');
-    });
-  };
-
-
   const run = (createHook) => {
-    hideNbspSpans();
     runOnContextReverso(createHook);
     runOnCollinsDictionary(createHook);
-    runOnMainDictionary(createHook);
+
+    // Reverso main dictionary has two modes, depending on wether the input is one word or a sentence.
+    runOnMainDictionaryOneWord(createHook);
+    runOnMainDictionarySentence(createHook);
+
     runOnCollaborativeDictionary(createHook);
     runOnDictionaryContextualDictionary(createHook);
   };
@@ -738,7 +752,7 @@
 
      Hook Userscript Name: ${hookName}.
 
-     Hook UserScript Version: 2.5.
+     Hook UserScript Version: 3.0.
     `
     );
     {
