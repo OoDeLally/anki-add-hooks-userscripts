@@ -5,10 +5,10 @@
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for Reverso
-// @version      3.2
+// @version      3.3
 // @description  Generate a hook for AnkiConnect on Reverso
 // @author       Pascal Heitz
-// @include      /reverso\.net\/(\w+\/)?\w+-\w+\/
+// @include      /reverso\.net\/([\w%]+\/)?[\w%]+-[\w%]+/
 // ==/UserScript==
 
 (function () {
@@ -607,7 +607,7 @@
 
      Hook Userscript Name: ${hookName}.
 
-     Hook UserScript Version: 3.2.
+     Hook UserScript Version: 3.3.
     `
     );
     {

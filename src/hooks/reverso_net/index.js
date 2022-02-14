@@ -1,8 +1,8 @@
 // @name         Anki Add Hooks for Reverso
-// @version      3.2
+// @version      3.3
 // @description  Generate a hook for AnkiConnect on Reverso
 // @author       Pascal Heitz
-// @include      /reverso\.net\/(\w+\/)?\w+-\w+\/
+// @include      /reverso\.net\/([\w%]+\/)?[\w%]+-[\w%]+/
 
 import runOnMainDictionaryOneWord from './run_on_main_dictionary_one_word';
 import runOnMainDictionarySentence from './run_on_main_dictionary_sentence';
