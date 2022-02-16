@@ -5,7 +5,7 @@
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for Reverso
-// @version      3.3
+// @version      3.4
 // @description  Generate a hook for AnkiConnect on Reverso
 // @author       Pascal Heitz
 // @include      /reverso\.net\/([\w%]+\/)?[\w%]+-[\w%]+/
@@ -89,6 +89,21 @@
   };
 
 
+  const getElementsByNameInOneNode = (parentNode, name, { throwOnUnfound = true } = {}) => {
+    if (!parentNode || !parentNode.getElementsByName) {
+      throw Error(`parentNode does not seem to be a DOM node: ${parentNode}`);
+    }
+    if (typeof name !== 'string') {
+      throw Error('name must be a string');
+    }
+    const foundNodes = Array.from(parentNode.getElementsByName(name));
+    if (foundNodes.length === 0 && throwOnUnfound) {
+      throw ScrapingError(`No node matches the name '${name}'`);
+    }
+    return foundNodes;
+  };
+
+
   // Just like parentNode.querySelectorAll, but:
   // - can throw if not found.
   // - accepts parentNode as an array of nodes to look from.
@@ -135,6 +150,29 @@
   };
 
 
+  // Just like parentNode.getElementsByName, but:
+  // - can throw if not found.
+  // - accepts parentNode as an array of nodes to look from.
+  const getElementsByName = (parentNode, name, options = {}) => {
+    if (typeof options !== 'object') {
+      throw Error('If provided, `options`, must be an object');
+    }
+    if (Array.isArray(parentNode)) {
+      let results = [];
+      parentNode.forEach((node) => {
+        const foundNodes = getElementsByNameInOneNode(node, name, { throwOnUnfound: false });
+        results = [...results, ...foundNodes];
+      });
+      if (results.length > 1 && options.throwOnFoundSeveral) {
+        throw ScrapingError(`Several nodes match the name '${name}'`);
+      }
+      return results;
+    } else {
+      return getElementsByNameInOneNode(parentNode, name, options);
+    }
+  };
+
+
   // Tells if `parentNode` already contains an anki hook.
   // `parentNode` can be an array of nodes to look from.
   const doesAnkiHookExistIn = parentNode =>
@@ -144,16 +182,39 @@
       { throwOnUnfound: false, throwOnFoundSeveral: false }
     );
 
-  var getLanguages = () => {
+  const getLanguageFromUrlParameters = () => {
     const match = window.location.hash.match(/\bsl=(\w+)&tl=(\w+)/);
+    if (!match) {
+      return null;
+    }
+    const [, sourceLanguage, targetLanguage] = match;
+    if (!sourceLanguage || !targetLanguage) {
+      return null;
+    }
+    return [sourceLanguage, targetLanguage];
+  };
+
+  const getLanguageFromUrlPath = () => {
+    // e.g. https://dictionnaire.reverso.net/anglais-francais/hello
+    const match = window.location.href.match(/reverso\.net\/(\w+\/)?([a-z]+)-([a-z]+)\//);
     if (!match) {
       throw ScrapingError('Could not extract languages from url');
     }
-    const [, sourceLanguage, targetLanguage] = match;
+    const [,, sourceLanguage, targetLanguage] = match;
     if (!sourceLanguage || !targetLanguage) {
       throw ScrapingError('Could not extract languages from url');
     }
     return [sourceLanguage, targetLanguage];
+  };
+
+  var getLanguages = () => {
+    const languages = getLanguageFromUrlParameters() || getLanguageFromUrlPath();
+
+    if (!languages) {
+      throw ScrapingError('Could not extract languages from url');
+    }
+
+    return languages;
   };
 
   const extractFrontText = () => {
@@ -573,6 +634,139 @@
       });
   };
 
+  // composeFunction(f, g, h) =>
+  //   x => (f∘g∘h)(x)
+
+
+  var composeFunctions = (...funs) =>
+    (...args) => {
+      let val = args;
+      funs.forEach((fun) => {
+        val = [fun(...val)];
+      });
+      return val[0];
+    };
+
+  const cleanTreeRec = (node) => {
+    if (
+      (node.nodeName === 'SPAN' && !node.textContent.replace(/[ \t]/gm, ''))
+      || node.nodeName === 'HR'
+    ) {
+      node.remove();
+      return;
+    }
+    // Clone the array to avoid screwing the iteration when a child if removed
+    Array.from(node.childNodes)
+      .forEach(childNode => cleanTreeRec(childNode));
+  };
+
+  const cleanTree = (rootNode) => {
+    cleanTreeRec(rootNode);
+    return rootNode;
+  };
+
+
+  /*
+    <div>
+      <b><h2>FirstWord</h2></b>
+      <!-- Stuff -->
+      <b>adj</b>
+      <!-- First word translation -->
+    </div>
+    <div>
+      <!-- First word translation -->
+    </div>
+    <div>
+      <b>SecondWord</b>
+      <!-- Stuff -->
+      <b>adj</b>
+      <!-- Second word translation -->
+    </div>
+    <div>
+      <!-- Second word translation -->
+    </div>
+
+    We need to separate the first div in two, because it contains information
+    for both sides of the card.
+    We take up to the second <b></b> for the first div.
+    The rest of the first div and the subsequent divs are part of the back of the card.
+  */
+  const partitionFrontAndBackInFirstDiv = (divGroup) => {
+    const nodes = Array.from(divGroup[0].childNodes);
+    const nodesToKeep = [];
+    let bNodeSeen = 0;
+    for (let nodeIndex = 0; nodeIndex < nodes.length; nodeIndex++) {
+      const node = nodes[nodeIndex];
+      nodesToKeep.push(node);
+      if (node.nodeName === 'B') {
+        bNodeSeen++;
+        if (bNodeSeen === 2) {
+          return [nodesToKeep, nodes.slice(nodeIndex + 1)];
+        }
+      }
+    }
+    return [nodesToKeep, []];
+  };
+
+
+  const extractFrontText$5 = (divGroup) => {
+    const transformTree = composeFunctions(cleanTree);
+    return stringifyNodeWithStyle(partitionFrontAndBackInFirstDiv(divGroup)[0], transformTree);
+  };
+
+  const extractBackText$5 = (divGroup) => {
+    const [, ...rest] = divGroup;
+    return `<div style="text-align:left;margin:auto;display:table;">
+            ${stringifyNodeWithStyle(partitionFrontAndBackInFirstDiv(divGroup)[1])}
+            ${stringifyNodeWithStyle(rest, cleanTree)}
+          </div>
+        `;
+  };
+
+
+  const getDivGroup = (wordNode, nextWordNode) => {
+    const divsToHighlight = [];
+    if (nextWordNode) {
+      let node = wordNode.parentNode;
+      while (node && node !== nextWordNode.parentNode) {
+        if (!isTextNode(node)) {
+          divsToHighlight.push(node);
+        }
+        node = node.nextSibling;
+      }
+    } else {
+      divsToHighlight.push(wordNode.parentNode);
+    }
+    return divsToHighlight;
+  };
+
+
+  var runOnCollinsDictionary = (createHook) => {
+    getElementsByName(document, 'translate_box', { throwOnUnfound: false })
+      .forEach((translateBox) => {
+        const wordNodes = querySelectorAll(translateBox, 'div > b:first-child', { throwOnUnfound: false });
+        wordNodes.forEach((wordNode, wordNodeIndex) => {
+          const divGroup = getDivGroup(wordNode, wordNodes[wordNodeIndex + 1]);
+          const hook = createHook(() => {
+            const [sourceLanguage, targetLanguage] = getLanguages();
+            return {
+              frontText: extractFrontText$5(divGroup),
+              backText: extractBackText$5(divGroup),
+              frontLanguage: sourceLanguage,
+              backLanguage: targetLanguage,
+              cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+            };
+          });
+          hook.style.position = 'absolute';
+          hook.style.right = '0px';
+          hook.style.top = '10px';
+          highlightOnHookHover(hook, divGroup, 'lightblue');
+          wordNode.parentNode.style.position = 'relative';
+          wordNode.parentNode.append(hook);
+        });
+      });
+  };
+
   // @name         Anki Add Hooks for Reverso
 
 
@@ -581,6 +775,7 @@
 
   const run = (createHook) => {
     runOnContextReverso(createHook);
+    runOnCollinsDictionary(createHook);
 
     // Reverso main dictionary has two modes, depending on wether the input is one word or a sentence.
     runOnMainDictionaryOneWord(createHook);
@@ -607,7 +802,7 @@
 
      Hook Userscript Name: ${hookName}.
 
-     Hook UserScript Version: 3.3.
+     Hook UserScript Version: 3.4.
     `
     );
     {
