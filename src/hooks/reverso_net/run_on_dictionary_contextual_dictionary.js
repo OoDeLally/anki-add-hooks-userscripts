@@ -17,12 +17,6 @@ const extractBackText = (itemDiv) => {
 };
 
 
-export const extract = divGroup => ({
-  frontText: extractFrontText(divGroup),
-  backText: extractBackText(divGroup),
-});
-
-
 const tryToAddHook = (createHook) => {
   querySelectorAll(document, '#contextSection table.contextlist tr', { throwOnUnfound: false })
     .forEach((itemDiv) => {

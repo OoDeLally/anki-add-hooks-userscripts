@@ -1,5 +1,5 @@
 // @name         Anki Add Hooks for Reverso
-// @version      3.5
+// @version      3.6
 // @description  Generate a hook for AnkiConnect on Reverso
 // @author       Pascal Heitz
 // @include      /reverso\.net\/([\w%]+\/)?[\w%]+-[\w%]+/
@@ -10,6 +10,7 @@ import runOnCollaborativeDictionary from './run_on_collaborative_dictionary';
 import runOnDictionaryContextualDictionary from './run_on_dictionary_contextual_dictionary';
 import runOnContextReverso from './run_on_context_reverso';
 import runOnCollinsDictionary from './run_on_collins_dictionary';
+import runOnTableHTMLResult from './run_on_TableHTMLResult';
 
 
 export const hookName = 'reverso.net';
@@ -18,6 +19,7 @@ export const hookName = 'reverso.net';
 export const run = (createHook) => {
   runOnContextReverso(createHook);
   runOnCollinsDictionary(createHook);
+  runOnTableHTMLResult(createHook);
 
   // Reverso main dictionary has two modes, depending on wether the input is one word or a sentence.
   runOnMainDictionaryOneWord(createHook);

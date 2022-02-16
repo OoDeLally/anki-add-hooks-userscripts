@@ -8,7 +8,7 @@ Add a button on translation websites to create an Anki card from a translation.
 
   [/hooks/wordreference_com_hook.user.js](https://github.com/OoDeLally/tampermonkey-anki-add-hooks/raw/master/hooks/wordreference_com_hook.user.js)
 
-### reverso.net (Last update Feb 14, 2022)
+### reverso.net (Last update Feb 16, 2022)
 
   [/hooks/reverso_net_hook.user.js](https://github.com/OoDeLally/tampermonkey-anki-add-hooks/raw/master/hooks/reverso_net_hook.user.js)
 

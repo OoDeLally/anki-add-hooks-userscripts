@@ -5,7 +5,7 @@
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for Reverso
-// @version      3.5
+// @version      3.6
 // @description  Generate a hook for AnkiConnect on Reverso
 // @author       Pascal Heitz
 // @include      /reverso\.net\/([\w%]+\/)?[\w%]+-[\w%]+/
@@ -196,7 +196,7 @@
 
   const getLanguageFromUrlPath = () => {
     // e.g. https://dictionnaire.reverso.net/anglais-francais/hello
-    const match = window.location.href.match(/reverso\.net\/(\w+\/)?([a-z]+)-([a-z]+)\//);
+    const match = window.location.href.match(/reverso\.net\/([\w%]+\/)?([a-z%]+)-([a-z%]+)\//);
     if (!match) {
       throw ScrapingError('Could not extract languages from url');
     }
@@ -566,6 +566,12 @@
         if (doesAnkiHookExistIn(itemDiv)) {
           return;
         }
+        const srcTd = querySelector(itemDiv, '.src', { throwOnUnfound: false });
+        const tgtTd = querySelector(itemDiv, '.tgt', { throwOnUnfound: false });
+        if (!srcTd && !tgtTd) {
+          // Probably a header e.g. https://woerterbuch.reverso.net/%C3%BCbersetzung/deutsch-portugiesisch/bildhauer
+          return;
+        }
         const hook = createHook(() => {
           const [sourceLanguage, targetLanguage] = getLanguages();
           return {
@@ -767,6 +773,43 @@
       });
   };
 
+  // e.g. https://woerterbuch.reverso.net/%C3%BCbersetzung/deutsch-portugiesisch/bildhauer
+
+
+  const tryToAddHook$3 = (createHook) => {
+    const parentDiv = querySelector(document, '.center_frameColl', { throwOnUnfound: false, throwOnFoundSeveral: false });
+    if (!parentDiv) {
+      return;
+    }
+    if (doesAnkiHookExistIn(parentDiv)) {
+      return;
+    }
+    const srcSpan = querySelector(parentDiv, '.CollResSrc');
+    const tgtSpan = querySelector(parentDiv, '.tgtColl');
+    const hook = createHook(() => {
+      const [sourceLanguage, targetLanguage] = getLanguages();
+      return {
+        frontText: srcSpan.innerText,
+        backText: tgtSpan.innerText,
+        frontLanguage: sourceLanguage,
+        backLanguage: targetLanguage,
+        cardKind: `${sourceLanguage} -> ${targetLanguage}`,
+      };
+    });
+    hook.style.position = 'absolute';
+    hook.style.top = '0px';
+    hook.style.right = '-80px';
+    highlightOnHookHover(hook, parentDiv, 'lightblue');
+    parentDiv.style.position = 'relative';
+    parentDiv.append(hook);
+  };
+
+  var runOnTableHTMLResult = (createHook) => {
+    setInterval(() => {
+      tryToAddHook$3(createHook);
+    }, 500);
+  };
+
   // @name         Anki Add Hooks for Reverso
 
 
@@ -776,6 +819,7 @@
   const run = (createHook) => {
     runOnContextReverso(createHook);
     runOnCollinsDictionary(createHook);
+    runOnTableHTMLResult(createHook);
 
     // Reverso main dictionary has two modes, depending on wether the input is one word or a sentence.
     runOnMainDictionaryOneWord(createHook);
@@ -802,7 +846,7 @@
 
      Hook Userscript Name: ${hookName}.
 
-     Hook UserScript Version: 3.5.
+     Hook UserScript Version: 3.6.
     `
     );
     {

@@ -25,12 +25,6 @@ const extractBackText = containerDiv =>
   stringifyNodeWithStyle(querySelector(containerDiv, '.trg > .text'));
 
 
-export const extract = divGroup => ({
-  frontText: extractFrontText(divGroup),
-  backText: extractBackText(divGroup),
-});
-
-
 export default (createHook) => {
   querySelectorAll(document, '.example', { throwOnUnfound: false })
     .forEach((containerDiv) => {

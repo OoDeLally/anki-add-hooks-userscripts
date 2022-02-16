@@ -14,7 +14,7 @@ const getLanguageFromUrlParameters = () => {
 
 const getLanguageFromUrlPath = () => {
   // e.g. https://dictionnaire.reverso.net/anglais-francais/hello
-  const match = window.location.href.match(/reverso\.net\/(\w+\/)?([a-z]+)-([a-z]+)\//);
+  const match = window.location.href.match(/reverso\.net\/([\w%]+\/)?([a-z%]+)-([a-z%]+)\//);
   if (!match) {
     throw ScrapingError('Could not extract languages from url');
   }
