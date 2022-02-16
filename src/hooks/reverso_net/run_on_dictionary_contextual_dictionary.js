@@ -29,6 +29,12 @@ const tryToAddHook = (createHook) => {
       if (doesAnkiHookExistIn(itemDiv)) {
         return;
       }
+      const srcTd = querySelector(itemDiv, '.src', { throwOnUnfound: false });
+      const tgtTd = querySelector(itemDiv, '.tgt', { throwOnUnfound: false });
+      if (!srcTd && !tgtTd) {
+        // Probably a header e.g. https://woerterbuch.reverso.net/%C3%BCbersetzung/deutsch-portugiesisch/bildhauer
+        return;
+      }
       const hook = createHook(() => {
         const [sourceLanguage, targetLanguage] = getLanguages();
         return {
