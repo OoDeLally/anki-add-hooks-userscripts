@@ -6,14 +6,14 @@ import getLanguages from './get_languages';
 //        Table on the bottom with a few examples.
 
 const extractFrontText = (itemDiv) => {
-  const div = querySelector(itemDiv, '.source');
-  return div.innerText;
+  const td = querySelector(itemDiv, '.src');
+  return td.innerText;
 };
 
 
 const extractBackText = (itemDiv) => {
-  const div = querySelector(itemDiv, '.target');
-  return div.innerText;
+  const td = querySelector(itemDiv, '.tgt');
+  return td.innerText;
 };
 
 
@@ -24,7 +24,7 @@ export const extract = divGroup => ({
 
 
 const tryToAddHook = (createHook) => {
-  querySelectorAll(document, '.context-examples .example', { throwOnUnfound: false })
+  querySelectorAll(document, '#contextSection table.contextlist tr', { throwOnUnfound: false })
     .forEach((itemDiv) => {
       if (doesAnkiHookExistIn(itemDiv)) {
         return;
@@ -40,8 +40,8 @@ const tryToAddHook = (createHook) => {
         };
       });
       hook.style.position = 'absolute';
-      hook.style.top = '10px';
-      hook.style.right = '5px';
+      hook.style.top = '0px';
+      hook.style.right = '-80px';
       highlightOnHookHover(hook, itemDiv, 'lightblue');
       itemDiv.style.position = 'relative';
       itemDiv.append(hook);

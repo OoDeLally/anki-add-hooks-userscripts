@@ -5,7 +5,7 @@
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for Reverso
-// @version      3.4
+// @version      3.5
 // @description  Generate a hook for AnkiConnect on Reverso
 // @author       Pascal Heitz
 // @include      /reverso\.net\/([\w%]+\/)?[\w%]+-[\w%]+/
@@ -536,7 +536,7 @@
         rows.forEach((row) => {
           const hook = createHook(() => extractCallBack(row, reverseDirection));
           hook.style.position = 'absolute';
-          hook.style.left = '105px';
+          hook.style.left = '110px';
           highlightOnHookHover(hook, row, 'lightblue');
           const parentNode = querySelector(row, '.CDResAct');
           parentNode.style.position = 'relative';
@@ -549,19 +549,19 @@
   //        Table on the bottom with a few examples.
 
   const extractFrontText$3 = (itemDiv) => {
-    const div = querySelector(itemDiv, '.source');
-    return div.innerText;
+    const td = querySelector(itemDiv, '.src');
+    return td.innerText;
   };
 
 
   const extractBackText$3 = (itemDiv) => {
-    const div = querySelector(itemDiv, '.target');
-    return div.innerText;
+    const td = querySelector(itemDiv, '.tgt');
+    return td.innerText;
   };
 
 
   const tryToAddHook$2 = (createHook) => {
-    querySelectorAll(document, '.context-examples .example', { throwOnUnfound: false })
+    querySelectorAll(document, '#contextSection table.contextlist tr', { throwOnUnfound: false })
       .forEach((itemDiv) => {
         if (doesAnkiHookExistIn(itemDiv)) {
           return;
@@ -577,8 +577,8 @@
           };
         });
         hook.style.position = 'absolute';
-        hook.style.top = '10px';
-        hook.style.right = '5px';
+        hook.style.top = '0px';
+        hook.style.right = '-80px';
         highlightOnHookHover(hook, itemDiv, 'lightblue');
         itemDiv.style.position = 'relative';
         itemDiv.append(hook);
@@ -802,7 +802,7 @@
 
      Hook Userscript Name: ${hookName}.
 
-     Hook UserScript Version: 3.4.
+     Hook UserScript Version: 3.5.
     `
     );
     {

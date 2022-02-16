@@ -47,7 +47,7 @@ export default (createHook) => {
       rows.forEach((row) => {
         const hook = createHook(() => extractCallBack(row, reverseDirection));
         hook.style.position = 'absolute';
-        hook.style.left = '105px';
+        hook.style.left = '110px';
         highlightOnHookHover(hook, row, 'lightblue');
         const parentNode = querySelector(row, '.CDResAct');
         parentNode.style.position = 'relative';
