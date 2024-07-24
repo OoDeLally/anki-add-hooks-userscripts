@@ -39,7 +39,7 @@
   background-color: #cccccc;
 }
 .-anki-add-hook:hover {
-  opacity: 1;
+  opacity: 1 !important;
 }
 
 .-anki-add-hook-star {

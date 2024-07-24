@@ -153,7 +153,9 @@ const addHooksInTrGroup = (trGroup, createHook, sourceLanguage, targetLanguage) 
   parent.style.position = 'relative';
   const hook = createHook(() => extractCallback(trGroup, sourceLanguage, targetLanguage));
   hook.style.position = 'absolute';
-  hook.style.right = '-80px';
+  hook.style.top = '2px';
+  hook.style.right = '2px';
+  hook.style.opacity = 0.2;
   highlightOnHookHover(hook, trGroup, 'gold');
   parent.append(hook);
 };
