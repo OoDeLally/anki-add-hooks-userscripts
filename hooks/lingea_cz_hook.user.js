@@ -912,7 +912,7 @@
         deckName,
         modelName,
         options: {
-          allowDuplicate: true,
+          allowDuplicate: false,
         },
         fields: {
           [modelFields[0]]: buildCardFace(
@@ -1014,6 +1014,7 @@
 
 
   const onHookClick = async (event, extractFieldsCallback, hookNode) => {
+    event.stopImmediatePropagation();
     event.preventDefault();
     event.stopPropagation();
     let fields;
@@ -1061,8 +1062,13 @@
     hookNode.appendChild(starNodeBig);
     hookNode.appendChild(starNodeSmall);
     hookNode.appendChild(textNode);
-    hookNode.onclick = event => onHookClick(event, extractFieldsCallback, hookNode);
-    return hookNode;
+
+    // Prevent the website to act on the hook.
+    // This is necessary e.g. in Wordreference, which triggers a translation lookup upon a word click
+    hookNode.addEventListener('mousedown', (event) => {event.stopImmediatePropagation();});
+    hookNode.addEventListener('mouseup', (event) => {event.stopImmediatePropagation();});
+
+    hookNode.onclick = event => onHookClick(event, extractFieldsCallback, hookNode);  return hookNode;
   };
 
 
