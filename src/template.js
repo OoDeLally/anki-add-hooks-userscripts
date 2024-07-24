@@ -187,7 +187,7 @@ const ankiConnectAddNoteRequest = async (fields) => {
       deckName,
       modelName,
       options: {
-        allowDuplicate: true,
+        allowDuplicate: false,
       },
       fields: {
         [modelFields[0]]: buildCardFace(
