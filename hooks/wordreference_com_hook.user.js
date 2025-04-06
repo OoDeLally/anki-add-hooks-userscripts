@@ -5,7 +5,7 @@
 // @grant        GM.getValue
 // @connect      localhost
 // @name         Anki Add Hooks for WordReference.com
-// @version      2.7
+// @version      2.8
 // @description  Generate a hook for AnkiConnect on WordReference.com
 // @author       Pascal Heitz
 // @include      /https?:\/\/www\.wordreference\.com\/(([a-z]{4}\/.+)|([a-z]{2}(\/[a-z]{2})?\/translation.asp\b.*))/
@@ -364,12 +364,16 @@
         if (trNode.className.includes(currentTrClass)) {
           currentTrGroup.push(trNode);
         } else {
-          trGroups.push(currentTrGroup);
+          if (currentTrGroup.length > 0) {
+            trGroups.push(currentTrGroup);
+          }
           currentTrGroup = [trNode];
           currentTrClass = currentTrClass === 'even' ? 'odd' : 'even';
         }
       });
-    trGroups.push(currentTrGroup);
+    if (currentTrGroup.length > 0) {
+      trGroups.push(currentTrGroup);
+    }
     return trGroups;
   };
 
@@ -641,7 +645,7 @@
 
      Hook Userscript Name: ${hookName}.
 
-     Hook UserScript Version: 2.7.
+     Hook UserScript Version: 2.8.
     `
     );
     {

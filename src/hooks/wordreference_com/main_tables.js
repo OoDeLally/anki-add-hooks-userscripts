@@ -52,12 +52,16 @@ const getTrGroups = (tableNode) => {
       if (trNode.className.includes(currentTrClass)) {
         currentTrGroup.push(trNode);
       } else {
-        trGroups.push(currentTrGroup);
+        if (currentTrGroup.length > 0) {
+          trGroups.push(currentTrGroup);
+        }
         currentTrGroup = [trNode];
         currentTrClass = currentTrClass === 'even' ? 'odd' : 'even';
       }
     });
-  trGroups.push(currentTrGroup);
+  if (currentTrGroup.length > 0) {
+    trGroups.push(currentTrGroup);
+  }
   return trGroups;
 };
 

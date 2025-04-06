@@ -4,7 +4,7 @@ Add a button on translation websites to create an Anki card from a translation.
 
 ## Currently supported websites
 
-### wordreference.com (Last update July 24, 2024)
+### wordreference.com (Last update April 06, 2025)
 
   [/hooks/wordreference_com_hook.user.js](https://github.com/OoDeLally/tampermonkey-anki-add-hooks/raw/master/hooks/wordreference_com_hook.user.js)
 
